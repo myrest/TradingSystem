@@ -5,6 +5,7 @@ import (
 	"TradingSystem/src/routes"
 	"log"
 	"os"
+	"path/filepath"
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"
@@ -17,7 +18,13 @@ func main() {
 	store := cookie.NewStore([]byte("secret"))
 	r.Use(sessions.Sessions("mysession", store))
 
-	r.LoadHTMLGlob("templates/**/*") // Add this line to load HTML templates
+	// 获取当前工作目录
+	wd, err := os.Getwd()
+	if err != nil {
+		log.Fatalf("Error getting current working directory: %v", err)
+	}
+	templatesDir := filepath.Join(wd, "templates")
+	r.LoadHTMLGlob(filepath.Join(templatesDir, "**/*")) // Add this line to load HTML templates
 
 	routes.RegisterRoutes(r)
 
