@@ -3,11 +3,10 @@ FROM golang
 
 COPY ./ /app
 
+COPY ./src/templates /app/templates
+
 WORKDIR /app
 
-
-#RUN go mod init TradingSystem
-#RUN go mod tidy
 RUN go mod download
 
 # Build the Go app

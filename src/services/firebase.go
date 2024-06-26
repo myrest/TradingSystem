@@ -24,7 +24,8 @@ func init() {
 	if credsPath == "" {
 		firestoreClient, err = firestore.NewClient(ctx, "resttradingsystem")
 		if err != nil {
-			log.Fatalf("error initializing Firestore client: %v\n", err)
+			//log.Fatalf("error initializing Firestore client: %v\n", err)
+			log.Println("error initializing Firestore client: \n", err.Error())
 		}
 	} else {
 		sa := option.WithCredentialsFile(credsPath)
