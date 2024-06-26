@@ -1,8 +1,8 @@
 package controllers
 
 import (
-	"ManageAPI/src/models"
-	"ManageAPI/src/services"
+	"TradingSystem/src/models"
+	"TradingSystem/src/services"
 	"net/http"
 
 	"github.com/gin-contrib/sessions"

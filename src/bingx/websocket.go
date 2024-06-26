@@ -1,7 +1,7 @@
 package bingx
 
 import (
-	"ManageAPI/src/common"
+	"TradingSystem/src/common"
 	"net/http"
 
 	"github.com/gorilla/websocket"

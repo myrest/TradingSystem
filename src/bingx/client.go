@@ -1,7 +1,7 @@
 package bingx
 
 import (
-	"ManageAPI/src/common"
+	"TradingSystem/src/common"
 	"bytes"
 	"context"
 	"crypto/hmac"

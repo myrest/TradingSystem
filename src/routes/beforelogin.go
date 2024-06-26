@@ -1,7 +1,7 @@
 package routes
 
 import (
-	"ManageAPI/src/controllers"
+	"TradingSystem/src/controllers"
 
 	"github.com/gin-gonic/gin"
 )
