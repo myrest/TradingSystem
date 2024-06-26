@@ -1,0 +1,36 @@
+{{ template "beforeloginheader.html" . }}
+    <!-- h1>跟單系統</h1 -->
+    <p>Name: {{ .Name }}</p>
+    <p>Email: {{ .Email }}</p>
+    <form id="create-account-form" action="/customers/create_account" method="post">
+        <button type="submit" id="create-account-button">建立帳號</button>
+    </form>
+
+<script>
+    document.getElementById('create-account-form').addEventListener('submit', function(event) {
+        event.preventDefault();
+        document.getElementById('loader').style.display = 'block';
+
+        fetch('/customers', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                name: '{{ .Name }}',
+                email: '{{ .Email }}'
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Success:', data);
+            document.getElementById('loader').style.display = 'none';
+            window.location.reload();
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+            document.getElementById('loader').style.display = 'none';
+        });
+    });
+</script>
+{{ template "beforeloginfooter.html" . }}

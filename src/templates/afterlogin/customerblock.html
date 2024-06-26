@@ -1,0 +1,151 @@
+<hr>
+<style>
+    radio {
+        width: 10%;
+    }
+
+    .inline {
+        display: inline;
+    }
+
+    table {
+        width: 100%;
+    }
+
+    #close-button {
+        margin-right: 20px;
+    }
+
+    .btn-container {
+        display: flex;
+        justify-content: space-between;
+        width: 350px;
+    }
+
+    .btn-sm {
+        padding: 5px 10px;
+        font-size: 0.875rem;
+        line-height: 1.5;
+        border-radius: 0.2rem;
+    }
+
+    .btn-primary {
+        background-color: #007bff;
+        border-color: #007bff;
+        color: #fff;
+    }
+
+    .btn-secondary {
+        background-color: #6c757d;
+        border-color: #6c757d;
+        color: #fff;
+    }
+
+    .btn {
+        display: inline-block;
+        font-weight: 400;
+        text-align: center;
+        white-space: nowrap;
+        vertical-align: middle;
+        user-select: none;
+        border: 1px solid transparent;
+        padding: 0.375rem 0.75rem;
+        font-size: 1rem;
+        line-height: 1.5;
+        border-radius: 0.25rem;
+        transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+    }
+</style>
+<div class="admin-section">
+    <table class="table table-sm" style="margin-top:20px;">
+        <thead>
+            <tr>
+                <th>幣種</th>
+                <th>操作</th>
+                <th>投入金額</th>
+            </tr>
+        </thead>
+        <tbody id="item-table-body">
+        </tbody>
+    </table>
+</div>
+
+<script>
+    var test
+    function updateSymbo(symbo) {
+        const row = document.querySelector(`tr[data-symbo="${symbo}"]`);
+        const status = row.querySelector('input[name="status-' + symbo + '"]:checked').value;
+        const amount = row.querySelector('.amount-input').value;
+
+        const data = {
+            'symbo': symbo,
+            'status': status,
+            'amount': amount
+        };
+
+        fetch(`/customers/symbo`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        }).then(response => {
+            if (!response.ok) {
+                response.text().then(x=>alert(`Failed to update symbo (${symbo}): ` + JSON.parse(x).error))
+            }else{
+                response.text().then(x=>{
+                    if (x != "\"\"") alert("Update completed, but " + x);
+                })
+            }
+        }).catch(error => {
+            console.error('Error:', error);
+        });
+    }
+
+    function attachEventListeners(row) {
+        const symbo = row.getAttribute('data-symbo');
+        row.querySelectorAll('.form-check-input').forEach(radio => {
+            radio.addEventListener('change', function () {
+                updateSymbo(symbo);
+            });
+        });
+
+        row.querySelector('.amount-input').addEventListener('change', function () {
+            updateSymbo(symbo);
+        });
+    }
+
+    // Fetch and populate symbo data on page load
+    function fetchSymboData() {
+        fetch('/customers/symbo')
+            .then(response => response.json())
+            .then(data => {
+                const tbody = document.getElementById('item-table-body');
+                data.forEach(symbo => {
+                    const row = document.createElement('tr');
+                    row.setAttribute('data-symbo', symbo.symbo);
+                    row.innerHTML = `
+                        <td>${symbo.symbo}</td>
+                        <td>
+                            <span class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="status-${symbo.symbo}" id="enable-${symbo.symbo}" value="true" ${symbo.status ? 'checked' : ''}>
+                                <label class="form-check-label inline" for="enable-${symbo.symbo}">啟用</label>
+                            </span>
+                            <span class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="status-${symbo.symbo}" id="disable-${symbo.symbo}" value="false" ${!symbo.status ? 'checked' : ''}>
+                                <label class="form-check-label inline" for="disable-${symbo.symbo}">停用</label>
+                            </span>
+                        </td>
+                        <td><input type="text" class="amount-input" name="amount-${symbo.symbo}" value="${symbo.amount || 0}"></td>
+                    `;
+                    tbody.appendChild(row);
+                    attachEventListeners(row); // Attach event listeners to the new row
+                });
+            })
+            .catch(error => {
+                console.error('Error fetching symbo data:', error);
+            });
+    }
+
+    document.addEventListener('DOMContentLoaded', fetchSymboData);
+</script>

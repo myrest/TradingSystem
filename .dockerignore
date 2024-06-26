@@ -1,0 +1,28 @@
+# Binaries
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+main
+
+# Testing
+*.test
+*.out
+
+# IDE files
+.idea/
+.vscode/
+
+# Vendor directory
+vendor/
+
+# Go Modules
+go.sum
+go.mod
+
+# Logs
+*.log
+
+# Firebase
+path/to/your/serviceAccountKey.json

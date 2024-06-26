@@ -1,0 +1,44 @@
+{{ template "beforeloginheader.html" . }}
+
+<h1>跟單系統</h1>
+<button id="login-button"><i class="fab fa-google"></i>Login with Google</button>
+<div class="loader" id="loader"></div>
+
+<script>
+    fetch('/misc/fireAuthConfig')
+        .then(response => response.json())
+        .then(config => {
+            firebase.initializeApp(config);
+
+            document.getElementById('login-button').addEventListener('click', () => {
+                document.getElementById('loader').style.display = 'block';
+                const provider = new firebase.auth.GoogleAuthProvider();
+                firebase.auth().signInWithPopup(provider)
+                    .then(result => {
+                        result.user.getIdToken().then(idToken => {
+                            fetch('/auth/google', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify({ token: idToken })
+                            }).then(response => {
+                                window.location = response.url
+                            })
+                                .then(data => console.log(data))
+                                .catch(error => console.error('Error:', error));
+                        });
+                    })
+                    .catch(error => {
+                        console.error('Authentication error:', error);
+                        document.getElementById('loader').style.display = 'none';
+                    });
+            });
+        })
+        .catch(error => {
+            console.error('Error fetching config:', error);
+            document.getElementById('loader').style.display = 'none';
+        });
+</script>
+
+{{ template "beforeloginfooter.html" . }}
