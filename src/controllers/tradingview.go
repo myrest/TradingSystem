@@ -1,9 +1,9 @@
 package controllers
 
 import (
-	"ManageAPI/src/bingx"
-	"ManageAPI/src/models"
-	"ManageAPI/src/services"
+	"TradingSystem/src/bingx"
+	"TradingSystem/src/models"
+	"TradingSystem/src/services"
 	"context"
 	"log"
 	"net/http"

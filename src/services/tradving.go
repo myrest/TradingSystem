@@ -1,7 +1,7 @@
 package services
 
 import (
-	"ManageAPI/src/models"
+	"TradingSystem/src/models"
 	"context"
 
 	"google.golang.org/api/iterator"

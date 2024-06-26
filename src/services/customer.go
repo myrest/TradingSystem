@@ -1,8 +1,9 @@
 package services
 
 import (
-	"ManageAPI/src/models"
+	"TradingSystem/src/models"
 	"context"
+	"log"
 
 	"google.golang.org/api/iterator"
 )
@@ -63,6 +64,7 @@ func GetCustomerByEmail(email string) (*models.Customer, error) {
 		return nil, nil // Customer not found
 	}
 	if err != nil {
+		log.Println(err)
 		return nil, err
 	}
 

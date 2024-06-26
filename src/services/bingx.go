@@ -1,7 +1,7 @@
 package services
 
 import (
-	"ManageAPI/src/bingx"
+	"TradingSystem/src/bingx"
 	"context"
 	"strconv"
 )

@@ -19,22 +19,26 @@ var (
 
 func init() {
 	ctx := context.Background()
+	var err error
 	credsPath := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS")
 	if credsPath == "" {
-		log.Fatalf("GOOGLE_APPLICATION_CREDENTIALS environment variable not set")
-	}
-	sa := option.WithCredentialsFile(credsPath)
+		firestoreClient, err = firestore.NewClient(ctx, "resttradingsystem")
+		if err != nil {
+			log.Fatalf("error initializing Firestore client: %v\n", err)
+		}
+	} else {
+		sa := option.WithCredentialsFile(credsPath)
 
-	var err error
-	app, err = firebase.NewApp(ctx, nil, sa)
-	if err != nil {
-		log.Fatalf("error initializing app: %v\n", err)
-	}
+		app, err = firebase.NewApp(ctx, nil, sa)
+		if err != nil {
+			log.Fatalf("error initializing app: %v\n", err)
+		}
 
-	// Initialize Firestore client
-	firestoreClient, err = app.Firestore(ctx)
-	if err != nil {
-		log.Fatalf("error initializing Firestore client: %v\n", err)
+		// Initialize Firestore client
+		firestoreClient, err = app.Firestore(ctx)
+		if err != nil {
+			log.Fatalf("error initializing Firestore client: %v\n", err)
+		}
 	}
 }
 

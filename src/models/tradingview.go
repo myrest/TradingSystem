@@ -1,7 +1,7 @@
 package models
 
 import (
-	"ManageAPI/src/bingx"
+	"TradingSystem/src/bingx"
 	"strconv"
 	"strings"
 )

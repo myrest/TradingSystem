@@ -5,8 +5,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"ManageAPI/src/models"
-	"ManageAPI/src/services"
+	"TradingSystem/src/models"
+	"TradingSystem/src/services"
 )
 
 //var _APIKey = "LCHu8mULibUy3IdkIj78UgPtrfuhZCho7IeWCmHYh8JcXlwCIoJaBPosntg967PkCJ9QpHqBDSneHtLX9Sg"
