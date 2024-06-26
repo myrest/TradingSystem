@@ -5,8 +5,10 @@ COPY ./ /app
 
 WORKDIR /app
 
-RUN go mod init TradingSystem
-RUN go mod tidy
+
+#RUN go mod init TradingSystem
+#RUN go mod tidy
+RUN go mod download
 
 # Build the Go app
 RUN go build -o main ./src/main.go
