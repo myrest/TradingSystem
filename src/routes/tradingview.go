@@ -10,5 +10,6 @@ func RegisterWebhookRoutes(r *gin.Engine) {
 	authRoutes := r.Group("/webhook")
 	{
 		authRoutes.POST("/tradingview", controllers.TradingViewWebhook)
+		authRoutes.POST("/tradingviewtest", controllers.TradingViewWebhookTEST)
 	}
 }

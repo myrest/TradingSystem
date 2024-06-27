@@ -116,15 +116,11 @@ type Client struct {
 }
 
 // Init Api Client from apiKey & secretKey
-func NewClient(apiKey, secretKey string, opts ...bool) *Client {
-	isTest := false
-	if len(opts) > 0 {
-		isTest = opts[0]
-	}
+func NewClient(apiKey, secretKey string, isTEST bool) *Client {
 	return &Client{
 		APIKey:     apiKey,
 		SecretKey:  secretKey,
-		BaseURL:    getApiEndpoint(isTest),
+		BaseURL:    getApiEndpoint(isTEST),
 		UserAgent:  "Bingx/golang",
 		HTTPClient: http.DefaultClient,
 		Logger:     log.New(os.Stderr, "bingx-golang", log.LstdFlags),
