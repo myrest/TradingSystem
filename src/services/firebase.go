@@ -23,10 +23,15 @@ func init() {
 	var err error
 	credsPath := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS")
 	if credsPath == "" {
+		sa := option.WithCredentialsJSON([]byte(""))
+		app, err = firebase.NewApp(ctx, nil, sa)
+		if err != nil {
+			log.Fatalf("error initializing app: %v\n", err)
+		}
+
 		firestoreClient, err = firestore.NewClient(ctx, "resttradingsystem")
 		if err != nil {
-			//log.Fatalf("error initializing Firestore client: %v\n", err)
-			log.Println("error initializing Firestore client: \n", err.Error())
+			log.Fatalf("error initializing Firestore client: %v\n", err)
 		}
 	} else {
 		sa := option.WithCredentialsFile(credsPath)
@@ -35,21 +40,11 @@ func init() {
 		if err != nil {
 			log.Fatalf("error initializing app: %v\n", err)
 		}
-		if app == nil {
-			log.Fatalln("firebase.NewApp got empty.")
-		} else {
-			log.Println("firebase.NewApp is good.")
-		}
 
 		// Initialize Firestore client
 		firestoreClient, err = app.Firestore(ctx)
 		if err != nil {
 			log.Fatalf("error initializing Firestore client: %v\n", err)
-		}
-		if firestoreClient == nil {
-			log.Fatalln("app.Firestore got empty.")
-		} else {
-			log.Println("app.Firestore is good.")
 		}
 	}
 }
