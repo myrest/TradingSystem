@@ -18,6 +18,7 @@ var (
 )
 
 func init() {
+	log.Printf("啟動 (%s) 中..", "Firebase")
 	ctx := context.Background()
 	var err error
 	credsPath := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS")
@@ -34,11 +35,21 @@ func init() {
 		if err != nil {
 			log.Fatalf("error initializing app: %v\n", err)
 		}
+		if app == nil {
+			log.Fatalln("firebase.NewApp got empty.")
+		} else {
+			log.Println("firebase.NewApp is good.")
+		}
 
 		// Initialize Firestore client
 		firestoreClient, err = app.Firestore(ctx)
 		if err != nil {
 			log.Fatalf("error initializing Firestore client: %v\n", err)
+		}
+		if firestoreClient == nil {
+			log.Fatalln("app.Firestore got empty.")
+		} else {
+			log.Println("app.Firestore is good.")
 		}
 	}
 }

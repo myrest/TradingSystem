@@ -3,17 +3,17 @@ FROM golang
 
 COPY ./ /app
 
-COPY ./src/templates /app/templates
-
 WORKDIR /app
 
 RUN go mod download
 
 # Build the Go app
-RUN go build -o main ./src/main.go
+RUN go build -o ./src/main ./src/main.go
 
 # Expose port 8080 to the outside world
 EXPOSE 8080
+
+WORKDIR /app/src
 
 # Command to run the executable
 CMD ["./main"]
