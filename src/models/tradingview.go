@@ -48,10 +48,11 @@ func (t *TvSiginalData) Convert(d TvWebhookData) {
 	t.TVData.Symbol = formatSymbol(d.Symbol)
 	if t.TVData.PositionSize == 0 {
 		//平倉
-		t.PlaceOrderType.Side = bingx.SellSideType
 		if t.TVData.Action == "sell" {
+			t.PlaceOrderType.Side = bingx.SellSideType
 			t.PlaceOrderType.PositionSideType = bingx.LongPositionSideType //平多倉
 		} else {
+			t.PlaceOrderType.Side = bingx.BuySideType
 			t.PlaceOrderType.PositionSideType = bingx.ShortPositionSideType //平空倉
 		}
 	} else {
@@ -66,18 +67,18 @@ func (t *TvSiginalData) Convert(d TvWebhookData) {
 			} else {
 				//減倉
 				t.PlaceOrderType.Side = bingx.SellSideType
-				t.PlaceOrderType.PositionSideType = bingx.ShortPositionSideType
+				t.PlaceOrderType.PositionSideType = bingx.LongPositionSideType
 			}
 		} else {
 			//應持空倉
 			if t.TVData.Action == "sell" {
 				//開空倉 or 加空倉
-				t.PlaceOrderType.Side = bingx.BuySideType
+				t.PlaceOrderType.Side = bingx.SellSideType
 				t.PlaceOrderType.PositionSideType = bingx.ShortPositionSideType
 			} else {
 				//減倉
-				t.PlaceOrderType.Side = bingx.SellSideType
-				t.PlaceOrderType.PositionSideType = bingx.LongPositionSideType
+				t.PlaceOrderType.Side = bingx.BuySideType
+				t.PlaceOrderType.PositionSideType = bingx.ShortPositionSideType
 			}
 		}
 	}

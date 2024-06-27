@@ -9,9 +9,15 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/gin-gonic/gin"
 )
+
+type openPosition struct {
+	AvailableAmt float64
+	PositionSide bingx.PositionSideType
+}
 
 func TradingViewWebhook(c *gin.Context) {
 	var WebhookData models.TvWebhookData
@@ -20,27 +26,50 @@ func TradingViewWebhook(c *gin.Context) {
 		return
 	}
 
+	err := preProcessPlaceOrder(c, WebhookData, false)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err})
+	}
+}
+
+func TradingViewWebhookTEST(c *gin.Context) {
+	var WebhookData models.TvWebhookData
+	if err := c.ShouldBindJSON(&WebhookData); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
+		return
+	}
+
+	err := preProcessPlaceOrder(c, WebhookData, true)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err})
+	}
+}
+
+func preProcessPlaceOrder(c *gin.Context, WebhookData models.TvWebhookData, isTEST bool) error {
 	var tvData models.TvSiginalData
 	tvData.Convert(WebhookData)
 
 	//取出有訂閱的人
 	customerList, err := services.GetCustomerCurrencySymbosBySymbol(c, WebhookData.Symbol)
 	if err != nil {
-		c.JSON(http.StatusOK, gin.H{"data": err})
+		return err
 	}
+
+	var wg sync.WaitGroup
 	for i := 0; i < len(customerList); i++ {
-		processPlaceOrder(customerList[i].APIKey, customerList[i].SecretKey, customerList[i].Amount, tvData)
+		wg.Add(1)
+		go func(customer models.CustomerCurrencySymboWithCustomer) {
+			defer wg.Done()
+			processPlaceOrder(customer.APIKey, customer.SecretKey, customer.Amount, tvData, isTEST)
+		}(customerList[i])
 	}
+	wg.Wait()
 
+	return nil
 }
 
-type openPosition struct {
-	AvailableAmt float64
-	PositionSide bingx.PositionSideType
-}
-
-func processPlaceOrder(APIKey, SecertKey string, amount float64, tv models.TvSiginalData) {
-	client := bingx.NewClient(APIKey, SecertKey, true)
+func processPlaceOrder(APIKey, SecertKey string, amount float64, tv models.TvSiginalData, isTEST bool) {
+	client := bingx.NewClient(APIKey, SecertKey, isTEST)
 
 	//查出目前持倉情況
 	positions, err := client.NewGetOpenPositionsService().Symbol(tv.TVData.Symbol).Do(context.Background())
@@ -61,7 +90,14 @@ func processPlaceOrder(APIKey, SecertKey string, amount float64, tv models.TvSig
 	}
 	//計算下單數量
 	placeAmount := tv.TVData.Contracts * amount / 100
-	if tv.PlaceOrderType.Side == bingx.SellSideType && oepntrade.AvailableAmt < placeAmount { //要防止平太多，變反向持倉
+	if ((tv.PlaceOrderType.Side == bingx.BuySideType && tv.PlaceOrderType.PositionSideType == bingx.ShortPositionSideType) ||
+		(tv.PlaceOrderType.Side == bingx.SellSideType && tv.PlaceOrderType.PositionSideType == bingx.LongPositionSideType)) &&
+		oepntrade.AvailableAmt < placeAmount { //要防止平太多，變反向持倉
+		placeAmount = oepntrade.AvailableAmt
+	}
+
+	if tv.TVData.PositionSize == 0 {
+		//全部平倉
 		placeAmount = oepntrade.AvailableAmt
 	}
 
