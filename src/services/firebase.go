@@ -7,6 +7,8 @@ import (
 	"sync"
 
 	"cloud.google.com/go/firestore"
+	secretmanager "cloud.google.com/go/secretmanager/apiv1"
+	secretmanagerpb "cloud.google.com/go/secretmanager/apiv1/secretmanagerpb"
 	firebase "firebase.google.com/go"
 	"google.golang.org/api/option"
 )
@@ -17,47 +19,53 @@ var (
 	firestoreClient *firestore.Client
 )
 
+func getSecret(ctx context.Context, name string) (string, error) {
+	client, err := secretmanager.NewClient(ctx)
+	if err != nil {
+		return "", err
+	}
+	defer client.Close()
+
+	accessRequest := &secretmanagerpb.AccessSecretVersionRequest{
+		Name: name,
+	}
+
+	result, err := client.AccessSecretVersion(ctx, accessRequest)
+	if err != nil {
+		return "", err
+	}
+
+	return string(result.Payload.Data), nil
+}
+
 func init() {
 	log.Printf("啟動 (%s) 中..", "Firebase")
 	ctx := context.Background()
 	var err error
+
 	credsPath := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS")
-	if credsPath == "" {
-		sa := option.WithCredentialsJSON([]byte(""))
-		app, err = firebase.NewApp(ctx, nil, sa)
-		if err != nil {
-			log.Fatalf("error initializing app: %v\n", err)
-		}
-
-		firestoreClient, err = firestore.NewClient(ctx, "resttradingsystem")
-		if err != nil {
-			log.Fatalf("error initializing Firestore client: %v\n", err)
-		}
-
-		if app == nil {
-			log.Println("firebase.App 為空。")
-		}
-
-		if firestoreClient == nil {
-			log.Println("firestore.Client 為空。")
-		}
-
-		log.Println("firebase.App firestore.Client載入完成。")
-
+	var sa option.ClientOption
+	if credsPath != "" {
+		sa = option.WithCredentialsFile(credsPath)
 	} else {
-		sa := option.WithCredentialsFile(credsPath)
-
-		app, err = firebase.NewApp(ctx, nil, sa)
+		creds, err := getSecret(ctx, "projects/635522974118/secrets/GOOGLE_APPLICATION_CREDENTIALS/versions/latest")
 		if err != nil {
-			log.Fatalf("error initializing app: %v\n", err)
+			log.Fatalf("failed to access secret version: %v", err)
 		}
-
-		// Initialize Firestore client
-		firestoreClient, err = app.Firestore(ctx)
-		if err != nil {
-			log.Fatalf("error initializing Firestore client: %v\n", err)
-		}
+		sa = option.WithCredentialsJSON([]byte(creds))
 	}
+
+	app, err = firebase.NewApp(ctx, nil, sa)
+	if err != nil {
+		log.Fatalf("error initializing app: %v\n", err)
+	}
+
+	// Initialize Firestore client
+	firestoreClient, err = app.Firestore(ctx)
+	if err != nil {
+		log.Fatalf("error initializing Firestore client: %v\n", err)
+	}
+
 }
 
 func getFirestoreClient() *firestore.Client {
