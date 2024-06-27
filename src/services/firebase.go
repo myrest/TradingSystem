@@ -33,6 +33,17 @@ func init() {
 		if err != nil {
 			log.Fatalf("error initializing Firestore client: %v\n", err)
 		}
+
+		if app == nil {
+			log.Println("firebase.App 為空。")
+		}
+
+		if firestoreClient == nil {
+			log.Println("firestore.Client 為空。")
+		}
+
+		log.Println("firebase.App firestore.Client載入完成。")
+
 	} else {
 		sa := option.WithCredentialsFile(credsPath)
 

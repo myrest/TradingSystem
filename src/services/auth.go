@@ -22,8 +22,14 @@ func VerifyIDToken(idToken string) (string, error) {
 
 func VerifyIDTokenAndGetDetails(idToken string) (string, string, string, error) {
 	ctx := context.Background()
+	if app == nil {
+		log.Println("VerifyIDTokenAndGetDetails中的app 為NULL.")
+	} else {
+		log.Println("VerifyIDTokenAndGetDetails執行中")
+	}
 	authClient, err := app.Auth(ctx)
 	if err != nil {
+		log.Printf("VerifyIDTokenAndGetDetails執行有問題\n %s", err.Error())
 		return "", "", "", err
 	}
 
