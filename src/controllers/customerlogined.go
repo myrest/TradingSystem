@@ -18,6 +18,43 @@ type updateCustomerSymboRequest struct {
 	Amount string `json:"amount"`
 }
 
+type CustomerCurrencySymboResponse struct {
+	models.CustomerCurrencySymbo
+	SystemStatus string
+}
+
+func ShowDashboardPage(c *gin.Context) {
+	session := sessions.Default(c)
+	name := session.Get("name")
+	email := session.Get("email")
+
+	if name == nil || email == nil {
+		c.Redirect(http.StatusFound, "/login")
+		return
+	}
+
+	customer, err := services.GetCustomerByEmail(email.(string))
+	if err == nil {
+		if customer == nil {
+			//帳號不存在，要建立一個新
+			c.HTML(http.StatusOK, "iscreatenew.html", gin.H{
+				"Name":  name,
+				"Email": email,
+			})
+		} else {
+			c.HTML(http.StatusOK, "dashboard.html", gin.H{
+				"Name":      name,
+				"Email":     email,
+				"ApiKey":    customer.APIKey,
+				"SecretKey": customer.SecretKey,
+				"IsAdmin":   customer.IsAdmin,
+			})
+		}
+	} else {
+		c.Redirect(http.StatusFound, "/login?GotError")
+	}
+}
+
 func UpdateCustomerSymbo(c *gin.Context) {
 	var input models.CustomerCurrencySymbo
 	var req updateCustomerSymboRequest
@@ -68,7 +105,7 @@ func GetAllCustomerSymbo(c *gin.Context) {
 	session := sessions.Default(c)
 	customerid := session.Get("id").(string)
 
-	symboList, err := services.GetAllSymbo(context.Background())
+	systemSymboList, err := services.GetAllSymbo(context.Background())
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -80,32 +117,51 @@ func GetAllCustomerSymbo(c *gin.Context) {
 		return
 	}
 
-	mergedList := mergeSymboLists(symboList, customersymboList)
+	mergedList := mergeSymboLists(systemSymboList, customersymboList)
 
 	c.JSON(http.StatusOK, mergedList)
 }
 
-func mergeSymboLists(symboList []models.CurrencySymbo, customersymboList []models.CustomerCurrencySymbo) []models.CustomerCurrencySymbo {
-	customerSymboMap := make(map[string]*models.CustomerCurrencySymbo)
-	for i := range customersymboList {
-		customerSymboMap[customersymboList[i].Symbo] = &customersymboList[i]
+func mergeSymboLists(systemSymboList []models.CurrencySymbo, customersymboList []models.CustomerCurrencySymbo) []CustomerCurrencySymboResponse {
+	customerSymboMap := make(map[string]models.CustomerCurrencySymbo)
+	for _, symbo := range customersymboList {
+		customerSymboMap[symbo.Symbo] = symbo
 	}
 
-	// Iterate through symboList and add to customersymboList if not already present
-	for _, symbo := range symboList {
-		if _, exists := customerSymboMap[symbo.Symbo]; !exists {
-			symbo.Status = false //預設為不啟用，不能被系統的啟用影響
-			newCustomerSymbo := models.CustomerCurrencySymbo{
-				CurrencySymbo: symbo,
-				Amount:        0,
+	var result []CustomerCurrencySymboResponse
+
+	// Iterate through systemSymboList
+	for _, symbo := range systemSymboList {
+		if customerSymbo, exists := customerSymboMap[symbo.Symbo]; exists {
+			// 如果 systemSymboList 中的 Symbo 存在于 customerSymboMap 中
+			systemStatus := "Disabled"
+			if symbo.Status {
+				systemStatus = "Enabled"
 			}
-			customersymboList = append(customersymboList, newCustomerSymbo)
+			result = append(result, CustomerCurrencySymboResponse{
+				CustomerCurrencySymbo: customerSymbo,
+				SystemStatus:          systemStatus,
+			})
+		} else {
+			// 如果 systemSymboList 中的 Symbo 不存在于 customerSymboMap 中，创建一个新的
+			newCustomerSymbo := models.CustomerCurrencySymbo{
+				CurrencySymbo: models.CurrencySymbo{
+					Symbo:  symbo.Symbo,
+					Status: false,
+				},
+				Amount: 0,
+			}
+			result = append(result, CustomerCurrencySymboResponse{
+				CustomerCurrencySymbo: newCustomerSymbo,
+				SystemStatus:          "Disabled",
+			})
 		}
 	}
-	// Sort customersymboList by Symbo
-	sort.Slice(customersymboList, func(i, j int) bool {
-		return customersymboList[i].Symbo < customersymboList[j].Symbo
+
+	// Sort the result by Symbo
+	sort.Slice(result, func(i, j int) bool {
+		return result[i].Symbo < result[j].Symbo
 	})
 
-	return customersymboList
+	return result
 }
