@@ -23,8 +23,15 @@ func main() {
 	if err != nil {
 		log.Fatalf("Error getting current working directory: %v", err)
 	}
+
+	//設定HTML樣板目錄
 	templatesDir := filepath.Join(wd, "templates")
 	r.LoadHTMLGlob(filepath.Join(templatesDir, "**/*")) // Add this line to load HTML templates
+
+	//設定靜態路由
+	staticDir := filepath.Join(wd, "static")
+	r.Static("/static", staticDir)
+	r.StaticFile("/favicon.ico", filepath.Join(staticDir, "favicon.ico"))
 
 	routes.RegisterRoutes(r)
 

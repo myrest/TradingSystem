@@ -75,3 +75,16 @@ func GetCustomerCurrencySymbosBySymbol(ctx context.Context, symbol string) ([]mo
 
 	return results, nil
 }
+
+// SaveWebhookData saves the webhook data to Firestore
+func SaveWebhookData(ctx context.Context, webhookData models.TvWebhookData) error {
+	client := getFirestoreClient()
+	_, _, err := client.Collection("webhookData").Add(ctx, webhookData)
+	return err
+}
+
+func SaveCustomerPlaceOrderResultLog(ctx context.Context, placeorderlog models.Log_TvSiginalData) error {
+	client := getFirestoreClient()
+	_, _, err := client.Collection("placeOrderLog").Add(ctx, placeorderlog)
+	return err
+}

@@ -46,6 +46,14 @@ func TradingViewWebhookTEST(c *gin.Context) {
 }
 
 func preProcessPlaceOrder(c *gin.Context, WebhookData models.TvWebhookData, isTEST bool) error {
+	// 寫入 WebhookData 到 Firestore
+	go func(data models.TvWebhookData) {
+		err := services.SaveWebhookData(context.Background(), data)
+		if err != nil {
+			log.Printf("Failed to save webhook data: %v", err)
+		}
+	}(WebhookData)
+
 	var tvData models.TvSiginalData
 	tvData.Convert(WebhookData)
 
@@ -60,7 +68,7 @@ func preProcessPlaceOrder(c *gin.Context, WebhookData models.TvWebhookData, isTE
 		wg.Add(1)
 		go func(customer models.CustomerCurrencySymboWithCustomer) {
 			defer wg.Done()
-			processPlaceOrder(customer.APIKey, customer.SecretKey, customer.Amount, tvData, isTEST)
+			processPlaceOrder(customer.CustomerID, customer.APIKey, customer.SecretKey, customer.Amount, tvData, isTEST)
 		}(customerList[i])
 	}
 	wg.Wait()
@@ -68,7 +76,7 @@ func preProcessPlaceOrder(c *gin.Context, WebhookData models.TvWebhookData, isTE
 	return nil
 }
 
-func processPlaceOrder(APIKey, SecertKey string, amount float64, tv models.TvSiginalData, isTEST bool) {
+func processPlaceOrder(CustomerID, APIKey, SecertKey string, amount float64, tv models.TvSiginalData, isTEST bool) {
 	client := bingx.NewClient(APIKey, SecertKey, isTEST)
 
 	//查出目前持倉情況
@@ -89,11 +97,16 @@ func processPlaceOrder(APIKey, SecertKey string, amount float64, tv models.TvSig
 		}
 	}
 	//計算下單數量
+	isClosePosition := false
+	var profit float64
 	placeAmount := tv.TVData.Contracts * amount / 100
-	if ((tv.PlaceOrderType.Side == bingx.BuySideType && tv.PlaceOrderType.PositionSideType == bingx.ShortPositionSideType) ||
-		(tv.PlaceOrderType.Side == bingx.SellSideType && tv.PlaceOrderType.PositionSideType == bingx.LongPositionSideType)) &&
-		oepntrade.AvailableAmt < placeAmount { //要防止平太多，變反向持倉
-		placeAmount = oepntrade.AvailableAmt
+	if (tv.PlaceOrderType.Side == bingx.BuySideType && tv.PlaceOrderType.PositionSideType == bingx.ShortPositionSideType) ||
+		(tv.PlaceOrderType.Side == bingx.SellSideType && tv.PlaceOrderType.PositionSideType == bingx.LongPositionSideType) {
+		if oepntrade.AvailableAmt < placeAmount {
+			//要防止平太多，變反向持倉
+			placeAmount = oepntrade.AvailableAmt
+		}
+		isClosePosition = true
 	}
 
 	if tv.TVData.PositionSize == 0 {
@@ -112,5 +125,28 @@ func processPlaceOrder(APIKey, SecertKey string, amount float64, tv models.TvSig
 		log.Println(err)
 	}
 	log.Printf("Limit order created: %+v", order)
-	//Todo:要寫Log
+	if isClosePosition {
+		order, err := client.NewGetOrderService().
+			Symbol(tv.TVData.Symbol).
+			ClientOrderId(strconv.Itoa(order.OrderId)).
+			Do(context.Background())
+		if err != nil {
+			profit, _ = strconv.ParseFloat(order.Profit, 64)
+		}
+		log.Printf("order data: %v", order)
+	}
+	placeOrderLog := models.Log_TvSiginalData{
+		TVData:     tv.TVData,
+		Profit:     profit,
+		CustomerID: CustomerID,
+	}
+
+	// 寫入 WebhookData 到 Firestore
+	go func(data models.Log_TvSiginalData) {
+		err := services.SaveCustomerPlaceOrderResultLog(context.Background(), data)
+		if err != nil {
+			log.Printf("Failed to save webhook data: %v", err)
+		}
+	}(placeOrderLog)
+
 }

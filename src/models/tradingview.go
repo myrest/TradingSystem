@@ -24,19 +24,27 @@ type CustomerCurrencySymboWithCustomer struct {
 	Customer
 }
 
+type TVData struct {
+	Action       string
+	Contracts    float64
+	PositionSize float64
+	Price        float64
+	Symbol       string
+}
+
 // 程式內用的TV訊號值
 type TvSiginalData struct {
-	TVData struct {
-		Action       string
-		Contracts    float64
-		PositionSize float64
-		Price        float64
-		Symbol       string
-	}
+	TVData
 	PlaceOrderType struct {
 		PositionSideType bingx.PositionSideType //Long, Short
 		Side             bingx.SideType         //Buy, Sell
 	}
+}
+
+type Log_TvSiginalData struct {
+	TVData
+	Profit     float64
+	CustomerID string
 }
 
 // 依訊號來決定倉位及方向
