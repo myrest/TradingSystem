@@ -100,10 +100,12 @@ func processPlaceOrder(CustomerID, APIKey, SecertKey string, amount float64, tv 
 	isClosePosition := false
 	var profit float64
 	placeAmount := tv.TVData.Contracts * amount / 100
-	if ((tv.PlaceOrderType.Side == bingx.BuySideType && tv.PlaceOrderType.PositionSideType == bingx.ShortPositionSideType) ||
-		(tv.PlaceOrderType.Side == bingx.SellSideType && tv.PlaceOrderType.PositionSideType == bingx.LongPositionSideType)) &&
-		oepntrade.AvailableAmt < placeAmount { //要防止平太多，變反向持倉
-		placeAmount = oepntrade.AvailableAmt
+	if (tv.PlaceOrderType.Side == bingx.BuySideType && tv.PlaceOrderType.PositionSideType == bingx.ShortPositionSideType) ||
+		(tv.PlaceOrderType.Side == bingx.SellSideType && tv.PlaceOrderType.PositionSideType == bingx.LongPositionSideType) {
+		if oepntrade.AvailableAmt < placeAmount {
+			//要防止平太多，變反向持倉
+			placeAmount = oepntrade.AvailableAmt
+		}
 		isClosePosition = true
 	}
 
@@ -124,10 +126,14 @@ func processPlaceOrder(CustomerID, APIKey, SecertKey string, amount float64, tv 
 	}
 	log.Printf("Limit order created: %+v", order)
 	if isClosePosition {
-		order, err := client.NewGetOrderService().ClientOrderId(strconv.Itoa(order.OrderId)).Do(context.Background())
+		order, err := client.NewGetOrderService().
+			Symbol(tv.TVData.Symbol).
+			ClientOrderId(strconv.Itoa(order.OrderId)).
+			Do(context.Background())
 		if err != nil {
 			profit, _ = strconv.ParseFloat(order.Profit, 64)
 		}
+		log.Printf("order data: %v", order)
 	}
 	placeOrderLog := models.Log_TvSiginalData{
 		TVData:     tv.TVData,

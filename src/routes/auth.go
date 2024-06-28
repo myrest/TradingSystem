@@ -11,5 +11,6 @@ func RegisterAuthRoutes(r *gin.Engine) {
 	{
 		authRoutes.POST("/google", controllers.GoogleAuthCallback)
 		authRoutes.DELETE("/google", controllers.GoogleLogout)
+		authRoutes.GET("/google", controllers.GoogleLogout)
 	}
 }
