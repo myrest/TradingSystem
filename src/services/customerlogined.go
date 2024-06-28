@@ -28,7 +28,9 @@ func UpdateCustomerCurrency(ctx context.Context, customercurrency *models.Custom
 		return err
 	}
 
-	iter = client.Collection("customerssymbo").Where("Symbo", "==", customercurrency.Symbo).Limit(1).Documents(ctx)
+	iter = client.Collection("customerssymbo").Where("Symbo", "==", customercurrency.Symbo).
+		Where("CustomerID", "==", customercurrency.CustomerID).
+		Limit(1).Documents(ctx)
 	doc, err := iter.Next()
 	if err == iterator.Done {
 		// data not found

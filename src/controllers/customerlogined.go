@@ -33,6 +33,7 @@ func ShowDashboardPage(c *gin.Context) {
 		return
 	}
 
+	//todo:新建好像有點問題？
 	customer, err := services.GetCustomerByEmail(email.(string))
 	if err == nil {
 		if customer == nil {
@@ -76,19 +77,29 @@ func UpdateCustomerSymbo(c *gin.Context) {
 
 	session := sessions.Default(c)
 	input.CustomerID = session.Get("id").(string)
-	APIkey := session.Get("apikey").(string)
-	SecretKey := session.Get("secertkey").(string)
+	var APIkey, SecretKey string
 
-	//檢查餘額
-	freeamount, err := services.GetAccountBalance(APIkey, SecretKey)
+	iAPIkey := session.Get("apikey")
+	iSecretKey := session.Get("secertkey")
+	if iAPIkey != nil {
+		APIkey = iAPIkey.(string)
+	}
+	if iSecretKey != nil {
+		SecretKey = iSecretKey.(string)
+	}
 
 	var errormessage string
 
-	if err != nil || input.Amount > freeamount {
-		if err != nil {
-			errormessage = err.Error()
-		} else {
-			errormessage = "Balance not enough. Balance: " + strconv.FormatFloat(freeamount, 'f', -1, 64)
+	//有key，啟用時要檢查餘額
+	var freeamount float64
+	if APIkey != "" && SecretKey != "" && input.Status {
+		freeamount, err = services.GetAccountBalance(APIkey, SecretKey)
+		if err != nil || input.Amount > freeamount {
+			if err != nil {
+				errormessage = err.Error()
+			} else {
+				errormessage = "Balance not enough. Balance: " + strconv.FormatFloat(freeamount, 'f', -1, 64)
+			}
 		}
 	}
 
@@ -132,12 +143,12 @@ func mergeSymboLists(systemSymboList []models.CurrencySymbo, customersymboList [
 
 	// Iterate through systemSymboList
 	for _, symbo := range systemSymboList {
+		systemStatus := "Disabled"
+		if symbo.Status {
+			systemStatus = "Enabled"
+		}
 		if customerSymbo, exists := customerSymboMap[symbo.Symbo]; exists {
 			// 如果 systemSymboList 中的 Symbo 存在于 customerSymboMap 中
-			systemStatus := "Disabled"
-			if symbo.Status {
-				systemStatus = "Enabled"
-			}
 			result = append(result, CustomerCurrencySymboResponse{
 				CustomerCurrencySymbo: customerSymbo,
 				SystemStatus:          systemStatus,
@@ -153,7 +164,7 @@ func mergeSymboLists(systemSymboList []models.CurrencySymbo, customersymboList [
 			}
 			result = append(result, CustomerCurrencySymboResponse{
 				CustomerCurrencySymbo: newCustomerSymbo,
-				SystemStatus:          "Disabled",
+				SystemStatus:          systemStatus,
 			})
 		}
 	}

@@ -5,6 +5,7 @@ import (
 	"TradingSystem/src/services"
 	"context"
 	"net/http"
+	"strings"
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
@@ -70,19 +71,19 @@ func UpdateCustomer(c *gin.Context) {
 		return
 	}
 
-	dbCustomer.APIKey = customer.APIKey
-	dbCustomer.SecretKey = customer.SecretKey
+	dbCustomer.APIKey = strings.TrimSpace(customer.APIKey)
+	dbCustomer.SecretKey = strings.TrimSpace(customer.SecretKey)
 
 	if err := services.UpdateCustomer(context.Background(), dbCustomer); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error updating customer"})
 		return
 	}
-	session.Set("apikey", customer.APIKey)
-	session.Set("secertkey", customer.SecretKey)
+	session.Set("apikey", dbCustomer.APIKey)
+	session.Set("secertkey", dbCustomer.SecretKey)
 	if err := session.Save(); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save session"})
 		return
 	}
 
-	c.JSON(http.StatusOK, customer)
+	c.JSON(http.StatusOK, dbCustomer)
 }

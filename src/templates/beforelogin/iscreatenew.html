@@ -1,13 +1,14 @@
 {{ template "beforeloginheader.html" . }}
-    <!-- h1>跟單系統</h1 -->
-    <p>Name: {{ .Name }}</p>
-    <p>Email: {{ .Email }}</p>
-    <form id="create-account-form" action="/customers/create_account" method="post">
-        <button type="submit" id="create-account-button">建立帳號</button>
-    </form>
+<!-- h1>跟單系統</h1 -->
+<p>Name: {{ .Name }}</p>
+<p>Email: {{ .Email }}</p>
+<form id="create-account-form" action="/customers/create_account" method="post">
+    <button type="submit" id="create-account-button">建立帳號</button>
+    <button class="btn-secondary" id="logoutBtn">取消</button>
+</form>
 
 <script>
-    document.getElementById('create-account-form').addEventListener('submit', function(event) {
+    document.getElementById('create-account-form').addEventListener('submit', function (event) {
         event.preventDefault();
         document.getElementById('loader').style.display = 'block';
 
@@ -21,16 +22,33 @@
                 email: '{{ .Email }}'
             })
         })
-        .then(response => response.json())
-        .then(data => {
-            console.log('Success:', data);
-            document.getElementById('loader').style.display = 'none';
-            window.location.reload();
-        })
-        .catch((error) => {
-            console.error('Error:', error);
-            document.getElementById('loader').style.display = 'none';
-        });
+            .then(response => response.json())
+            .then(data => {
+                console.log('Success:', data);
+                document.getElementById('loader').style.display = 'none';
+                window.location.reload();
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+                document.getElementById('loader').style.display = 'none';
+            });
+    });
+
+    document.getElementById('logoutBtn').addEventListener('click', function (event) {
+        event.preventDefault();
+        document.getElementById('loader').style.display = 'block';
+
+        fetch('/auth/google', {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: ""
+        }).then(response => {
+            window.location = response.url
+        }).then(data => console.log(data))
+            .catch(error => console.error('Error:', error));
     });
 </script>
+
 {{ template "beforeloginfooter.html" . }}
