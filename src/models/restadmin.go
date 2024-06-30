@@ -1,9 +1,16 @@
 package models
 
-type CurrencySymbo struct {
+type AdminCurrencySymbo struct {
 	Symbo  string `json:"symbo"`
 	Status bool   `json:"status"`
 }
+
+type CurrencySymbo struct {
+	AdminCurrencySymbo
+	Cert string `json:"cert"`
+}
+
+//GenerateRandomString
 
 type CustomerCurrencySymbo struct {
 	CurrencySymbo

@@ -1,18 +1,20 @@
 package services
 
 import (
+	"TradingSystem/src/common"
 	"TradingSystem/src/models"
 	"context"
+	"errors"
 	"sort"
 
 	"google.golang.org/api/iterator"
 )
 
-func CreateNewSymbo(ctx context.Context, Symbo models.CurrencySymbo) error {
+func CreateNewSymbo(ctx context.Context, Symbo models.CurrencySymbo) (models.CurrencySymbo, error) {
 	client := getFirestoreClient()
-
+	Symbo.Cert = common.GenerateRandomString(8)
 	_, _, err := client.Collection("SymboData").Add(ctx, Symbo)
-	return err
+	return Symbo, err
 }
 
 func UpdateSymbo(ctx context.Context, Symbo models.CurrencySymbo) error {
@@ -27,6 +29,9 @@ func UpdateSymbo(ctx context.Context, Symbo models.CurrencySymbo) error {
 	var Symbodata models.CurrencySymbo
 	doc.DataTo(&Symbodata)
 	Symbodata.Status = Symbo.Status
+	if Symbodata.Cert == "" {
+		Symbodata.Cert = common.GenerateRandomString(8)
+	}
 	_, err = client.Collection("SymboData").Doc(doc.Ref.ID).Set(ctx, Symbodata)
 
 	return err
@@ -57,4 +62,21 @@ func GetAllSymbo(ctx context.Context) ([]models.CurrencySymbo, error) {
 	})
 
 	return symboList, nil
+}
+
+func GetSymbo(ctx context.Context, Symbo, Cert string) (models.CurrencySymbo, error) {
+	client := getFirestoreClient()
+	var rtn models.CurrencySymbo
+	iter := client.Collection("SymboData").Where("Symbo", "==", Symbo).Limit(1).Documents(ctx)
+	doc, err := iter.Next()
+	if err == iterator.Done {
+		return rtn, errors.New("symbo not found")
+	}
+
+	doc.DataTo(&rtn)
+	if rtn.Cert != Cert {
+		return rtn, errors.New("incorrect symbo cert")
+	}
+
+	return rtn, nil
 }

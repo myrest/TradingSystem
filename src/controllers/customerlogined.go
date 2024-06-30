@@ -157,8 +157,11 @@ func mergeSymboLists(systemSymboList []models.CurrencySymbo, customersymboList [
 			// 如果 systemSymboList 中的 Symbo 不存在于 customerSymboMap 中，创建一个新的
 			newCustomerSymbo := models.CustomerCurrencySymbo{
 				CurrencySymbo: models.CurrencySymbo{
-					Symbo:  symbo.Symbo,
-					Status: false,
+					AdminCurrencySymbo: models.AdminCurrencySymbo{
+						Symbo:  symbo.Symbo,
+						Status: false,
+					},
+					//Cert不需顯示給用戶
 				},
 				Amount: 0,
 			}

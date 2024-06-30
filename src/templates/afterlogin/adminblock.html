@@ -75,6 +75,7 @@
         <thead>
             <tr>
                 <th>幣種</th>
+                <th>憑證</th>
                 <th>操作</th>
             </tr>
         </thead>
@@ -107,11 +108,13 @@
                 body: JSON.stringify(data)
             }).then(response => {
                 if (response.ok) {
-                    // Add new item to the table
-                    const tbody = document.getElementById('item-table-body');
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
+                    response.json().then(data => {
+                        cert = data.data
+                        const tbody = document.getElementById('item-table-body');
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
                 <td>${newItem}</td>
+                <td>${cert}</td>
                 <td>
                     <span class="form-check form-check-inline">
                         <input class="form-check-input" type="radio" name="status-${newItem}" id="enable-${newItem}" value="true">
@@ -123,12 +126,13 @@
                     </span>
                 </td>
             `;
-                    tbody.appendChild(row);
-                    attachEventListeners(row); // Attach event listeners to the new row
+                        tbody.appendChild(row);
+                        attachEventListeners(row); // Attach event listeners to the new row
 
-                    // Hide the form and clear the input
-                    document.getElementById('new-item-form').style.display = 'none';
-                    document.getElementById('new-item').value = '';
+                        // Hide the form and clear the input
+                        document.getElementById('new-item-form').style.display = 'none';
+                        document.getElementById('new-item').value = '';
+                    })
                 } else {
                     response.json().then(error => {
                         // Handle update error
@@ -173,6 +177,7 @@
                     const row = document.createElement('tr');
                     row.innerHTML = `
                     <td>${symbo.symbo}</td>
+                    <td>${symbo.cert}</td>
                     <td>
                         <span class="form-check form-check-inline">
                             <input class="form-check-input" type="radio" name="status-${symbo.symbo}" id="enable-${symbo.symbo}" value="true" ${symbo.status ? 'checked' : ''}>

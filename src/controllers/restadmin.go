@@ -17,11 +17,13 @@ func AddNewSymbo(c *gin.Context) {
 		return
 	}
 
-	if err := services.CreateNewSymbo(context.Background(), data); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error createing symbo."})
+	rtn, err := services.CreateNewSymbo(context.Background(), data)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error createing symbo"})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"status": "success"})
+
+	c.JSON(http.StatusOK, gin.H{"data": rtn.Cert})
 }
 
 type updateStatusRequest struct {
@@ -39,8 +41,11 @@ func UpdateSymbo(c *gin.Context) {
 	}
 
 	data = models.CurrencySymbo{
-		Symbo:  req.Symbo,
-		Status: req.Status == "true",
+		AdminCurrencySymbo: models.AdminCurrencySymbo{
+			Symbo:  req.Symbo,
+			Status: req.Status == "true",
+		},
+		//Cert不能改
 	}
 
 	if err := services.UpdateSymbo(context.Background(), data); err != nil {

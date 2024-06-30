@@ -39,7 +39,6 @@ func getSecret(ctx context.Context, name string) (string, error) {
 }
 
 func init() {
-	log.Printf("啟動 (%s) 中..", "Firebase")
 	ctx := context.Background()
 	var err error
 
