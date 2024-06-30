@@ -155,13 +155,13 @@ func processPlaceOrder(CustomerID, APIKey, SecertKey string, amount float64, tv 
 	log.Printf("Customer:%s %v order created: %+v", CustomerID, bingx.MarketOrderType, order)
 
 	//寫入訂單編號
-	placeOrderLog.Result = strconv.Itoa((*order).OrderId)
+	placeOrderLog.Result = strconv.FormatInt((*order).OrderId, 10)
 	placeOrderLog.Amount = placeAmount
 
 	//依訂單編號，取出下單結果，用來記錄amount及price
 	placedOrder, err := client.NewGetOrderService().
 		Symbol(tv.TVData.Symbol).
-		ClientOrderId(strconv.Itoa(order.OrderId)).
+		OrderId(order.OrderId).
 		Do(context.Background())
 
 	//無法取得下單的資料
@@ -170,7 +170,7 @@ func processPlaceOrder(CustomerID, APIKey, SecertKey string, amount float64, tv 
 	}
 
 	profit, _ = strconv.ParseFloat(placedOrder.Profit, 64)
-	placedPrice, _ := strconv.ParseFloat(placedOrder.Price, 64)
+	placedPrice, _ := strconv.ParseFloat(placedOrder.AveragePrice, 64)
 
 	placeOrderLog.Profit = profit
 	placeOrderLog.Price = placedPrice
