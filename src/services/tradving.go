@@ -10,11 +10,11 @@ import (
 func GetCustomerCurrencySymbosBySymbol(ctx context.Context, symbol string) ([]models.CustomerCurrencySymboWithCustomer, error) {
 	client := getFirestoreClient()
 
-	// 查询 CustomerCurrencySymbo 集合
-	iter := client.Collection("customerssymbo").Where("Symbo", "==", symbol).Where("Status", "==", true).Documents(ctx)
+	// 查询 CustomerCurrencySymbol 集合
+	iter := client.Collection("customerssymbol").Where("Symbol", "==", symbol).Where("Status", "==", true).Documents(ctx)
 	defer iter.Stop()
 
-	var customerCurrencySymbos []models.CustomerCurrencySymbo
+	var customerCurrencySymbos []models.CustomerCurrencySymbol
 	var customerIDs []string
 
 	for {
@@ -26,10 +26,10 @@ func GetCustomerCurrencySymbosBySymbol(ctx context.Context, symbol string) ([]mo
 			return nil, err
 		}
 
-		var customerCurrencySymbo models.CustomerCurrencySymbo
-		doc.DataTo(&customerCurrencySymbo)
-		customerCurrencySymbos = append(customerCurrencySymbos, customerCurrencySymbo)
-		customerIDs = append(customerIDs, customerCurrencySymbo.CustomerID)
+		var customerCurrencySymbol models.CustomerCurrencySymbol
+		doc.DataTo(&customerCurrencySymbol)
+		customerCurrencySymbos = append(customerCurrencySymbos, customerCurrencySymbol)
+		customerIDs = append(customerIDs, customerCurrencySymbol.CustomerID)
 	}
 
 	// 分批次查询 Customer 记录
@@ -66,8 +66,8 @@ func GetCustomerCurrencySymbosBySymbol(ctx context.Context, symbol string) ([]mo
 	for _, ccs := range customerCurrencySymbos {
 		if customer, found := customers[ccs.CustomerID]; found {
 			result := models.CustomerCurrencySymboWithCustomer{
-				CustomerCurrencySymbo: ccs,
-				Customer:              customer,
+				CustomerCurrencySymbol: ccs,
+				Customer:               customer,
 			}
 			results = append(results, result)
 		}

@@ -1,12 +1,22 @@
 package models
 
-type CurrencySymbo struct {
-	Symbo  string `json:"symbo"`
+type CurrencySymbolBase struct {
+	Symbol string `json:"symbol"`
 	Status bool   `json:"status"`
 }
 
-type CustomerCurrencySymbo struct {
-	CurrencySymbo
+type AdminCurrencySymbol struct {
+	CurrencySymbolBase
+	Cert string `json:"cert"`
+}
+
+type CustomerCurrencySymbol struct {
+	CurrencySymbolBase
 	Amount     float64 `json:"amount"`
 	CustomerID string
+}
+
+type AdminSymboListUI struct {
+	AdminCurrencySymbol
+	PositionSize string `json:"positionsize"`
 }

@@ -13,14 +13,14 @@ type TvWebhookData struct {
 		Contracts    string `json:"contracts"`
 		PositionSize string `json:"position_size"`
 	} `json:"data"`
-	Price    string `json:"price"`
-	UserInfo string `json:"user_info"`
-	Symbol   string `json:"symbol"`
-	Time     string `json:"time"`
+	Price  string `json:"price"`
+	Cert   string `json:"cert"`
+	Symbol string `json:"symbol"`
+	Time   string `json:"time"`
 }
 
 type CustomerCurrencySymboWithCustomer struct {
-	CustomerCurrencySymbo
+	CustomerCurrencySymbol
 	Customer
 }
 
@@ -45,6 +45,10 @@ type Log_TvSiginalData struct {
 	TVData
 	Profit     float64
 	CustomerID string
+	Result     string
+	Time       int64
+	Amount     float64
+	Price      float64
 }
 
 // 依訊號來決定倉位及方向

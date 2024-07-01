@@ -12,7 +12,7 @@ func RegisterCustomerRoutes(r *gin.Engine) {
 		customerRoutes.POST("", controllers.CreateCustomer)
 		customerRoutes.POST("/update", controllers.UpdateCustomer)
 		customerRoutes.GET("/dashboard", controllers.ShowDashboardPage)
-		customerRoutes.GET("/symbo", controllers.GetAllCustomerSymbo)
-		customerRoutes.PATCH("/symbo", controllers.UpdateCustomerSymbo)
+		customerRoutes.GET("/symbol", controllers.GetAllCustomerSymbol)
+		customerRoutes.PATCH("/symbol", controllers.UpdateCustomerSymbol)
 	}
 }

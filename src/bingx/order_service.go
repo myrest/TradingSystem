@@ -60,7 +60,7 @@ func (s *CreateOrderService) Quantity(quantity float64) *CreateOrderService {
 }
 
 type CreateOrderResponse struct {
-	OrderId int `json:"orderId"`
+	OrderId int64 `json:"orderId"`
 }
 
 func (s *CreateOrderService) Do(ctx context.Context, opts ...RequestOption) (res *CreateOrderResponse, err error) {
@@ -208,7 +208,7 @@ func (s *CancelOrderService) Do(ctx context.Context, opts ...RequestOption) (res
 type GetOrderService struct {
 	c             *Client
 	symbol        string
-	orderId       int
+	orderId       int64
 	clientOrderID string
 }
 
@@ -240,7 +240,7 @@ func (s *GetOrderService) Symbol(symbol string) *GetOrderService {
 	return s
 }
 
-func (s *GetOrderService) OrderId(orderId int) *GetOrderService {
+func (s *GetOrderService) OrderId(orderId int64) *GetOrderService {
 	s.orderId = orderId
 	return s
 }

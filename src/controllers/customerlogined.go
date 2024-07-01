@@ -13,13 +13,13 @@ import (
 )
 
 type updateCustomerSymboRequest struct {
-	Symbo  string `json:"symbo"`
+	Symbol string `json:"symbol"`
 	Status string `json:"status"`
 	Amount string `json:"amount"`
 }
 
 type CustomerCurrencySymboResponse struct {
-	models.CustomerCurrencySymbo
+	models.CustomerCurrencySymbol
 	SystemStatus string
 }
 
@@ -56,8 +56,8 @@ func ShowDashboardPage(c *gin.Context) {
 	}
 }
 
-func UpdateCustomerSymbo(c *gin.Context) {
-	var input models.CustomerCurrencySymbo
+func UpdateCustomerSymbol(c *gin.Context) {
+	var input models.CustomerCurrencySymbol
 	var req updateCustomerSymboRequest
 
 	if err := c.BindJSON(&req); err != nil {
@@ -65,7 +65,7 @@ func UpdateCustomerSymbo(c *gin.Context) {
 		return
 	}
 
-	input.Symbo = req.Symbo
+	input.Symbol = req.Symbol
 	input.Status = req.Status == "true"
 	amount, err := strconv.ParseFloat(req.Amount, 64)
 	if err != nil {
@@ -105,18 +105,18 @@ func UpdateCustomerSymbo(c *gin.Context) {
 
 	err = services.UpdateCustomerCurrency(context.Background(), &input)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Update customer symbo failed. " + err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Update customer Symbol failed. " + err.Error()})
 		return
 	}
 
 	c.JSON(http.StatusOK, errormessage)
 }
 
-func GetAllCustomerSymbo(c *gin.Context) {
+func GetAllCustomerSymbol(c *gin.Context) {
 	session := sessions.Default(c)
 	customerid := session.Get("id").(string)
 
-	systemSymboList, err := services.GetAllSymbo(context.Background())
+	systemSymboList, err := services.GetAllSymbol(context.Background())
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -133,45 +133,45 @@ func GetAllCustomerSymbo(c *gin.Context) {
 	c.JSON(http.StatusOK, mergedList)
 }
 
-func mergeSymboLists(systemSymboList []models.CurrencySymbo, customersymboList []models.CustomerCurrencySymbo) []CustomerCurrencySymboResponse {
-	customerSymboMap := make(map[string]models.CustomerCurrencySymbo)
-	for _, symbo := range customersymboList {
-		customerSymboMap[symbo.Symbo] = symbo
+func mergeSymboLists(systemSymboList []models.AdminCurrencySymbol, customersymboList []models.CustomerCurrencySymbol) []CustomerCurrencySymboResponse {
+	customerSymboMap := make(map[string]models.CustomerCurrencySymbol)
+	for _, Symbol := range customersymboList {
+		customerSymboMap[Symbol.Symbol] = Symbol
 	}
 
 	var result []CustomerCurrencySymboResponse
 
 	// Iterate through systemSymboList
-	for _, symbo := range systemSymboList {
+	for _, Symbol := range systemSymboList {
 		systemStatus := "Disabled"
-		if symbo.Status {
+		if Symbol.Status {
 			systemStatus = "Enabled"
 		}
-		if customerSymbo, exists := customerSymboMap[symbo.Symbo]; exists {
-			// 如果 systemSymboList 中的 Symbo 存在于 customerSymboMap 中
+		if customerSymbol, exists := customerSymboMap[Symbol.Symbol]; exists {
+			// 如果 systemSymboList 中的 Symbol 存在于 customerSymboMap 中
 			result = append(result, CustomerCurrencySymboResponse{
-				CustomerCurrencySymbo: customerSymbo,
-				SystemStatus:          systemStatus,
+				CustomerCurrencySymbol: customerSymbol,
+				SystemStatus:           systemStatus,
 			})
 		} else {
-			// 如果 systemSymboList 中的 Symbo 不存在于 customerSymboMap 中，创建一个新的
-			newCustomerSymbo := models.CustomerCurrencySymbo{
-				CurrencySymbo: models.CurrencySymbo{
-					Symbo:  symbo.Symbo,
+			// 如果 systemSymboList 中的 Symbol 不存在于 customerSymboMap 中，创建一个新的
+			newCustomerSymbol := models.CustomerCurrencySymbol{
+				CurrencySymbolBase: models.CurrencySymbolBase{
+					Symbol: Symbol.Symbol,
 					Status: false,
 				},
 				Amount: 0,
 			}
 			result = append(result, CustomerCurrencySymboResponse{
-				CustomerCurrencySymbo: newCustomerSymbo,
-				SystemStatus:          systemStatus,
+				CustomerCurrencySymbol: newCustomerSymbol,
+				SystemStatus:           systemStatus,
 			})
 		}
 	}
 
 	// Sort the result by Symbo
 	sort.Slice(result, func(i, j int) bool {
-		return result[i].Symbo < result[j].Symbo
+		return result[i].Symbol < result[j].Symbol
 	})
 
 	return result

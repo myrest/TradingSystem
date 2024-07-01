@@ -9,28 +9,35 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func AddNewSymbo(c *gin.Context) {
-	var data models.CurrencySymbo
+func AddNewSymbol(c *gin.Context) {
+	var data models.AdminCurrencySymbol
 
 	if err := c.BindJSON(&data); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid data"})
 		return
 	}
 
-	if err := services.CreateNewSymbo(context.Background(), data); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error createing symbo."})
+	if data.Symbol == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid symbo"})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"status": "success"})
+
+	rtn, err := services.CreateNewSymbol(context.Background(), data)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error createing symbol"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"data": rtn.Cert})
 }
 
 type updateStatusRequest struct {
-	Symbo  string `json:"symbo"`
+	Symbol string `json:"symbol"`
 	Status string `json:"status"`
 }
 
-func UpdateSymbo(c *gin.Context) {
-	var data models.CurrencySymbo
+func UpdateSymbol(c *gin.Context) {
+	var data models.AdminCurrencySymbol
 	var req updateStatusRequest
 
 	if err := c.BindJSON(&req); err != nil {
@@ -38,23 +45,56 @@ func UpdateSymbo(c *gin.Context) {
 		return
 	}
 
-	data = models.CurrencySymbo{
-		Symbo:  req.Symbo,
-		Status: req.Status == "true",
+	if req.Symbol == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid symbo"})
+		return
 	}
 
-	if err := services.UpdateSymbo(context.Background(), data); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error updateing symbo."})
+	data = models.AdminCurrencySymbol{
+		CurrencySymbolBase: models.CurrencySymbolBase{
+			Symbol: req.Symbol,
+			Status: req.Status == "true",
+		},
+		//Cert不能改
+	}
+
+	if err := services.UpdateSymbol(context.Background(), data); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error updateing Symbol."})
 		return
 	}
 }
 
-func GetAllSymbo(c *gin.Context) {
-	symboList, err := services.GetAllSymbo(context.Background())
+func GetAllSymbol(c *gin.Context) {
+	var rtn []models.AdminSymboListUI
+
+	symboList, err := services.GetAllSymbol(context.Background())
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusFound, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, symboList)
+	webhooklist, err := services.GetLatestWebhook(context.Background())
+	if err != nil {
+		c.JSON(http.StatusFound, gin.H{"error": err.Error()})
+		return
+	}
+
+	// 将webhooklist的数据合并到symboList中
+	webhookMap := make(map[string]models.TvWebhookData)
+	for _, webhook := range webhooklist {
+		webhookMap[webhook.Symbol] = webhook
+	}
+
+	for _, Symbol := range symboList {
+		positionSize := ""
+		if webhook, exists := webhookMap[Symbol.Symbol]; exists {
+			positionSize = webhook.Data.PositionSize
+		}
+		rtn = append(rtn, models.AdminSymboListUI{
+			AdminCurrencySymbol: Symbol,
+			PositionSize:        positionSize,
+		})
+	}
+
+	c.JSON(http.StatusOK, rtn)
 }

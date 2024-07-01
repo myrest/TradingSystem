@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -41,7 +42,7 @@ func TradingViewWebhookTEST(c *gin.Context) {
 
 	err := preProcessPlaceOrder(c, WebhookData, true)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err})
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 	}
 }
 
@@ -53,6 +54,13 @@ func preProcessPlaceOrder(c *gin.Context, WebhookData models.TvWebhookData, isTE
 			log.Printf("Failed to save webhook data: %v", err)
 		}
 	}(WebhookData)
+
+	//檢查Cert
+	_, err := services.GetSymbol(c, WebhookData.Symbol, WebhookData.Cert)
+	if err != nil {
+		//Todo:要寫Log
+		return err
+	}
 
 	var tvData models.TvSiginalData
 	tvData.Convert(WebhookData)
@@ -79,10 +87,19 @@ func preProcessPlaceOrder(c *gin.Context, WebhookData models.TvWebhookData, isTE
 func processPlaceOrder(CustomerID, APIKey, SecertKey string, amount float64, tv models.TvSiginalData, isTEST bool) {
 	client := bingx.NewClient(APIKey, SecertKey, isTEST)
 
+	placeOrderLog := models.Log_TvSiginalData{
+		TVData:     tv.TVData,
+		Profit:     0,
+		CustomerID: CustomerID,
+		Time:       time.Now().Unix(),
+	}
+
 	//查出目前持倉情況
 	positions, err := client.NewGetOpenPositionsService().Symbol(tv.TVData.Symbol).Do(context.Background())
 	if err != nil {
 		//Todo:要寫Log
+		placeOrderLog.Result = "Get open position failed."
+		asyncWriteTVsignalData(placeOrderLog)
 		return
 	}
 
@@ -97,7 +114,7 @@ func processPlaceOrder(CustomerID, APIKey, SecertKey string, amount float64, tv 
 		}
 	}
 	//計算下單數量
-	isClosePosition := false
+	//isClosePosition := false
 	var profit float64
 	placeAmount := tv.TVData.Contracts * amount / 100
 	if (tv.PlaceOrderType.Side == bingx.BuySideType && tv.PlaceOrderType.PositionSideType == bingx.ShortPositionSideType) ||
@@ -106,7 +123,7 @@ func processPlaceOrder(CustomerID, APIKey, SecertKey string, amount float64, tv 
 			//要防止平太多，變反向持倉
 			placeAmount = oepntrade.AvailableAmt
 		}
-		isClosePosition = true
+		//isClosePosition = true
 	}
 
 	if tv.TVData.PositionSize == 0 {
@@ -114,6 +131,13 @@ func processPlaceOrder(CustomerID, APIKey, SecertKey string, amount float64, tv 
 		placeAmount = oepntrade.AvailableAmt
 	}
 
+	if placeAmount == 0 {
+		placeOrderLog.Result = "No open poition for close."
+		asyncWriteTVsignalData(placeOrderLog)
+		return
+	}
+
+	//下單
 	order, err := client.NewCreateOrderService().
 		PositionSide(tv.PlaceOrderType.PositionSideType). //bingx.LongPositionSideType
 		Symbol(tv.TVData.Symbol).
@@ -121,32 +145,44 @@ func processPlaceOrder(CustomerID, APIKey, SecertKey string, amount float64, tv 
 		Type(bingx.MarketOrderType).
 		Side(tv.PlaceOrderType.Side).
 		Do(context.Background())
+
+	//如果下單有問題，就記錄下來後return
 	if err != nil {
-		log.Println(err)
+		placeOrderLog.Result = "Place order failed:" + err.Error()
+		asyncWriteTVsignalData(placeOrderLog)
+		return
 	}
-	log.Printf("Limit order created: %+v", order)
-	if isClosePosition {
-		order, err := client.NewGetOrderService().
-			Symbol(tv.TVData.Symbol).
-			ClientOrderId(strconv.Itoa(order.OrderId)).
-			Do(context.Background())
-		if err != nil {
-			profit, _ = strconv.ParseFloat(order.Profit, 64)
-		}
-		log.Printf("order data: %v", order)
-	}
-	placeOrderLog := models.Log_TvSiginalData{
-		TVData:     tv.TVData,
-		Profit:     profit,
-		CustomerID: CustomerID,
+	log.Printf("Customer:%s %v order created: %+v", CustomerID, bingx.MarketOrderType, order)
+
+	//寫入訂單編號
+	placeOrderLog.Result = strconv.FormatInt((*order).OrderId, 10)
+	placeOrderLog.Amount = placeAmount
+
+	//依訂單編號，取出下單結果，用來記錄amount及price
+	placedOrder, err := client.NewGetOrderService().
+		Symbol(tv.TVData.Symbol).
+		OrderId(order.OrderId).
+		Do(context.Background())
+
+	//無法取得下單的資料
+	if err != nil {
+		placeOrderLog.Result = placeOrderLog.Result + "\nGet placed order failed:" + err.Error()
 	}
 
-	// 寫入 WebhookData 到 Firestore
+	profit, _ = strconv.ParseFloat(placedOrder.Profit, 64)
+	placedPrice, _ := strconv.ParseFloat(placedOrder.AveragePrice, 64)
+
+	placeOrderLog.Profit = profit
+	placeOrderLog.Price = placedPrice
+	asyncWriteTVsignalData(placeOrderLog)
+}
+
+// 寫log
+func asyncWriteTVsignalData(tvdata models.Log_TvSiginalData) {
 	go func(data models.Log_TvSiginalData) {
 		err := services.SaveCustomerPlaceOrderResultLog(context.Background(), data)
 		if err != nil {
 			log.Printf("Failed to save webhook data: %v", err)
 		}
-	}(placeOrderLog)
-
+	}(tvdata)
 }
