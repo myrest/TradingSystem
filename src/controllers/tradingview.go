@@ -56,7 +56,7 @@ func preProcessPlaceOrder(c *gin.Context, WebhookData models.TvWebhookData, isTE
 	}(WebhookData)
 
 	//檢查Cert
-	_, err := services.GetSymbo(c, WebhookData.Symbol, WebhookData.Cert)
+	_, err := services.GetSymbol(c, WebhookData.Symbol, WebhookData.Cert)
 	if err != nil {
 		//Todo:要寫Log
 		return err

@@ -8,7 +8,7 @@ import (
 	"google.golang.org/api/iterator"
 )
 
-func UpdateCustomerCurrency(ctx context.Context, customercurrency *models.CustomerCurrencySymbo) error {
+func UpdateCustomerCurrency(ctx context.Context, customercurrency *models.CustomerCurrencySymbol) error {
 	client := getFirestoreClient()
 	customer, err := GetCustomer(ctx, customercurrency.CustomerID)
 	if err != nil || customer == nil || customer.Email == "" {
@@ -19,16 +19,16 @@ func UpdateCustomerCurrency(ctx context.Context, customercurrency *models.Custom
 		}
 	}
 	//檢查系統symbo是否存在
-	iter := client.Collection("SymboData").Where("Symbo", "==", customercurrency.Symbo).Limit(1).Documents(ctx)
+	iter := client.Collection("SymboData").Where("Symbo", "==", customercurrency.Symbol).Limit(1).Documents(ctx)
 	_, err = iter.Next()
 	if err == iterator.Done {
-		return errors.New("system symbo (" + customercurrency.Symbo + ") not found")
+		return errors.New("system Symbol (" + customercurrency.Symbol + ") not found")
 	}
 	if err != nil {
 		return err
 	}
 
-	iter = client.Collection("customerssymbo").Where("Symbo", "==", customercurrency.Symbo).
+	iter = client.Collection("customerssymbo").Where("Symbo", "==", customercurrency.Symbol).
 		Where("CustomerID", "==", customercurrency.CustomerID).
 		Limit(1).Documents(ctx)
 	doc, err := iter.Next()
@@ -42,7 +42,7 @@ func UpdateCustomerCurrency(ctx context.Context, customercurrency *models.Custom
 		return err
 	}
 
-	var data models.CustomerCurrencySymbo
+	var data models.CustomerCurrencySymbol
 	doc.DataTo(&data)
 	data.Status = customercurrency.Status
 	data.Amount = customercurrency.Amount
@@ -51,13 +51,13 @@ func UpdateCustomerCurrency(ctx context.Context, customercurrency *models.Custom
 	return err
 }
 
-func GetCustomerCurrency(ctx context.Context, customerID string) ([]models.CustomerCurrencySymbo, error) {
+func GetCustomerCurrency(ctx context.Context, customerID string) ([]models.CustomerCurrencySymbol, error) {
 	client := getFirestoreClient()
 
 	iter := client.Collection("customerssymbo").Where("CustomerID", "==", customerID).Documents(ctx)
 	defer iter.Stop()
 
-	var customerCurrencySymbos []models.CustomerCurrencySymbo
+	var customerCurrencySymbos []models.CustomerCurrencySymbol
 	for {
 		doc, err := iter.Next()
 		if err == iterator.Done {
@@ -67,7 +67,7 @@ func GetCustomerCurrency(ctx context.Context, customerID string) ([]models.Custo
 			return nil, err
 		}
 
-		var data models.CustomerCurrencySymbo
+		var data models.CustomerCurrencySymbol
 		doc.DataTo(&data)
 		customerCurrencySymbos = append(customerCurrencySymbos, data)
 	}

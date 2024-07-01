@@ -20,7 +20,7 @@ type TvWebhookData struct {
 }
 
 type CustomerCurrencySymboWithCustomer struct {
-	CustomerCurrencySymbo
+	CustomerCurrencySymbol
 	Customer
 }
 

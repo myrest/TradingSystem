@@ -76,13 +76,13 @@
 
 <script>
     var test
-    function updateSymbo(symbo) {
+    function updateSymbol(Symbol) {
         const row = document.querySelector(`tr[data-symbo="${symbo}"]`);
-        const status = row.querySelector('input[name="status-' + symbo + '"]:checked').value;
+        const status = row.querySelector('input[name="status-' + Symbol + '"]:checked').value;
         const amount = row.querySelector('.amount-input').value;
 
         const data = {
-            'symbo': symbo,
+            'symbo': Symbol,
             'status': status,
             'amount': amount
         };
@@ -95,7 +95,7 @@
             body: JSON.stringify(data)
         }).then(response => {
             if (!response.ok) {
-                response.text().then(x=>alert(`Failed to update symbo (${symbo}): ` + JSON.parse(x).error))
+                response.text().then(x=>alert(`Failed to update Symbol (${symbo}): ` + JSON.parse(x).error))
             }else{
                 response.text().then(x=>{
                     if (x != "\"\"") alert("Update completed, but " + x);
@@ -107,47 +107,47 @@
     }
 
     function attachEventListeners(row) {
-        const symbo = row.getAttribute('data-symbo');
+        const Symbol = row.getAttribute('data-symbo');
         row.querySelectorAll('.form-check-input').forEach(radio => {
             radio.addEventListener('change', function () {
-                updateSymbo(symbo);
+                updateSymbol(Symbol);
             });
         });
 
         row.querySelector('.amount-input').addEventListener('change', function () {
-            updateSymbo(symbo);
+            updateSymbol(Symbol);
         });
     }
 
-    // Fetch and populate symbo data on page load
+    // Fetch and populate Symbol data on page load
     function fetchSymboData() {
         fetch('/customers/symbo')
             .then(response => response.json())
             .then(data => {
                 const tbody = document.getElementById('item-table-body');
-                data.forEach(symbo => {
+                data.forEach(Symbol => {
                     const row = document.createElement('tr');
-                    row.setAttribute('data-symbo', symbo.symbo);
+                    row.setAttribute('data-symbo', Symbol.Symbol);
                     row.innerHTML = `
-                        <td class="${symbo.SystemStatus}">${symbo.symbo}</td>
+                        <td class="${Symbol.SystemStatus}">${Symbol.symbo}</td>
                         <td>
                             <span class="form-check form-check-inline">
-                                <input class="form-check-input" type="radio" name="status-${symbo.symbo}" id="enable-${symbo.symbo}" value="true" ${symbo.status ? 'checked' : ''} ${symbo.SystemStatus}>
-                                <label class="form-check-label inline" for="enable-${symbo.symbo}">啟用</label>
+                                <input class="form-check-input" type="radio" name="status-${Symbol.symbo}" id="enable-${Symbol.symbo}" value="true" ${Symbol.status ? 'checked' : ''} ${Symbol.SystemStatus}>
+                                <label class="form-check-label inline" for="enable-${Symbol.symbo}">啟用</label>
                             </span>
                             <span class="form-check form-check-inline">
-                                <input class="form-check-input" type="radio" name="status-${symbo.symbo}" id="disable-${symbo.symbo}" value="false" ${!symbo.status ? 'checked' : ''} ${symbo.SystemStatus}>
-                                <label class="form-check-label inline" for="disable-${symbo.symbo}">停用</label>
+                                <input class="form-check-input" type="radio" name="status-${Symbol.symbo}" id="disable-${Symbol.symbo}" value="false" ${!Symbol.status ? 'checked' : ''} ${Symbol.SystemStatus}>
+                                <label class="form-check-label inline" for="disable-${Symbol.symbo}">停用</label>
                             </span>
                         </td>
-                        <td><input type="text" class="amount-input" name="amount-${symbo.symbo}" value="${symbo.amount || 0}" ${symbo.SystemStatus}></td>
+                        <td><input type="text" class="amount-input" name="amount-${Symbol.symbo}" value="${Symbol.amount || 0}" ${Symbol.SystemStatus}></td>
                     `;
                     tbody.appendChild(row);
                     attachEventListeners(row); // Attach event listeners to the new row
                 });
             })
             .catch(error => {
-                console.error('Error fetching symbo data:', error);
+                console.error('Error fetching Symbol data:', error);
             });
     }
 

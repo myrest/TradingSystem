@@ -5,30 +5,32 @@ import (
 	"TradingSystem/src/models"
 	"context"
 	"errors"
+	"log"
 	"sort"
+	"sync"
 
 	"google.golang.org/api/iterator"
 )
 
-func CreateNewSymbo(ctx context.Context, Symbo models.CurrencySymbo) (models.CurrencySymbo, error) {
+func CreateNewSymbol(ctx context.Context, Symbol models.CurrencySymbol) (models.CurrencySymbol, error) {
 	client := getFirestoreClient()
-	Symbo.Cert = common.GenerateRandomString(8)
-	_, _, err := client.Collection("SymboData").Add(ctx, Symbo)
-	return Symbo, err
+	Symbol.Cert = common.GenerateRandomString(8)
+	_, _, err := client.Collection("SymboData").Add(ctx, Symbol)
+	return Symbol, err
 }
 
-func UpdateSymbo(ctx context.Context, Symbo models.CurrencySymbo) error {
+func UpdateSymbol(ctx context.Context, Symbol models.CurrencySymbol) error {
 	client := getFirestoreClient()
 
-	iter := client.Collection("SymboData").Where("Symbo", "==", Symbo.Symbo).Limit(1).Documents(ctx)
+	iter := client.Collection("SymboData").Where("Symbo", "==", Symbol.Symbol).Limit(1).Documents(ctx)
 	doc, err := iter.Next()
 	if err != nil {
 		return err
 	}
 
-	var Symbodata models.CurrencySymbo
+	var Symbodata models.CurrencySymbol
 	doc.DataTo(&Symbodata)
-	Symbodata.Status = Symbo.Status
+	Symbodata.Status = Symbol.Status
 	if Symbodata.Cert == "" {
 		Symbodata.Cert = common.GenerateRandomString(8)
 	}
@@ -37,11 +39,11 @@ func UpdateSymbo(ctx context.Context, Symbo models.CurrencySymbo) error {
 	return err
 }
 
-func GetAllSymbo(ctx context.Context) ([]models.CurrencySymbo, error) {
+func GetAllSymbol(ctx context.Context) ([]models.CurrencySymbol, error) {
 	client := getFirestoreClient()
 	iter := client.Collection("SymboData").Documents(ctx)
 
-	var symboList []models.CurrencySymbo
+	var symboList []models.CurrencySymbol
 	for {
 		doc, err := iter.Next()
 		if err == iterator.Done {
@@ -51,31 +53,93 @@ func GetAllSymbo(ctx context.Context) ([]models.CurrencySymbo, error) {
 			return nil, err
 		}
 
-		var symbo models.CurrencySymbo
-		doc.DataTo(&symbo)
-		symboList = append(symboList, symbo)
+		var Symbol models.CurrencySymbol
+		doc.DataTo(&Symbol)
+		symboList = append(symboList, Symbol)
 	}
 
 	// Sort customersymboList by Symbo
 	sort.Slice(symboList, func(i, j int) bool {
-		return symboList[i].Symbo < symboList[j].Symbo
+		return symboList[i].Symbol < symboList[j].Symbol
 	})
 
 	return symboList, nil
 }
 
-func GetSymbo(ctx context.Context, Symbo, Cert string) (models.CurrencySymbo, error) {
+func GetSymbol(ctx context.Context, Symbol, Cert string) (models.CurrencySymbol, error) {
 	client := getFirestoreClient()
-	var rtn models.CurrencySymbo
-	iter := client.Collection("SymboData").Where("Symbo", "==", Symbo).Limit(1).Documents(ctx)
+	var rtn models.CurrencySymbol
+	iter := client.Collection("SymboData").Where("Symbo", "==", Symbol).Limit(1).Documents(ctx)
 	doc, err := iter.Next()
 	if err == iterator.Done {
-		return rtn, errors.New("symbo not found")
+		return rtn, errors.New("Symbol not found")
 	}
 
 	doc.DataTo(&rtn)
 	if rtn.Cert != Cert {
-		return rtn, errors.New("incorrect symbo cert")
+		return rtn, errors.New("incorrect Symbol cert")
+	}
+
+	return rtn, nil
+}
+
+func GetLatestWebhook(ctx context.Context) ([]models.TvWebhookData, error) {
+	client := getFirestoreClient()
+
+	allAdminSymbol, err := GetAllSymbol(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var mu sync.Mutex
+	var wg sync.WaitGroup
+	var rtn []models.TvWebhookData
+	symboMap := make(map[string]models.TvWebhookData)
+
+	for i := range allAdminSymbol {
+		wg.Add(1)
+		go func(Symbol string) {
+			defer wg.Done()
+			var webhookdata models.TvWebhookData
+			webhookdata.Symbol = Symbol
+			iter := client.Collection("webhookData").
+				Where("Symbol", "==", Symbol).
+				//OrderBy("Time", firestore.Desc).
+				Limit(1).
+				Documents(ctx)
+
+			doc, err := iter.Next()
+			if err == iterator.Done {
+				mu.Lock()
+				symboMap[Symbol] = webhookdata
+				mu.Unlock()
+				return
+			}
+			if err != nil {
+				log.Printf("Failed to iterate documents for Symbol %s: %v", Symbol, err)
+				mu.Lock()
+				symboMap[Symbol] = webhookdata
+				mu.Unlock()
+				return
+			}
+
+			doc.DataTo(&webhookdata)
+
+			mu.Lock()
+			symboMap[Symbol] = webhookdata
+			mu.Unlock()
+		}(allAdminSymbol[i].Symbol)
+	}
+
+	wg.Wait()
+
+	// 将map转换为slice
+	for _, value := range symboMap {
+		rtn = append(rtn, value)
+	}
+
+	if len(rtn) == 0 {
+		return nil, errors.New("no data found")
 	}
 
 	return rtn, nil

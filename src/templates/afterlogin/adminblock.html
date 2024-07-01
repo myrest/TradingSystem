@@ -167,25 +167,26 @@
         });
     }
 
-    // Fetch and populate symbo data on page load
+    // Fetch and populate Symbol data on page load
     function fetchSymboData() {
         fetch('/restadmin/symbo')
             .then(response => response.json())
             .then(data => {
+                console.log(data)
                 const tbody = document.getElementById('item-table-body');
-                data.forEach(symbo => {
+                data.forEach(Symbol => {
                     const row = document.createElement('tr');
                     row.innerHTML = `
-                    <td>${symbo.symbo}</td>
-                    <td>${symbo.cert}</td>
+                    <td>${Symbol.symbo}</td>
+                    <td>${Symbol.cert}</td>
                     <td>
                         <span class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="status-${symbo.symbo}" id="enable-${symbo.symbo}" value="true" ${symbo.status ? 'checked' : ''}>
-                            <label class="form-check-label inline" for="enable-${symbo.symbo}">啟用</label>
+                            <input class="form-check-input" type="radio" name="status-${Symbol.symbo}" id="enable-${Symbol.symbo}" value="true" ${Symbol.status ? 'checked' : ''}>
+                            <label class="form-check-label inline" for="enable-${Symbol.symbo}">啟用</label>
                         </span>
                         <span class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="status-${symbo.symbo}" id="disable-${symbo.symbo}" value="false" ${!symbo.status ? 'checked' : ''}>
-                            <label class="form-check-label inline" for="disable-${symbo.symbo}">停用</label>
+                            <input class="form-check-input" type="radio" name="status-${Symbol.symbo}" id="disable-${Symbol.symbo}" value="false" ${!Symbol.status ? 'checked' : ''}>
+                            <label class="form-check-label inline" for="disable-${Symbol.symbo}">停用</label>
                         </span>
                     </td>
                 `;
@@ -194,7 +195,7 @@
                 });
             })
             .catch(error => {
-                console.error('Error fetching symbo data:', error);
+                console.error('Error fetching Symbol data:', error);
             });
     }
 
