@@ -84,7 +84,7 @@ func preProcessPlaceOrder(c *gin.Context, WebhookData models.TvWebhookData, isTE
 	return nil
 }
 
-func processPlaceOrder(CustomerID, APIKey, SecertKey string, amount float64, tv models.TvSiginalData, isTEST bool) {
+func processPlaceOrder(CustomerID, APIKey, SecertKey string, CustomerPlacedAmount float64, tv models.TvSiginalData, isTEST bool) {
 	client := bingx.NewClient(APIKey, SecertKey, isTEST)
 
 	placeOrderLog := models.Log_TvSiginalData{
@@ -116,7 +116,7 @@ func processPlaceOrder(CustomerID, APIKey, SecertKey string, amount float64, tv 
 	//計算下單數量
 	//isClosePosition := false
 	var profit float64
-	placeAmount := tv.TVData.Contracts * amount / 100 * 10
+	placeAmount := tv.TVData.Contracts * CustomerPlacedAmount / 100
 	if (tv.PlaceOrderType.Side == bingx.BuySideType && tv.PlaceOrderType.PositionSideType == bingx.ShortPositionSideType) ||
 		(tv.PlaceOrderType.Side == bingx.SellSideType && tv.PlaceOrderType.PositionSideType == bingx.LongPositionSideType) {
 		if oepntrade.AvailableAmt < placeAmount {
