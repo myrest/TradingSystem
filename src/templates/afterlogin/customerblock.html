@@ -75,19 +75,18 @@
 </div>
 
 <script>
-    var test
     function updateSymbol(Symbol) {
-        const row = document.querySelector(`tr[data-symbo="${symbo}"]`);
+        const row = document.querySelector(`tr[data-symbol="${Symbol}"]`);
         const status = row.querySelector('input[name="status-' + Symbol + '"]:checked').value;
         const amount = row.querySelector('.amount-input').value;
 
         const data = {
-            'symbo': Symbol,
+            'symbol': Symbol,
             'status': status,
             'amount': amount
         };
 
-        fetch(`/customers/symbo`, {
+        fetch(`/customers/symbol`, {
             method: 'PATCH',
             headers: {
                 'Content-Type': 'application/json'
@@ -95,7 +94,7 @@
             body: JSON.stringify(data)
         }).then(response => {
             if (!response.ok) {
-                response.text().then(x=>alert(`Failed to update Symbol (${symbo}): ` + JSON.parse(x).error))
+                response.text().then(x=>alert(`Failed to update Symbol (${Symbol}): ` + JSON.parse(x).error))
             }else{
                 response.text().then(x=>{
                     if (x != "\"\"") alert("Update completed, but " + x);
@@ -107,7 +106,7 @@
     }
 
     function attachEventListeners(row) {
-        const Symbol = row.getAttribute('data-symbo');
+        const Symbol = row.getAttribute('data-symbol');
         row.querySelectorAll('.form-check-input').forEach(radio => {
             radio.addEventListener('change', function () {
                 updateSymbol(Symbol);
@@ -121,26 +120,26 @@
 
     // Fetch and populate Symbol data on page load
     function fetchSymbolData() {
-        fetch('/customers/symbo')
+        fetch('/customers/symbol')
             .then(response => response.json())
             .then(data => {
                 const tbody = document.getElementById('item-table-body');
                 data.forEach(Symbol => {
                     const row = document.createElement('tr');
-                    row.setAttribute('data-symbo', Symbol.Symbol);
+                    row.setAttribute('data-symbol', Symbol.symbol);
                     row.innerHTML = `
-                        <td class="${Symbol.SystemStatus}">${Symbol.symbo}</td>
+                        <td class="${Symbol.SystemStatus}">${Symbol.symbol}</td>
                         <td>
                             <span class="form-check form-check-inline">
-                                <input class="form-check-input" type="radio" name="status-${Symbol.symbo}" id="enable-${Symbol.symbo}" value="true" ${Symbol.status ? 'checked' : ''} ${Symbol.SystemStatus}>
-                                <label class="form-check-label inline" for="enable-${Symbol.symbo}">啟用</label>
+                                <input class="form-check-input" type="radio" name="status-${Symbol.symbol}" id="enable-${Symbol.symbol}" value="true" ${Symbol.status ? 'checked' : ''} ${Symbol.SystemStatus}>
+                                <label class="form-check-label inline" for="enable-${Symbol.symbol}">啟用</label>
                             </span>
                             <span class="form-check form-check-inline">
-                                <input class="form-check-input" type="radio" name="status-${Symbol.symbo}" id="disable-${Symbol.symbo}" value="false" ${!Symbol.status ? 'checked' : ''} ${Symbol.SystemStatus}>
-                                <label class="form-check-label inline" for="disable-${Symbol.symbo}">停用</label>
+                                <input class="form-check-input" type="radio" name="status-${Symbol.symbol}" id="disable-${Symbol.symbol}" value="false" ${!Symbol.status ? 'checked' : ''} ${Symbol.SystemStatus}>
+                                <label class="form-check-label inline" for="disable-${Symbol.symbol}">停用</label>
                             </span>
                         </td>
-                        <td><input type="text" class="amount-input" name="amount-${Symbol.symbo}" value="${Symbol.amount || 0}" ${Symbol.SystemStatus}></td>
+                        <td><input type="text" class="amount-input" name="amount-${Symbol.symbol}" value="${Symbol.amount || 0}" ${Symbol.SystemStatus}></td>
                     `;
                     tbody.appendChild(row);
                     attachEventListeners(row); // Attach event listeners to the new row

@@ -28,13 +28,13 @@ func UpdateCustomerCurrency(ctx context.Context, customercurrency *models.Custom
 		return err
 	}
 
-	iter = client.Collection("customerssymbo").Where("Symbol", "==", customercurrency.Symbol).
+	iter = client.Collection("customerssymbol").Where("Symbol", "==", customercurrency.Symbol).
 		Where("CustomerID", "==", customercurrency.CustomerID).
 		Limit(1).Documents(ctx)
 	doc, err := iter.Next()
 	if err == iterator.Done {
 		// data not found
-		_, _, err := client.Collection("customerssymbo").Add(ctx, customercurrency)
+		_, _, err := client.Collection("customerssymbol").Add(ctx, customercurrency)
 		return err
 	}
 
@@ -47,14 +47,14 @@ func UpdateCustomerCurrency(ctx context.Context, customercurrency *models.Custom
 	data.Status = customercurrency.Status
 	data.Amount = customercurrency.Amount
 
-	_, err = client.Collection("customerssymbo").Doc(doc.Ref.ID).Set(ctx, data)
+	_, err = client.Collection("customerssymbol").Doc(doc.Ref.ID).Set(ctx, data)
 	return err
 }
 
 func GetCustomerCurrency(ctx context.Context, customerID string) ([]models.CustomerCurrencySymbol, error) {
 	client := getFirestoreClient()
 
-	iter := client.Collection("customerssymbo").Where("CustomerID", "==", customerID).Documents(ctx)
+	iter := client.Collection("customerssymbol").Where("CustomerID", "==", customerID).Documents(ctx)
 	defer iter.Stop()
 
 	var customerCurrencySymbos []models.CustomerCurrencySymbol

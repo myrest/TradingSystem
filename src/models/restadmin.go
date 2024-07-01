@@ -1,24 +1,22 @@
 package models
 
-type AdminCurrencySymbol struct {
+type CurrencySymbolBase struct {
 	Symbol string `json:"symbol"`
 	Status bool   `json:"status"`
 }
 
-type CurrencySymbol struct {
-	AdminCurrencySymbol
+type AdminCurrencySymbol struct {
+	CurrencySymbolBase
 	Cert string `json:"cert"`
 }
 
-//GenerateRandomString
-
 type CustomerCurrencySymbol struct {
-	CurrencySymbol
+	CurrencySymbolBase
 	Amount     float64 `json:"amount"`
 	CustomerID string
 }
 
 type AdminSymboListUI struct {
-	CurrencySymbol
+	AdminCurrencySymbol
 	PositionSize string `json:"positionsize"`
 }

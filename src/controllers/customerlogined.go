@@ -133,7 +133,7 @@ func GetAllCustomerSymbol(c *gin.Context) {
 	c.JSON(http.StatusOK, mergedList)
 }
 
-func mergeSymboLists(systemSymboList []models.CurrencySymbol, customersymboList []models.CustomerCurrencySymbol) []CustomerCurrencySymboResponse {
+func mergeSymboLists(systemSymboList []models.AdminCurrencySymbol, customersymboList []models.CustomerCurrencySymbol) []CustomerCurrencySymboResponse {
 	customerSymboMap := make(map[string]models.CustomerCurrencySymbol)
 	for _, Symbol := range customersymboList {
 		customerSymboMap[Symbol.Symbol] = Symbol
@@ -156,12 +156,9 @@ func mergeSymboLists(systemSymboList []models.CurrencySymbol, customersymboList 
 		} else {
 			// 如果 systemSymboList 中的 Symbol 不存在于 customerSymboMap 中，创建一个新的
 			newCustomerSymbol := models.CustomerCurrencySymbol{
-				CurrencySymbol: models.CurrencySymbol{
-					AdminCurrencySymbol: models.AdminCurrencySymbol{
-						Symbol: Symbol.Symbol,
-						Status: false,
-					},
-					//Cert不需顯示給用戶
+				CurrencySymbolBase: models.CurrencySymbolBase{
+					Symbol: Symbol.Symbol,
+					Status: false,
 				},
 				Amount: 0,
 			}

@@ -12,14 +12,14 @@ import (
 	"google.golang.org/api/iterator"
 )
 
-func CreateNewSymbol(ctx context.Context, Symbol models.CurrencySymbol) (models.CurrencySymbol, error) {
+func CreateNewSymbol(ctx context.Context, Symbol models.AdminCurrencySymbol) (models.AdminCurrencySymbol, error) {
 	client := getFirestoreClient()
 	Symbol.Cert = common.GenerateRandomString(8)
 	_, _, err := client.Collection("SymbolData").Add(ctx, Symbol)
 	return Symbol, err
 }
 
-func UpdateSymbol(ctx context.Context, Symbol models.CurrencySymbol) error {
+func UpdateSymbol(ctx context.Context, Symbol models.AdminCurrencySymbol) error {
 	client := getFirestoreClient()
 
 	iter := client.Collection("SymbolData").Where("Symbol", "==", Symbol.Symbol).Limit(1).Documents(ctx)
@@ -28,7 +28,7 @@ func UpdateSymbol(ctx context.Context, Symbol models.CurrencySymbol) error {
 		return err
 	}
 
-	var SymbolData models.CurrencySymbol
+	var SymbolData models.AdminCurrencySymbol
 	doc.DataTo(&SymbolData)
 	SymbolData.Status = Symbol.Status
 	if SymbolData.Cert == "" {
@@ -39,11 +39,11 @@ func UpdateSymbol(ctx context.Context, Symbol models.CurrencySymbol) error {
 	return err
 }
 
-func GetAllSymbol(ctx context.Context) ([]models.CurrencySymbol, error) {
+func GetAllSymbol(ctx context.Context) ([]models.AdminCurrencySymbol, error) {
 	client := getFirestoreClient()
 	iter := client.Collection("SymbolData").Documents(ctx)
 
-	var symboList []models.CurrencySymbol
+	var symboList []models.AdminCurrencySymbol
 	for {
 		doc, err := iter.Next()
 		if err == iterator.Done {
@@ -53,7 +53,7 @@ func GetAllSymbol(ctx context.Context) ([]models.CurrencySymbol, error) {
 			return nil, err
 		}
 
-		var Symbol models.CurrencySymbol
+		var Symbol models.AdminCurrencySymbol
 		doc.DataTo(&Symbol)
 		symboList = append(symboList, Symbol)
 	}
@@ -66,13 +66,13 @@ func GetAllSymbol(ctx context.Context) ([]models.CurrencySymbol, error) {
 	return symboList, nil
 }
 
-func GetSymbol(ctx context.Context, Symbol, Cert string) (models.CurrencySymbol, error) {
+func GetSymbol(ctx context.Context, Symbol, Cert string) (models.AdminCurrencySymbol, error) {
 	client := getFirestoreClient()
-	var rtn models.CurrencySymbol
+	var rtn models.AdminCurrencySymbol
 	iter := client.Collection("SymbolData").Where("Symbol", "==", Symbol).Limit(1).Documents(ctx)
 	doc, err := iter.Next()
 	if err == iterator.Done {
-		return rtn, errors.New("Symbol not found")
+		return rtn, errors.New("symbol not found")
 	}
 
 	doc.DataTo(&rtn)

@@ -10,16 +10,21 @@ import (
 )
 
 func AddNewSymbol(c *gin.Context) {
-	var data models.CurrencySymbol
+	var data models.AdminCurrencySymbol
 
 	if err := c.BindJSON(&data); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid data"})
 		return
 	}
 
+	if data.Symbol == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid symbo"})
+		return
+	}
+
 	rtn, err := services.CreateNewSymbol(context.Background(), data)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error createing symbo"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error createing symbol"})
 		return
 	}
 
@@ -32,7 +37,7 @@ type updateStatusRequest struct {
 }
 
 func UpdateSymbol(c *gin.Context) {
-	var data models.CurrencySymbol
+	var data models.AdminCurrencySymbol
 	var req updateStatusRequest
 
 	if err := c.BindJSON(&req); err != nil {
@@ -40,8 +45,13 @@ func UpdateSymbol(c *gin.Context) {
 		return
 	}
 
-	data = models.CurrencySymbol{
-		AdminCurrencySymbol: models.AdminCurrencySymbol{
+	if req.Symbol == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid symbo"})
+		return
+	}
+
+	data = models.AdminCurrencySymbol{
+		CurrencySymbolBase: models.CurrencySymbolBase{
 			Symbol: req.Symbol,
 			Status: req.Status == "true",
 		},
@@ -59,13 +69,13 @@ func GetAllSymbol(c *gin.Context) {
 
 	symboList, err := services.GetAllSymbol(context.Background())
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusFound, gin.H{"error": err.Error()})
 		return
 	}
 
 	webhooklist, err := services.GetLatestWebhook(context.Background())
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusFound, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -81,8 +91,8 @@ func GetAllSymbol(c *gin.Context) {
 			positionSize = webhook.Data.PositionSize
 		}
 		rtn = append(rtn, models.AdminSymboListUI{
-			CurrencySymbol: Symbol,
-			PositionSize:   positionSize,
+			AdminCurrencySymbol: Symbol,
+			PositionSize:        positionSize,
 		})
 	}
 
