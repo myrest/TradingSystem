@@ -1,4 +1,6 @@
 <hr>
+請自行調整持倉模式為：<span class="high-message">全倉 10倍槓桿</span><Br>
+過高的槓桿若沒有足夠的保證金，很容易爆倉，請務必確認槓桿倍數。
 <style>
     radio {
         width: 10%;
@@ -12,8 +14,13 @@
         width: 100%;
     }
 
-    #close-button {
+    .close-button {
         margin-right: 20px;
+    }
+
+    .high-message {
+        border-color: #007bff;
+        color: #ff6868;
     }
 
     .btn-container {
@@ -56,7 +63,7 @@
         transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
     }
 
-    tr .Disabled{
+    tr .Disabled {
         color: #8a9cac;
     }
 </style>
@@ -94,9 +101,9 @@
             body: JSON.stringify(data)
         }).then(response => {
             if (!response.ok) {
-                response.text().then(x=>alert(`Failed to update Symbol (${Symbol}): ` + JSON.parse(x).error))
-            }else{
-                response.text().then(x=>{
+                response.text().then(x => alert(`Failed to update Symbol (${Symbol}): ` + JSON.parse(x).error))
+            } else {
+                response.text().then(x => {
                     if (x != "\"\"") alert("Update completed, but " + x);
                 })
             }

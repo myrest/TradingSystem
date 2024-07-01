@@ -116,7 +116,7 @@ func processPlaceOrder(CustomerID, APIKey, SecertKey string, amount float64, tv 
 	//計算下單數量
 	//isClosePosition := false
 	var profit float64
-	placeAmount := tv.TVData.Contracts * amount / 100
+	placeAmount := tv.TVData.Contracts * amount / 100 * 10
 	if (tv.PlaceOrderType.Side == bingx.BuySideType && tv.PlaceOrderType.PositionSideType == bingx.ShortPositionSideType) ||
 		(tv.PlaceOrderType.Side == bingx.SellSideType && tv.PlaceOrderType.PositionSideType == bingx.LongPositionSideType) {
 		if oepntrade.AvailableAmt < placeAmount {
