@@ -17,7 +17,7 @@ var SecertKey = "uub6B7scfX5AVmTYHPlNbmBbf9pLJMY7lgpAq7qunDkw5gDP7xgWLBHkduESKCj
 
 func GetBingxOrderByID(c *gin.Context) {
 	id := c.Query("id")
-	Symbol := c.Query("symbo")
+	Symbol := c.Query("symbol")
 	idint, err := strconv.ParseInt(id, 10, 64)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input id"})

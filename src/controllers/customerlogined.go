@@ -13,7 +13,7 @@ import (
 )
 
 type updateCustomerSymboRequest struct {
-	Symbol string `json:"symbo"`
+	Symbol string `json:"symbol"`
 	Status string `json:"status"`
 	Amount string `json:"amount"`
 }

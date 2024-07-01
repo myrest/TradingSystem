@@ -1,7 +1,7 @@
 package models
 
 type AdminCurrencySymbol struct {
-	Symbol string `json:"symbo"`
+	Symbol string `json:"symbol"`
 	Status bool   `json:"status"`
 }
 

@@ -19,7 +19,7 @@ func UpdateCustomerCurrency(ctx context.Context, customercurrency *models.Custom
 		}
 	}
 	//檢查系統symbo是否存在
-	iter := client.Collection("SymboData").Where("Symbo", "==", customercurrency.Symbol).Limit(1).Documents(ctx)
+	iter := client.Collection("SymbolData").Where("Symbol", "==", customercurrency.Symbol).Limit(1).Documents(ctx)
 	_, err = iter.Next()
 	if err == iterator.Done {
 		return errors.New("system Symbol (" + customercurrency.Symbol + ") not found")
@@ -28,7 +28,7 @@ func UpdateCustomerCurrency(ctx context.Context, customercurrency *models.Custom
 		return err
 	}
 
-	iter = client.Collection("customerssymbo").Where("Symbo", "==", customercurrency.Symbol).
+	iter = client.Collection("customerssymbo").Where("Symbol", "==", customercurrency.Symbol).
 		Where("CustomerID", "==", customercurrency.CustomerID).
 		Limit(1).Documents(ctx)
 	doc, err := iter.Next()

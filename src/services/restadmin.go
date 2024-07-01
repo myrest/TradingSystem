@@ -15,33 +15,33 @@ import (
 func CreateNewSymbol(ctx context.Context, Symbol models.CurrencySymbol) (models.CurrencySymbol, error) {
 	client := getFirestoreClient()
 	Symbol.Cert = common.GenerateRandomString(8)
-	_, _, err := client.Collection("SymboData").Add(ctx, Symbol)
+	_, _, err := client.Collection("SymbolData").Add(ctx, Symbol)
 	return Symbol, err
 }
 
 func UpdateSymbol(ctx context.Context, Symbol models.CurrencySymbol) error {
 	client := getFirestoreClient()
 
-	iter := client.Collection("SymboData").Where("Symbo", "==", Symbol.Symbol).Limit(1).Documents(ctx)
+	iter := client.Collection("SymbolData").Where("Symbol", "==", Symbol.Symbol).Limit(1).Documents(ctx)
 	doc, err := iter.Next()
 	if err != nil {
 		return err
 	}
 
-	var Symbodata models.CurrencySymbol
-	doc.DataTo(&Symbodata)
-	Symbodata.Status = Symbol.Status
-	if Symbodata.Cert == "" {
-		Symbodata.Cert = common.GenerateRandomString(8)
+	var SymbolData models.CurrencySymbol
+	doc.DataTo(&SymbolData)
+	SymbolData.Status = Symbol.Status
+	if SymbolData.Cert == "" {
+		SymbolData.Cert = common.GenerateRandomString(8)
 	}
-	_, err = client.Collection("SymboData").Doc(doc.Ref.ID).Set(ctx, Symbodata)
+	_, err = client.Collection("SymbolData").Doc(doc.Ref.ID).Set(ctx, SymbolData)
 
 	return err
 }
 
 func GetAllSymbol(ctx context.Context) ([]models.CurrencySymbol, error) {
 	client := getFirestoreClient()
-	iter := client.Collection("SymboData").Documents(ctx)
+	iter := client.Collection("SymbolData").Documents(ctx)
 
 	var symboList []models.CurrencySymbol
 	for {
@@ -69,7 +69,7 @@ func GetAllSymbol(ctx context.Context) ([]models.CurrencySymbol, error) {
 func GetSymbol(ctx context.Context, Symbol, Cert string) (models.CurrencySymbol, error) {
 	client := getFirestoreClient()
 	var rtn models.CurrencySymbol
-	iter := client.Collection("SymboData").Where("Symbo", "==", Symbol).Limit(1).Documents(ctx)
+	iter := client.Collection("SymbolData").Where("Symbol", "==", Symbol).Limit(1).Documents(ctx)
 	doc, err := iter.Next()
 	if err == iterator.Done {
 		return rtn, errors.New("Symbol not found")

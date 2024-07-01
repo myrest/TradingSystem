@@ -168,7 +168,7 @@
     }
 
     // Fetch and populate Symbol data on page load
-    function fetchSymboData() {
+    function fetchSymbolData() {
         fetch('/restadmin/symbo')
             .then(response => response.json())
             .then(data => {
@@ -199,5 +199,5 @@
             });
     }
 
-    document.addEventListener('DOMContentLoaded', fetchSymboData);
+    document.addEventListener('DOMContentLoaded', fetchSymbolData);
 </script>

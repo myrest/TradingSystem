@@ -27,7 +27,7 @@ func AddNewSymbol(c *gin.Context) {
 }
 
 type updateStatusRequest struct {
-	Symbol string `json:"symbo"`
+	Symbol string `json:"symbol"`
 	Status string `json:"status"`
 }
 

@@ -11,7 +11,7 @@ func GetCustomerCurrencySymbosBySymbol(ctx context.Context, symbol string) ([]mo
 	client := getFirestoreClient()
 
 	// 查询 CustomerCurrencySymbol 集合
-	iter := client.Collection("customerssymbo").Where("Symbo", "==", symbol).Where("Status", "==", true).Documents(ctx)
+	iter := client.Collection("customerssymbo").Where("Symbol", "==", symbol).Where("Status", "==", true).Documents(ctx)
 	defer iter.Stop()
 
 	var customerCurrencySymbos []models.CustomerCurrencySymbol
