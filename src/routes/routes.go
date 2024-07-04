@@ -6,7 +6,7 @@ import (
 
 func RegisterRoutes(r *gin.Engine) {
 	//測試用，正常要關起來。
-	//RegisterMyTestRoutes(r)
+	RegisterMyTestRoutes(r)
 	RegisterAuthRoutes(r)
 	RegisterCustomerRoutes(r)
 	RegisterBeforeLoginRoutes(r)

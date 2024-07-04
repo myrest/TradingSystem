@@ -1,209 +1,46 @@
-<hr>
-<style>
-    radio {
-        width: 10%;
-    }
-
-    .inline {
-        display: inline;
-    }
-
-    table {
-        width: 100%;
-    }
-
-    #close-button {
-        margin-right: 20px;
-    }
-
-    .btn-container {
-        display: flex;
-        justify-content: space-between;
-        width: 350px;
-    }
-
-    .btn-sm {
-        padding: 5px 10px;
-        font-size: 0.875rem;
-        line-height: 1.5;
-        border-radius: 0.2rem;
-    }
-
-    .btn-primary {
-        background-color: #007bff;
-        border-color: #007bff;
-        color: #fff;
-    }
-
-    .btn-secondary {
-        background-color: #6c757d;
-        border-color: #6c757d;
-        color: #fff;
-    }
-
-    .btn {
-        display: inline-block;
-        font-weight: 400;
-        text-align: center;
-        white-space: nowrap;
-        vertical-align: middle;
-        user-select: none;
-        border: 1px solid transparent;
-        padding: 0.375rem 0.75rem;
-        font-size: 1rem;
-        line-height: 1.5;
-        border-radius: 0.25rem;
-        transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
-    }
-</style>
-<div class="admin-section">
-    <h2>Admin Section</h2>
-    <button id="add-button" class="btn btn-primary btn-sm">ADD</button>
-
-    <div id="new-item-form" style="display:none; margin-top:20px;">
-        <div class="form-group">
-            <label for="new-item" class="inline">幣種:</label>
-            <input type="text" id="new-item" name="new-item" class="form-control" style="width: 350px">
-        </div>
-        <div class="d-flex justify-content-between btn-container">
-            <button id="close-button" class="btn btn-secondary btn-sm">Close</button>
-            <button id="save-button" class="btn btn-primary btn-sm">Save</button>
-        </div>
-    </div>
-
-    <table class="table table-sm" style="margin-top:20px;">
+<div class="crypto-table">
+    <h2>貨幣資料</h2>
+    <button onclick="showAddModal()">新增貨幣</button>
+    <table id="cryptoTable">
         <thead>
             <tr>
                 <th>幣種</th>
                 <th>憑證</th>
+                <th>狀態</th>
                 <th>操作</th>
             </tr>
         </thead>
-        <tbody id="item-table-body">
-            <!-- Data will be dynamically populated here -->
+        <tbody>
+            <!-- 數據將通過JavaScript動態添加 -->
         </tbody>
     </table>
 </div>
+</div>
 
-<script>
-    document.getElementById('add-button').addEventListener('click', function () {
-        document.getElementById('new-item-form').style.display = 'block';
-    });
+<!-- 新增/編輯貨幣的模態框 -->
+<div id="cryptoModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal()">&times;</span>
+        <h2 id="modalTitle">新增/編輯貨幣</h2>
+        <p>
+            <strong>幣種：</strong>
+            <input type="text" id="modalCoin" placeholder="Enter Coin">
+        </p>
+        <p>
+            <strong>資料：</strong>
+            <textarea id="modalData" placeholder="Enter Data"></textarea>
+        </p>
+        <button onclick="saveCrypto()">保存</button>
+    </div>
+</div>
 
-    document.getElementById('close-button').addEventListener('click', function () {
-        document.getElementById('new-item-form').style.display = 'none';
-    });
+<!-- 顯示資料內容的模態框 -->
+<div id="dataModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeDataModal()">&times;</span>
+        <h2 id="dataModalTitle"></h2>
+        <p id="dataModalContent"></p>
+    </div>
+</div>
 
-    document.getElementById('save-button').addEventListener('click', function () {
-        const newItem = document.getElementById('new-item').value.toUpperCase();
-        if (newItem) {
-            const data = {
-                'symbol': newItem
-            }
-            fetch('/restadmin/symbol', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(data)
-            }).then(response => {
-                if (response.ok) {
-                    response.json().then(data => {
-                        cert = data.data
-                        const tbody = document.getElementById('item-table-body');
-                        const row = document.createElement('tr');
-                        row.innerHTML = `
-                <td>${newItem}</td>
-                <td>${cert}</td>
-                <td>
-                    <span class="form-check form-check-inline">
-                        <input class="form-check-input" type="radio" name="status-${newItem}" id="enable-${newItem}" value="true">
-                        <label class="form-check-label inline" for="enable-${newItem}">啟用</label>
-                    </span>
-                    <span class="form-check form-check-inline">
-                        <input class="form-check-input" type="radio" name="status-${newItem}" id="disable-${newItem}" value="false" checked>
-                        <label class="form-check-label inline" for="disable-${newItem}">停用</label>
-                    </span>
-                </td>
-            `;
-                        tbody.appendChild(row);
-                        attachEventListeners(row); // Attach event listeners to the new row
-
-                        // Hide the form and clear the input
-                        document.getElementById('new-item-form').style.display = 'none';
-                        document.getElementById('new-item').value = '';
-                    })
-                } else {
-                    response.json().then(error => {
-                        // Handle update error
-                        console.error('Error updating customer:', error);
-                    });
-                }
-            }).catch(error => {
-                console.error('Error:', error);
-            });
-        }
-    });
-
-    function attachEventListeners(row) {
-        row.querySelectorAll('.form-check-input').forEach(radio => {
-            radio.addEventListener('change', function () {
-                const data = {
-                    'symbol': this.name.split('-')[1],
-                    'status': this.value
-                }
-                fetch(`/restadmin/symbol`, {
-                    method: 'PATCH',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(data)
-                }).then(response => {
-                    if (!response.ok) {
-                        console.error(`Failed to update status for item ${item} to ${status}`);
-                    }
-                });
-            });
-        });
-    }
-
-    // Fetch and populate Symbol data on page load
-    function fetchSymbolData() {
-        fetch('/restadmin/symbol')
-            .then(response => {
-                if (response.ok) {
-                    response.json().then(data => {
-                        console.log(data)
-                        if (!response.ok) {
-                            return;
-                        }
-                        const tbody = document.getElementById('item-table-body');
-                        data.forEach(Symbol => {
-                            const row = document.createElement('tr');
-                            row.innerHTML = `
-                    <td>${Symbol.symbol}</td>
-                    <td>${Symbol.cert}</td>
-                    <td>
-                        <span class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="status-${Symbol.symbol}" id="enable-${Symbol.symbol}" value="true" ${Symbol.status ? 'checked' : ''}>
-                            <label class="form-check-label inline" for="enable-${Symbol.symbol}">啟用</label>
-                        </span>
-                        <span class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="status-${Symbol.symbol}" id="disable-${Symbol.symbol}" value="false" ${!Symbol.status ? 'checked' : ''}>
-                            <label class="form-check-label inline" for="disable-${Symbol.symbol}">停用</label>
-                        </span>
-                    </td>
-                `;
-                            tbody.appendChild(row);
-                            attachEventListeners(row); // Attach event listeners to the new row
-                        });
-                    })
-                        .catch(error => {
-                            console.error('Error fetching Symbol data:', error);
-                        });
-                }
-            })
-    }
-
-    document.addEventListener('DOMContentLoaded', fetchSymbolData);
-</script>
+<script src="/static/js/dashboard.js"></script>

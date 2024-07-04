@@ -1,8 +1,9 @@
 package models
 
 type CurrencySymbolBase struct {
-	Symbol string `json:"symbol"`
-	Status bool   `json:"status"`
+	Symbol  string `json:"symbol"`
+	Status  bool   `json:"status"`
+	Message string `json:"message"`
 }
 
 type AdminCurrencySymbol struct {

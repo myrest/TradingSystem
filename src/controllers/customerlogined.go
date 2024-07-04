@@ -19,7 +19,8 @@ type updateCustomerSymboRequest struct {
 }
 
 type CustomerCurrencySymboResponse struct {
-	models.CustomerCurrencySymbol
+	models.CurrencySymbolBase
+	Amount       float64 `json:"amount"`
 	SystemStatus string
 }
 
@@ -150,8 +151,13 @@ func mergeSymboLists(systemSymboList []models.AdminCurrencySymbol, customersymbo
 		if customerSymbol, exists := customerSymboMap[Symbol.Symbol]; exists {
 			// 如果 systemSymboList 中的 Symbol 存在于 customerSymboMap 中
 			result = append(result, CustomerCurrencySymboResponse{
-				CustomerCurrencySymbol: customerSymbol,
-				SystemStatus:           systemStatus,
+				CurrencySymbolBase: models.CurrencySymbolBase{
+					Symbol:  customerSymbol.Symbol,
+					Status:  customerSymbol.Status,
+					Message: Symbol.Message,
+				},
+				SystemStatus: systemStatus,
+				Amount:       customerSymbol.Amount,
 			})
 		} else {
 			// 如果 systemSymboList 中的 Symbol 不存在于 customerSymboMap 中，创建一个新的
@@ -163,8 +169,13 @@ func mergeSymboLists(systemSymboList []models.AdminCurrencySymbol, customersymbo
 				Amount: 0,
 			}
 			result = append(result, CustomerCurrencySymboResponse{
-				CustomerCurrencySymbol: newCustomerSymbol,
-				SystemStatus:           systemStatus,
+				CurrencySymbolBase: models.CurrencySymbolBase{
+					Symbol:  newCustomerSymbol.Symbol,
+					Status:  newCustomerSymbol.Status,
+					Message: newCustomerSymbol.Message,
+				},
+				SystemStatus: systemStatus,
+				Amount:       newCustomerSymbol.Amount,
 			})
 		}
 	}

@@ -10,6 +10,10 @@ import (
 )
 
 func AddNewSymbol(c *gin.Context) {
+	if !isAdmin(c) {
+		c.JSON(http.StatusForbidden, gin.H{"error": "No Permission."})
+		return
+	}
 	var data models.AdminCurrencySymbol
 
 	if err := c.BindJSON(&data); err != nil {
@@ -28,7 +32,7 @@ func AddNewSymbol(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"data": rtn.Cert})
+	c.JSON(http.StatusOK, gin.H{"data": rtn})
 }
 
 type updateStatusRequest struct {
@@ -36,7 +40,11 @@ type updateStatusRequest struct {
 	Status string `json:"status"`
 }
 
-func UpdateSymbol(c *gin.Context) {
+func UpdateStatus(c *gin.Context) {
+	if !isAdmin(c) {
+		c.JSON(http.StatusForbidden, gin.H{"error": "No Permission."})
+		return
+	}
 	var data models.AdminCurrencySymbol
 	var req updateStatusRequest
 
@@ -58,13 +66,54 @@ func UpdateSymbol(c *gin.Context) {
 		//Cert不能改
 	}
 
-	if err := services.UpdateSymbol(context.Background(), data); err != nil {
+	if err := services.UpdateSymbolStatus(context.Background(), data); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error updateing Symbol."})
+		return
+	}
+}
+
+type updateMessageRequest struct {
+	Symbol  string `json:"symbol"`
+	Message string `json:"message"`
+}
+
+func UpdateMessage(c *gin.Context) {
+	if !isAdmin(c) {
+		c.JSON(http.StatusForbidden, gin.H{"error": "No Permission."})
+		return
+	}
+	var data models.AdminCurrencySymbol
+	var req updateMessageRequest
+
+	if err := c.BindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid data"})
+		return
+	}
+
+	if req.Symbol == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid symbo"})
+		return
+	}
+
+	data = models.AdminCurrencySymbol{
+		CurrencySymbolBase: models.CurrencySymbolBase{
+			Symbol:  req.Symbol,
+			Message: req.Message,
+		},
+	}
+
+	if err := services.UpdateSymbolMessage(context.Background(), data); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error updateing Symbol."})
 		return
 	}
 }
 
 func GetAllSymbol(c *gin.Context) {
+	if !isAdmin(c) {
+		c.JSON(http.StatusForbidden, gin.H{"error": "No Permission."})
+		return
+	}
+
 	var rtn []models.AdminSymboListUI
 
 	symboList, err := services.GetAllSymbol(context.Background())

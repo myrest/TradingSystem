@@ -1,29 +1,26 @@
 {{ template "afterloginheader.html" . }}
-<h1>跟單系統</h1>
-<p>Name: {{ .Name }}</p>
-<p>Email: {{ .Email }}</p>
-
-<form id="update-customer-form" action="/customers/update" method="post">
-    <div class="form-group">
-        <label for="apikey">API Key:</label>
-        <div class="input-group mb-3">
-            <span class="input-group-text"><i class="fas fa-key"></i></span>
-            <input type="text" id="apikey" name="apikey" class="form-control" required style="width: 350px"
-                value="{{ .ApiKey }}">
+<div class="dashboard">
+    <h1>跟單系統</h1>
+    <div class="user-info">
+        <div class="user-avatar" id="userAvatar"></div>
+        <div class="user-details">
+            <h3 id="userName">{{ .Name }}</h3>
+            <p id="userEmail">{{ .Email }}</p>
         </div>
+        <button class="logout-btn" onclick="logout()">登出</button>
     </div>
-
-    <div class="form-group">
-        <label for="secretkey">Secret Key:</label>
-        <div class="input-group mb-3">
-            <span class="input-group-text"><i class="fas fa-lock"></i></span>
-            <input type="text" id="secretkey" name="secretkey" class="form-control" required style="width: 350px"
-                value="{{ .SecretKey }}">
-        </div>
+    <div class="api-keys">
+        <h2>API Keys</h2>
+        <p>
+            <strong>API Key：</strong>
+            <input type="text" id="apiKey" placeholder="Enter API Key" value="{{ .ApiKey }}">
+        </p>
+        <p>
+            <strong>Secret Key：</strong>
+            <input type="text" id="secretKey" placeholder="Enter Secret Key" value="{{ .SecretKey }}">
+        </p>
+        <button onclick="saveKeys()">保存</button>
     </div>
-
-    <button type="submit" id="create-account-button" class="btn btn-primary">更新帳號</button>
-</form>
 
 {{ if .IsAdmin }}
     {{ template "adminblock.html" . }}
@@ -31,41 +28,5 @@
     {{ template "customerblock.html" . }}
 {{ end }}
 
-<script>
-    const updateCustomerForm = document.getElementById('update-customer-form');
-
-    updateCustomerForm.addEventListener('submit', (event) => {
-        event.preventDefault();
-
-        const apikey = document.getElementById('apikey').value;
-        const secretkey = document.getElementById('secretkey').value;
-        // Get values for other customer fields
-
-        const data = {
-            apikey,
-            secretkey,
-        };
-
-        fetch('/customers/update', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(data)
-        }).then(response => {
-            if (response.ok) {
-                // Handle successful update
-                console.log('Customer updated successfully');
-                alert('Customer updated successfully');
-            } else {
-                response.json().then(error => {
-                    // Handle update error
-                    console.error('Error updating customer:', error);
-                });
-            }
-        }).catch(error => {
-            console.error('Error:', error);
-        });
-    });
-</script>
 {{ template "beforeloginfooter.html" . }}
+<script src="/static/js/common.js"></script>
