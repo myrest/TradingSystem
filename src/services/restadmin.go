@@ -9,6 +9,7 @@ import (
 	"sort"
 	"sync"
 
+	"cloud.google.com/go/firestore"
 	"google.golang.org/api/iterator"
 )
 
@@ -19,11 +20,21 @@ func CreateNewSymbol(ctx context.Context, Symbol models.AdminCurrencySymbol) (mo
 	return Symbol, err
 }
 
-func UpdateSymbol(ctx context.Context, Symbol models.AdminCurrencySymbol) error {
+func getSymbolFromDB(ctx context.Context, symbol string) (*firestore.DocumentSnapshot, error) {
 	client := getFirestoreClient()
 
-	iter := client.Collection("SymbolData").Where("Symbol", "==", Symbol.Symbol).Limit(1).Documents(ctx)
+	iter := client.Collection("SymbolData").Where("Symbol", "==", symbol).Limit(1).Documents(ctx)
 	doc, err := iter.Next()
+	if err != nil {
+		return nil, err
+	}
+	return doc, err
+}
+
+func UpdateSymbolStatus(ctx context.Context, Symbol models.AdminCurrencySymbol) error {
+	client := getFirestoreClient()
+
+	doc, err := getSymbolFromDB(ctx, Symbol.Symbol)
 	if err != nil {
 		return err
 	}
@@ -31,9 +42,22 @@ func UpdateSymbol(ctx context.Context, Symbol models.AdminCurrencySymbol) error 
 	var SymbolData models.AdminCurrencySymbol
 	doc.DataTo(&SymbolData)
 	SymbolData.Status = Symbol.Status
-	if SymbolData.Cert == "" {
-		SymbolData.Cert = common.GenerateRandomString(8)
+	_, err = client.Collection("SymbolData").Doc(doc.Ref.ID).Set(ctx, SymbolData)
+
+	return err
+}
+
+func UpdateSymbolMessage(ctx context.Context, Symbol models.AdminCurrencySymbol) error {
+	client := getFirestoreClient()
+
+	doc, err := getSymbolFromDB(ctx, Symbol.Symbol)
+	if err != nil {
+		return err
 	}
+
+	var SymbolData models.AdminCurrencySymbol
+	doc.DataTo(&SymbolData)
+	SymbolData.Message = Symbol.Message
 	_, err = client.Collection("SymbolData").Doc(doc.Ref.ID).Set(ctx, SymbolData)
 
 	return err
