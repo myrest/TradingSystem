@@ -1,11 +1,15 @@
 {{ template "beforeloginheader.html" . }}
-<!-- h1>跟單系統</h1 -->
-<p>Name: {{ .Name }}</p>
-<p>Email: {{ .Email }}</p>
-<form id="create-account-form" action="/customers/create_account" method="post">
-    <button type="submit" id="create-account-button">建立帳號</button>
-    <button class="btn-secondary" id="logoutBtn">取消</button>
-</form>
+<div class="login-box">
+    <h1>跟單系統</h1>
+    <span>
+        <p>Name: {{ .Name }}</p>
+        <p>Email: {{ .Email }}</p>
+    </span>
+    <form id="create-account-form" action="/customers/create_account" method="post">
+        <button type="submit" id="create-account-button">建立帳號</button>
+        <button class="btn-secondary" id="logoutBtn">取消</button>
+    </form>
+</div>
 
 <script>
     document.getElementById('create-account-form').addEventListener('submit', function (event) {

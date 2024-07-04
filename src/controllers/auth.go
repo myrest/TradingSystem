@@ -9,6 +9,15 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+func isAdmin(c *gin.Context) bool {
+	session := sessions.Default(c)
+	isAdmin := session.Get("isadmin")
+	if isAdmin != nil {
+		return isAdmin.(bool)
+	}
+	return false
+}
+
 func GoogleAuthCallback(c *gin.Context) {
 	var req struct {
 		Token string `json:"token"`

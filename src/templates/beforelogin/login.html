@@ -1,8 +1,15 @@
 {{ template "beforeloginheader.html" . }}
 
-<h1>跟單系統</h1>
-<button id="login-button"><i class="fab fa-google"></i>Login with Google</button>
-<div class="loader" id="loader"></div>
+
+<div class="login-box">
+    <h1>跟單系統</h1>
+    <button id="login-button" class="btn">
+        <i class="fab fa-google"></i>
+        使用 Google 登入
+    </button>
+    <button id="login-button" class="btn" style="display: none;">登出</button>
+    <div id="user-info"></div>
+</div>
 
 <script>
     fetch('/misc/fireAuthConfig')

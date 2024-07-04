@@ -11,6 +11,10 @@ html {
     max-width: 1000px;
     margin: 0 auto;
     padding: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;    
 }
 
 .dashboard {
@@ -70,6 +74,18 @@ h2 {
     border-radius: 5px;
     cursor: pointer;
     transition: background-color 0.3s;
+}
+
+.btn-secondary{
+    background-color: #65708f;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    width: 83px;
+    margin-left: 10px;
 }
 
 .logout-btn:hover {
@@ -178,4 +194,14 @@ th {
 
 .status-toggle.disabled {
     background-color: #f44336;
+}
+
+.login-box {
+    background-color: rgba(255, 255, 255, 0.9);
+    border-radius: 10px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    width: 350px;
+    text-align: center;
+    padding: 40px;
 }
