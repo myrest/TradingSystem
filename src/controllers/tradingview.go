@@ -27,31 +27,18 @@ func TradingViewWebhook(c *gin.Context) {
 		return
 	}
 
-	err := preProcessPlaceOrder(c, WebhookData, false)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err})
-	}
-}
-
-func TradingViewWebhookTEST(c *gin.Context) {
-	var WebhookData models.TvWebhookData
-	if err := c.ShouldBindJSON(&WebhookData); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
-		return
-	}
-
-	err := preProcessPlaceOrder(c, WebhookData, true)
+	err := preProcessPlaceOrder(c, WebhookData)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 	}
 }
 
-func preProcessPlaceOrder(c *gin.Context, WebhookData models.TvWebhookData, isTEST bool) error {
+func preProcessPlaceOrder(c *gin.Context, WebhookData models.TvWebhookData) error {
 	// 寫入 WebhookData 到 Firestore
 	go func(data models.TvWebhookData) {
 		err := services.SaveWebhookData(context.Background(), data)
 		if err != nil {
-			log.Printf("Failed to save webhook data: %v", err)
+			log.Printf("Failed to save webhook data: %v", err.Error())
 		}
 	}(WebhookData)
 
@@ -76,7 +63,7 @@ func preProcessPlaceOrder(c *gin.Context, WebhookData models.TvWebhookData, isTE
 		wg.Add(1)
 		go func(customer models.CustomerCurrencySymboWithCustomer) {
 			defer wg.Done()
-			processPlaceOrder(customer.CustomerID, customer.APIKey, customer.SecretKey, customer.Amount, tvData, isTEST)
+			processPlaceOrder(customer.CustomerID, customer.APIKey, customer.SecretKey, customer.Amount, tvData, customer.Simulation)
 		}(customerList[i])
 	}
 	wg.Wait()
@@ -132,7 +119,7 @@ func processPlaceOrder(CustomerID, APIKey, SecertKey string, CustomerPlacedAmoun
 	}
 
 	if placeAmount == 0 {
-		placeOrderLog.Result = "No open poition for close."
+		placeOrderLog.Result = "Place amount is 0."
 		asyncWriteTVsignalData(placeOrderLog)
 		return
 	}
