@@ -13,15 +13,10 @@ import (
 )
 
 type updateCustomerSymboRequest struct {
-	Symbol string `json:"symbol"`
-	Status string `json:"status"`
-	Amount string `json:"amount"`
-}
-
-type CustomerCurrencySymboResponse struct {
-	models.CurrencySymbolBase
-	Amount       float64 `json:"amount"`
-	SystemStatus string
+	Symbol     string `json:"symbol"`
+	Status     string `json:"status"`
+	Amount     string `json:"amount"`
+	Simulation string `json:"simulation"`
 }
 
 func ShowDashboardPage(c *gin.Context) {
@@ -66,8 +61,13 @@ func UpdateCustomerSymbol(c *gin.Context) {
 		return
 	}
 
-	input.Symbol = req.Symbol
-	input.Status = req.Status == "true"
+	input = models.CustomerCurrencySymbol{
+		CurrencySymbolBase: models.CurrencySymbolBase{
+			Symbol: req.Symbol,
+			Status: req.Status == "true",
+		},
+		Simulation: req.Simulation == "true",
+	}
 	amount, err := strconv.ParseFloat(req.Amount, 64)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid data"})
@@ -134,13 +134,13 @@ func GetAllCustomerSymbol(c *gin.Context) {
 	c.JSON(http.StatusOK, mergedList)
 }
 
-func mergeSymboLists(systemSymboList []models.AdminCurrencySymbol, customersymboList []models.CustomerCurrencySymbol) []CustomerCurrencySymboResponse {
+func mergeSymboLists(systemSymboList []models.AdminCurrencySymbol, customersymboList []models.CustomerCurrencySymbol) []models.CustomerCurrencySymboResponse {
 	customerSymboMap := make(map[string]models.CustomerCurrencySymbol)
 	for _, Symbol := range customersymboList {
 		customerSymboMap[Symbol.Symbol] = Symbol
 	}
 
-	var result []CustomerCurrencySymboResponse
+	var result []models.CustomerCurrencySymboResponse
 
 	// Iterate through systemSymboList
 	for _, Symbol := range systemSymboList {
@@ -150,7 +150,7 @@ func mergeSymboLists(systemSymboList []models.AdminCurrencySymbol, customersymbo
 		}
 		if customerSymbol, exists := customerSymboMap[Symbol.Symbol]; exists {
 			// 如果 systemSymboList 中的 Symbol 存在于 customerSymboMap 中
-			result = append(result, CustomerCurrencySymboResponse{
+			result = append(result, models.CustomerCurrencySymboResponse{
 				CurrencySymbolBase: models.CurrencySymbolBase{
 					Symbol:  customerSymbol.Symbol,
 					Status:  customerSymbol.Status,
@@ -158,6 +158,7 @@ func mergeSymboLists(systemSymboList []models.AdminCurrencySymbol, customersymbo
 				},
 				SystemStatus: systemStatus,
 				Amount:       customerSymbol.Amount,
+				Simulation:   customerSymbol.Simulation,
 			})
 		} else {
 			// 如果 systemSymboList 中的 Symbol 不存在于 customerSymboMap 中，创建一个新的
@@ -166,9 +167,10 @@ func mergeSymboLists(systemSymboList []models.AdminCurrencySymbol, customersymbo
 					Symbol: Symbol.Symbol,
 					Status: false,
 				},
-				Amount: 0,
+				Amount:     0,
+				Simulation: false,
 			}
-			result = append(result, CustomerCurrencySymboResponse{
+			result = append(result, models.CustomerCurrencySymboResponse{
 				CurrencySymbolBase: models.CurrencySymbolBase{
 					Symbol:  newCustomerSymbol.Symbol,
 					Status:  newCustomerSymbol.Status,
@@ -176,6 +178,7 @@ func mergeSymboLists(systemSymboList []models.AdminCurrencySymbol, customersymbo
 				},
 				SystemStatus: systemStatus,
 				Amount:       newCustomerSymbol.Amount,
+				Simulation:   newCustomerSymbol.Simulation,
 			})
 		}
 	}

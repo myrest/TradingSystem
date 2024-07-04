@@ -46,6 +46,7 @@ func UpdateCustomerCurrency(ctx context.Context, customercurrency *models.Custom
 	doc.DataTo(&data)
 	data.Status = customercurrency.Status
 	data.Amount = customercurrency.Amount
+	data.Simulation = customercurrency.Simulation
 
 	_, err = client.Collection("customerssymbol").Doc(doc.Ref.ID).Set(ctx, data)
 	return err
