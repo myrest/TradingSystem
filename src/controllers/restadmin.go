@@ -10,6 +10,10 @@ import (
 )
 
 func AddNewSymbol(c *gin.Context) {
+	if !isAdmin(c) {
+		c.JSON(http.StatusForbidden, gin.H{"error": "No Permission."})
+		return
+	}
 	var data models.AdminCurrencySymbol
 
 	if err := c.BindJSON(&data); err != nil {
@@ -37,6 +41,10 @@ type updateStatusRequest struct {
 }
 
 func UpdateStatus(c *gin.Context) {
+	if !isAdmin(c) {
+		c.JSON(http.StatusForbidden, gin.H{"error": "No Permission."})
+		return
+	}
 	var data models.AdminCurrencySymbol
 	var req updateStatusRequest
 
@@ -70,6 +78,10 @@ type updateMessageRequest struct {
 }
 
 func UpdateMessage(c *gin.Context) {
+	if !isAdmin(c) {
+		c.JSON(http.StatusForbidden, gin.H{"error": "No Permission."})
+		return
+	}
 	var data models.AdminCurrencySymbol
 	var req updateMessageRequest
 
@@ -97,6 +109,11 @@ func UpdateMessage(c *gin.Context) {
 }
 
 func GetAllSymbol(c *gin.Context) {
+	if !isAdmin(c) {
+		c.JSON(http.StatusForbidden, gin.H{"error": "No Permission."})
+		return
+	}
+
 	var rtn []models.AdminSymboListUI
 
 	symboList, err := services.GetAllSymbol(context.Background())
