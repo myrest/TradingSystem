@@ -35,15 +35,13 @@ func TradingViewWebhook(c *gin.Context) {
 
 func preProcessPlaceOrder(c *gin.Context, WebhookData models.TvWebhookData) error {
 	// 寫入 WebhookData 到 Firestore
-	go func(data models.TvWebhookData) {
-		err := services.SaveWebhookData(context.Background(), data)
-		if err != nil {
-			log.Printf("Failed to save webhook data: %v", err.Error())
-		}
-	}(WebhookData)
+	TvWebHookLog, err := services.SaveWebhookData(context.Background(), WebhookData)
+	if err != nil {
+		log.Printf("Failed to save webhook data: %v", err.Error())
+	}
 
 	//檢查Cert
-	_, err := services.GetSymbol(c, WebhookData.Symbol, WebhookData.Cert)
+	_, err = services.GetSymbol(c, WebhookData.Symbol, WebhookData.Cert)
 	if err != nil {
 		//Todo:要寫Log
 		return err
@@ -63,7 +61,7 @@ func preProcessPlaceOrder(c *gin.Context, WebhookData models.TvWebhookData) erro
 		wg.Add(1)
 		go func(customer models.CustomerCurrencySymboWithCustomer) {
 			defer wg.Done()
-			processPlaceOrder(customer.CustomerID, customer.APIKey, customer.SecretKey, customer.Amount, tvData, customer.Simulation)
+			processPlaceOrder(customer, tvData, TvWebHookLog)
 		}(customerList[i])
 	}
 	wg.Wait()
@@ -71,20 +69,22 @@ func preProcessPlaceOrder(c *gin.Context, WebhookData models.TvWebhookData) erro
 	return nil
 }
 
-func processPlaceOrder(CustomerID, APIKey, SecertKey string, CustomerPlacedAmount float64, tv models.TvSiginalData, isTEST bool) {
-	client := bingx.NewClient(APIKey, SecertKey, isTEST)
+func processPlaceOrder(Customer models.CustomerCurrencySymboWithCustomer, tv models.TvSiginalData, TvWebHookLog string) {
+	client := bingx.NewClient(APIKey, SecertKey, Customer.Simulation)
+	// 定义日期字符串的格式
+	const layout = "2006-01-02 15:04:05"
 
 	placeOrderLog := models.Log_TvSiginalData{
-		TVData:     tv.TVData,
-		Profit:     0,
-		CustomerID: CustomerID,
-		Time:       time.Now().Unix(),
+		PlaceOrderType: tv.PlaceOrderType,
+		CustomerID:     Customer.CustomerID,
+		Time:           time.Now().UTC().Format(layout),
+		Simulation:     Customer.Simulation,
+		WebHookRefID:   TvWebHookLog,
 	}
 
 	//查出目前持倉情況
 	positions, err := client.NewGetOpenPositionsService().Symbol(tv.TVData.Symbol).Do(context.Background())
 	if err != nil {
-		//Todo:要寫Log
 		placeOrderLog.Result = "Get open position failed."
 		asyncWriteTVsignalData(placeOrderLog)
 		return
@@ -101,16 +101,14 @@ func processPlaceOrder(CustomerID, APIKey, SecertKey string, CustomerPlacedAmoun
 		}
 	}
 	//計算下單數量
-	//isClosePosition := false
 	var profit float64
-	placeAmount := tv.TVData.Contracts * CustomerPlacedAmount / 100
+	placeAmount := tv.TVData.Contracts * Customer.Amount / 100
 	if (tv.PlaceOrderType.Side == bingx.BuySideType && tv.PlaceOrderType.PositionSideType == bingx.ShortPositionSideType) ||
 		(tv.PlaceOrderType.Side == bingx.SellSideType && tv.PlaceOrderType.PositionSideType == bingx.LongPositionSideType) {
 		if oepntrade.AvailableAmt < placeAmount {
 			//要防止平太多，變反向持倉
 			placeAmount = oepntrade.AvailableAmt
 		}
-		//isClosePosition = true
 	}
 
 	if tv.TVData.PositionSize == 0 {
@@ -126,7 +124,7 @@ func processPlaceOrder(CustomerID, APIKey, SecertKey string, CustomerPlacedAmoun
 
 	//下單
 	order, err := client.NewCreateOrderService().
-		PositionSide(tv.PlaceOrderType.PositionSideType). //bingx.LongPositionSideType
+		PositionSide(tv.PlaceOrderType.PositionSideType).
 		Symbol(tv.TVData.Symbol).
 		Quantity(placeAmount).
 		Type(bingx.MarketOrderType).
@@ -139,7 +137,7 @@ func processPlaceOrder(CustomerID, APIKey, SecertKey string, CustomerPlacedAmoun
 		asyncWriteTVsignalData(placeOrderLog)
 		return
 	}
-	log.Printf("Customer:%s %v order created: %+v", CustomerID, bingx.MarketOrderType, order)
+	log.Printf("Customer:%s %v order created: %+v", Customer.CustomerID, bingx.MarketOrderType, order)
 
 	//寫入訂單編號
 	placeOrderLog.Result = strconv.FormatInt((*order).OrderId, 10)
@@ -167,7 +165,7 @@ func processPlaceOrder(CustomerID, APIKey, SecertKey string, CustomerPlacedAmoun
 // 寫log
 func asyncWriteTVsignalData(tvdata models.Log_TvSiginalData) {
 	go func(data models.Log_TvSiginalData) {
-		err := services.SaveCustomerPlaceOrderResultLog(context.Background(), data)
+		_, err := services.SaveCustomerPlaceOrderResultLog(context.Background(), data)
 		if err != nil {
 			log.Printf("Failed to save webhook data: %v", err)
 		}

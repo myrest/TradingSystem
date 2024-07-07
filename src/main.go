@@ -3,6 +3,7 @@ package main
 //使用myrest005的帳號
 import (
 	"TradingSystem/src/routes"
+	"html/template"
 	"log"
 	"os"
 	"path/filepath"
@@ -14,6 +15,22 @@ import (
 
 func main() {
 	r := gin.Default()
+	r.SetFuncMap(template.FuncMap{
+		"subtract": func(a, b int) int {
+			return a - b
+		},
+		"add": func(a, b int) int {
+			return a + b
+		},
+		"iterate": func(start, end int) []int {
+			var result []int
+			for i := start; i <= end; i++ {
+				result = append(result, i)
+			}
+			return result
+		},
+	})
+
 	// 设置会话存储
 	store := cookie.NewStore([]byte("secret"))
 	r.Use(sessions.Sessions("mysession", store))

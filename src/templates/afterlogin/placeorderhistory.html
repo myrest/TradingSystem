@@ -1,0 +1,44 @@
+{{ template "afterloginheader.html" . }}
+<div class="dashboard">
+    <h1>下單歷史 - {{.symbol}}</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>時間</th>
+                <th>方向</th>
+                <th>交易類型</th>
+                <th>價格</th>
+                <th>數量</th>
+                <th>利潤</th>
+                <th>結果</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{range .data}}
+            <tr>
+                <td>{{.Time}}</td>
+                <td>{{.PositionSideType}}</td>
+                <td>{{.Side}}</td>
+                <td>{{.Price}}</td>
+                <td>{{.Amount}}</td>
+                <td>{{.Profit}}</td>
+                <td>{{.Result}}</td>
+            </tr>
+            {{end}}
+        </tbody>
+    </table>
+    <div class="pagination">
+        {{if gt .page 1}}
+        <a href="?symbol={{.symbol}}&page={{subtract .page 1}}&pageSize={{.pageSize}}">&laquo;</a>
+        {{end}}
+        {{range $i := iterate 1 .totalPages}}
+        <a href="?symbol={{$.symbol}}&page={{$i}}&pageSize={{$.pageSize}}" {{if eq $i $.page}}class="active"
+            {{end}}>{{$i}}</a>
+        {{end}}
+        {{if lt .page .totalPages}}
+        <a href="?symbol={{.symbol}}&page={{add .page 1}}&pageSize={{.pageSize}}">&raquo;</a>
+        {{end}}
+    </div>
+</div>
+{{ template "beforeloginfooter.html" . }}
+<script src="/static/js/common.js"></script>

@@ -38,6 +38,7 @@ function renderCryptoTable() {
                 <td><span class="status-toggle ${item.status ? '' : 'disabled'} ${sysdisabled}" onclick="updateCustomerCurrency('${item.symbol}', 'Status')">${item.status ? '啟用' : '停用'}</span></td>
                 <td><span class="status-toggle ${!item.simulation ? '' : 'disabled'} ${sysdisabled}" onclick="updateCustomerCurrency('${item.symbol}', 'Simulation')">${item.simulation ? '模擬' : '實盤'}</span></td>
                 <td><input type="text" class="amount-input" name="amount-${item.symbol}" value="${item.amount || 0}" ${item.SystemStatus} onchange="updateCustomerCurrency('${item.symbol}', 'Amount')"></td>
+                <td><a href="/customers/placeorderhistory?symbol=${item.symbol}">記錄</a></td>
             </tr>
         `;
         tableBody.innerHTML += row;

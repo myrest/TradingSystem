@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"TradingSystem/src/common"
 	"TradingSystem/src/models"
 	"TradingSystem/src/services"
 	"context"
@@ -189,4 +190,72 @@ func mergeSymboLists(systemSymboList []models.AdminCurrencySymbol, customersymbo
 	})
 
 	return result
+}
+
+func PlaceOrderHistory(c *gin.Context) {
+	symbol := c.Query("symbol")
+	customerid := c.Query("cid")
+	session := sessions.Default(c)
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	pageSize, _ := strconv.Atoi(c.DefaultQuery("pageSize", "10"))
+	symbol = common.FormatSymbol(symbol)
+
+	if customerid == "" {
+		cid := session.Get("id")
+		if cid != nil {
+			customerid = cid.(string)
+		}
+	}
+	if customerid == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "No Customer Data."})
+		return
+	}
+
+	list, totalPages, err := services.GetPlaceOrderHistory(c, symbol, customerid, page, pageSize)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.HTML(http.StatusOK, "placeorderhistory.html", gin.H{
+		"data":       list,
+		"page":       page,
+		"pageSize":   pageSize,
+		"totalPages": totalPages,
+		"symbol":     symbol,
+	})
+}
+
+func GetPlaceOrderHistoryBySymbol(c *gin.Context) {
+	symbol := c.Query("symbol")
+	customerid := c.Query("cid")
+	session := sessions.Default(c)
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	pageSize, _ := strconv.Atoi(c.DefaultQuery("pageSize", "10"))
+	symbol = common.FormatSymbol(symbol)
+
+	if customerid == "" {
+		cid := session.Get("id")
+		if cid != nil {
+			customerid = cid.(string)
+		}
+	}
+	if customerid == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "No Customer Data."})
+		return
+	}
+
+	list, totalPages, err := services.GetPlaceOrderHistory(c, symbol, customerid, page, pageSize)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"data":       list,
+		"page":       page,
+		"pageSize":   pageSize,
+		"totalPages": totalPages,
+		"symbol":     symbol,
+	})
 }

@@ -9,10 +9,12 @@ import (
 func RegisterCustomerRoutes(r *gin.Engine) {
 	customerRoutes := r.Group("/customers")
 	{
-		customerRoutes.POST("", controllers.CreateCustomer)
-		customerRoutes.POST("/update", controllers.UpdateCustomer)
+		customerRoutes.GET("/placeorderhistory", controllers.PlaceOrderHistory)
+		customerRoutes.GET("/getplaceorderhistory", controllers.GetPlaceOrderHistoryBySymbol)
 		customerRoutes.GET("/dashboard", controllers.ShowDashboardPage)
 		customerRoutes.GET("/symbol", controllers.GetAllCustomerSymbol)
+		customerRoutes.POST("", controllers.CreateCustomer)
+		customerRoutes.POST("/update", controllers.UpdateCustomer)
 		customerRoutes.PATCH("/symbol", controllers.UpdateCustomerSymbol)
 	}
 }
