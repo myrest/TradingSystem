@@ -2,6 +2,7 @@ package models
 
 import (
 	"TradingSystem/src/bingx"
+	"TradingSystem/src/common"
 	"strconv"
 	"strings"
 )
@@ -35,20 +36,24 @@ type TVData struct {
 // 程式內用的TV訊號值
 type TvSiginalData struct {
 	TVData
-	PlaceOrderType struct {
-		PositionSideType bingx.PositionSideType //Long, Short
-		Side             bingx.SideType         //Buy, Sell
-	}
+	PlaceOrderType
+}
+
+type PlaceOrderType struct {
+	PositionSideType bingx.PositionSideType //Long, Short
+	Side             bingx.SideType         //Buy, Sell
 }
 
 type Log_TvSiginalData struct {
-	TVData
-	Profit     float64
-	CustomerID string
-	Result     string
-	Time       int64
-	Amount     float64
-	Price      float64
+	PlaceOrderType
+	Profit       float64
+	CustomerID   string
+	Result       string
+	Time         string
+	Amount       float64
+	Price        float64
+	Simulation   bool
+	WebHookRefID string
 }
 
 // 依訊號來決定倉位及方向
@@ -57,7 +62,7 @@ func (t *TvSiginalData) Convert(d TvWebhookData) {
 	t.TVData.Contracts, _ = strconv.ParseFloat(d.Data.Contracts, 64)
 	t.TVData.PositionSize, _ = strconv.ParseFloat(d.Data.PositionSize, 64)
 	t.TVData.Price, _ = strconv.ParseFloat(d.Price, 64)
-	t.TVData.Symbol = formatSymbol(d.Symbol)
+	t.TVData.Symbol = common.FormatSymbol(d.Symbol)
 	if t.TVData.PositionSize == 0 {
 		//平倉
 		if t.TVData.Action == "sell" {
@@ -94,16 +99,4 @@ func (t *TvSiginalData) Convert(d TvWebhookData) {
 			}
 		}
 	}
-}
-
-func formatSymbol(symbol string) string {
-	// Split the symbol into base and currency parts
-	parts := strings.Split(symbol, "USDT.P")
-	if len(parts) != 2 {
-		return symbol
-	}
-
-	// Format the symbol with "-" before "USDT"
-	formattedSymbol := parts[0] + "-" + "USDT"
-	return formattedSymbol
 }

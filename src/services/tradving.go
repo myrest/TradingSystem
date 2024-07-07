@@ -3,7 +3,10 @@ package services
 import (
 	"TradingSystem/src/models"
 	"context"
+	"errors"
 
+	"cloud.google.com/go/firestore"
+	"cloud.google.com/go/firestore/apiv1/firestorepb"
 	"google.golang.org/api/iterator"
 )
 
@@ -77,14 +80,79 @@ func GetCustomerCurrencySymbosBySymbol(ctx context.Context, symbol string) ([]mo
 }
 
 // SaveWebhookData saves the webhook data to Firestore
-func SaveWebhookData(ctx context.Context, webhookData models.TvWebhookData) error {
+func SaveWebhookData(ctx context.Context, webhookData models.TvWebhookData) (string, error) {
 	client := getFirestoreClient()
-	_, _, err := client.Collection("webhookData").Add(ctx, webhookData)
-	return err
+	doc, _, err := client.Collection("webhookData").Add(ctx, webhookData)
+	if err != nil {
+		return "", err
+	}
+	return doc.ID, nil
 }
 
-func SaveCustomerPlaceOrderResultLog(ctx context.Context, placeorderlog models.Log_TvSiginalData) error {
+func SaveCustomerPlaceOrderResultLog(ctx context.Context, placeorderlog models.Log_TvSiginalData) (string, error) {
 	client := getFirestoreClient()
-	_, _, err := client.Collection("placeOrderLog").Add(ctx, placeorderlog)
-	return err
+	doc, _, err := client.Collection("placeOrderLog").Add(ctx, placeorderlog)
+	if err != nil {
+		return "", err
+	}
+	return doc.ID, nil
+}
+
+func GetPlaceOrderHistory(ctx context.Context, Symbol, CustomerID string, page, pageSize int) ([]models.Log_TvSiginalData, int, error) {
+	client := getFirestoreClient()
+
+	query := client.Collection("placeOrderLog").
+		Where("Symbol", "==", Symbol).
+		Where("CustomerID", "==", CustomerID).
+		OrderBy("Time", firestore.Desc).
+		Offset((page - 1) * pageSize).
+		Limit(pageSize)
+
+	iter := query.Documents(ctx)
+	defer iter.Stop()
+
+	var rtn []models.Log_TvSiginalData
+
+	for {
+		doc, err := iter.Next()
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			return rtn, 0, err
+		}
+
+		var history models.Log_TvSiginalData
+		doc.DataTo(&history)
+		rtn = append(rtn, history)
+	}
+
+	totalpage, err := getTotalPages(ctx, Symbol, CustomerID, pageSize)
+
+	return rtn, totalpage, err
+}
+
+func getTotalPages(ctx context.Context, Symbol, CustomerID string, pageSize int) (int, error) {
+	client := getFirestoreClient()
+
+	// Firestore COUNT query
+	query := client.Collection("placeOrderLog").
+		Where("Symbol", "==", Symbol).
+		Where("CustomerID", "==", CustomerID)
+
+	countQuery := query.NewAggregationQuery().WithCount("all")
+	results, err := countQuery.Get(ctx)
+	if err != nil {
+		return 0, err
+	}
+	count, ok := results["all"]
+	if !ok {
+		return 0, errors.New("firestore: couldn't get alias for COUNT from results")
+	}
+
+	countValue := count.(*firestorepb.Value).GetIntegerValue()
+
+	totalPages := (int(countValue) + pageSize - 1) / pageSize
+
+	return totalPages, nil
 }

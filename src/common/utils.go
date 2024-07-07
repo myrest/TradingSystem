@@ -5,6 +5,7 @@ import (
 	"compress/gzip"
 	"io"
 	"math/rand"
+	"regexp"
 	"time"
 )
 
@@ -32,4 +33,9 @@ func GenerateRandomString(length int) string {
 		b[i] = charset[seededRand.Intn(len(charset))]
 	}
 	return string(b)
+}
+
+// Convert "USDT.P" to "-USDT"
+func FormatSymbol(symbol string) string {
+	return regexp.MustCompile(`USDT\.P`).ReplaceAllString(symbol, "-USDT")
 }
