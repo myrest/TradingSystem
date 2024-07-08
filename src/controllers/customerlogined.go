@@ -252,18 +252,22 @@ func PlaceOrderHistory(c *gin.Context) {
 
 func GetPlaceOrderHistoryBySymbol(c *gin.Context) {
 	symbol := c.Query("symbol")
-	customerid := c.Query("cid")
+	cid := c.DefaultQuery("cid", "")
 	session := sessions.Default(c)
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	pageSize, _ := strconv.Atoi(c.DefaultQuery("pageSize", "10"))
 	symbol = common.FormatSymbol(symbol)
 
-	if customerid == "" {
-		cid := session.Get("id")
-		if cid != nil {
-			customerid = cid.(string)
-		}
+	sessioncid := session.Get("id")
+	var customerid string
+	if sessioncid != nil {
+		customerid = sessioncid.(string)
 	}
+
+	if customerid != "" && isAdmin(c) {
+		customerid = cid
+	}
+
 	if customerid == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "No Customer Data."})
 		return
