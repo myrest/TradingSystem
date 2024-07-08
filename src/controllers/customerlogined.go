@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"TradingSystem/src/bingx"
 	"TradingSystem/src/common"
 	"TradingSystem/src/models"
 	"TradingSystem/src/services"
@@ -192,6 +193,11 @@ func mergeSymboLists(systemSymboList []models.AdminCurrencySymbol, customersymbo
 	return result
 }
 
+type Log_PlaceBetHistoryUI struct {
+	models.Log_TvSiginalData
+	Position string
+}
+
 func PlaceOrderHistory(c *gin.Context) {
 	symbol := c.Query("symbol")
 	customerid := c.Query("cid")
@@ -199,6 +205,8 @@ func PlaceOrderHistory(c *gin.Context) {
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	pageSize, _ := strconv.Atoi(c.DefaultQuery("pageSize", "10"))
 	symbol = common.FormatSymbol(symbol)
+
+	var rtn []Log_PlaceBetHistoryUI
 
 	if customerid == "" {
 		cid := session.Get("id")
@@ -217,8 +225,24 @@ func PlaceOrderHistory(c *gin.Context) {
 		return
 	}
 
+	for i := 0; i < len(list); i++ {
+		positionside := "多"
+		side := "開"
+		if list[i].PositionSideType == bingx.ShortPositionSideType {
+			positionside = "空"
+		}
+		if (list[i].PositionSideType == bingx.ShortPositionSideType && list[i].Side == bingx.BuySideType) ||
+			(list[i].PositionSideType == bingx.LongPositionSideType && list[i].Side == bingx.SellSideType) {
+			side = "平"
+		}
+		rtn = append(rtn, Log_PlaceBetHistoryUI{
+			Log_TvSiginalData: list[i],
+			Position:          side + positionside,
+		})
+	}
+
 	c.HTML(http.StatusOK, "placeorderhistory.html", gin.H{
-		"data":       list,
+		"data":       rtn,
 		"page":       page,
 		"pageSize":   pageSize,
 		"totalPages": totalPages,

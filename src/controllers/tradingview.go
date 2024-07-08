@@ -80,6 +80,7 @@ func processPlaceOrder(Customer models.CustomerCurrencySymboWithCustomer, tv mod
 		Time:           time.Now().UTC().Format(layout),
 		Simulation:     Customer.Simulation,
 		WebHookRefID:   TvWebHookLog,
+		Symbol:         tv.Symbol,
 	}
 
 	//查出目前持倉情況

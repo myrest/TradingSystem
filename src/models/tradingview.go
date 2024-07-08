@@ -54,6 +54,7 @@ type Log_TvSiginalData struct {
 	Price        float64
 	Simulation   bool
 	WebHookRefID string
+	Symbol       string
 }
 
 // 依訊號來決定倉位及方向
