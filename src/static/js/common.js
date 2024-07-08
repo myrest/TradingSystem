@@ -53,5 +53,3 @@ function showDataModal(coin, data) {
 function closeDataModal() {
     document.getElementById('dataModal').style.display = 'none';
 }
-
-document.getElementById('userAvatar').textContent = "X"
