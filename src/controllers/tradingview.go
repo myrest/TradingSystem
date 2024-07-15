@@ -61,7 +61,7 @@ func preProcessPlaceOrder(c *gin.Context, WebhookData models.TvWebhookData) erro
 		wg.Add(1)
 		go func(customer models.CustomerCurrencySymboWithCustomer) {
 			defer wg.Done()
-			processPlaceOrder(customer, tvData, TvWebHookLog)
+			processPlaceOrder(customer, tvData, TvWebHookLog, customer.APIKey, customer.SecretKey)
 		}(customerList[i])
 	}
 	wg.Wait()
@@ -69,7 +69,7 @@ func preProcessPlaceOrder(c *gin.Context, WebhookData models.TvWebhookData) erro
 	return nil
 }
 
-func processPlaceOrder(Customer models.CustomerCurrencySymboWithCustomer, tv models.TvSiginalData, TvWebHookLog string) {
+func processPlaceOrder(Customer models.CustomerCurrencySymboWithCustomer, tv models.TvSiginalData, TvWebHookLog, APIKey, SecertKey string) {
 	client := bingx.NewClient(APIKey, SecertKey, Customer.Simulation)
 	// 定义日期字符串的格式
 	const layout = "2006-01-02 15:04:05"
