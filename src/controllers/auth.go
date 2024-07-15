@@ -28,7 +28,7 @@ func GoogleAuthCallback(c *gin.Context) {
 		return
 	}
 
-	uid, email, name, err := services.VerifyIDTokenAndGetDetails(req.Token)
+	uid, email, name, photo, err := services.VerifyIDTokenAndGetDetails(req.Token)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid ID token"})
 		return
@@ -38,6 +38,7 @@ func GoogleAuthCallback(c *gin.Context) {
 	session.Set("uid", uid)
 	session.Set("name", name)
 	session.Set("email", email)
+	session.Set("photo", photo)
 
 	customer, err := services.GetCustomerByEmail(email)
 	if err == nil && customer != nil {

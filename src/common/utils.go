@@ -5,6 +5,7 @@ import (
 	"compress/gzip"
 	"io"
 	"math/rand"
+	"os"
 	"regexp"
 	"time"
 )
@@ -38,4 +39,12 @@ func GenerateRandomString(length int) string {
 // Convert "USDT.P" to "-USDT"
 func FormatSymbol(symbol string) string {
 	return regexp.MustCompile(`USDT\.P`).ReplaceAllString(symbol, "-USDT")
+}
+
+func IsFileExists(filePath string) bool {
+	info, err := os.Stat(filePath)
+	if os.IsNotExist(err) {
+		return false
+	}
+	return !info.IsDir()
 }

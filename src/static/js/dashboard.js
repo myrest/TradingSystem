@@ -44,6 +44,9 @@ function renderCryptoTable() {
                 <td>
                     <button onclick="editCrypto('${item.symbol}')">編輯</button>
                 </td>
+                <td>
+                    <a href="/restadmin/subscriber?symbol=${item.symbol}">訂閱者</a>
+                </td>
             </tr>
         `;
         tableBody.innerHTML += row;

@@ -21,4 +21,4 @@ vendor/
 *.log
 
 # Firebase
-serviceAccountKey.json
+serviceAccountKey*

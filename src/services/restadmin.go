@@ -168,3 +168,27 @@ func GetLatestWebhook(ctx context.Context) ([]models.TvWebhookData, error) {
 
 	return rtn, nil
 }
+
+func GetSubscribeCustomersBySymbol(ctx context.Context, Symbol string) ([]models.CustomerCurrencySymbol, error) {
+	client := getFirestoreClient()
+
+	iter := client.Collection("customerssymbol").Where("Symbol", "==", Symbol).Documents(ctx)
+	defer iter.Stop()
+
+	var rtn []models.CustomerCurrencySymbol
+	for {
+		doc, err := iter.Next()
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			return nil, err
+		}
+
+		var data models.CustomerCurrencySymbol
+		doc.DataTo(&data)
+		rtn = append(rtn, data)
+	}
+
+	return rtn, nil
+}

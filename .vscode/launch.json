@@ -18,8 +18,8 @@
             "mode": "auto",
             "program": "${workspaceFolder}/src/main.go",
             "env": {
-                "GOOGLE_APPLICATION_CREDENTIALS": "${workspaceFolder}/serviceAccountKey.json",
-                "GIN_MODE": "debug"
+                "GIN_MODE": "debug",
+                "ENVIRONMENT" : "dev",
             }
         }
     ]

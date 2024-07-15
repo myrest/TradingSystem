@@ -25,6 +25,7 @@ func ShowDashboardPage(c *gin.Context) {
 	session := sessions.Default(c)
 	name := session.Get("name")
 	email := session.Get("email")
+	photo := session.Get("photo")
 
 	if name == nil || email == nil {
 		c.Redirect(http.StatusFound, "/login")
@@ -39,6 +40,7 @@ func ShowDashboardPage(c *gin.Context) {
 			c.HTML(http.StatusOK, "iscreatenew.html", gin.H{
 				"Name":  name,
 				"Email": email,
+				"Photo": photo,
 			})
 		} else {
 			c.HTML(http.StatusOK, "dashboard.html", gin.H{
@@ -47,6 +49,7 @@ func ShowDashboardPage(c *gin.Context) {
 				"ApiKey":    customer.APIKey,
 				"SecretKey": customer.SecretKey,
 				"IsAdmin":   customer.IsAdmin,
+				"Photo":     photo,
 			})
 		}
 	} else {
@@ -252,18 +255,22 @@ func PlaceOrderHistory(c *gin.Context) {
 
 func GetPlaceOrderHistoryBySymbol(c *gin.Context) {
 	symbol := c.Query("symbol")
-	customerid := c.Query("cid")
+	cid := c.DefaultQuery("cid", "")
 	session := sessions.Default(c)
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	pageSize, _ := strconv.Atoi(c.DefaultQuery("pageSize", "10"))
 	symbol = common.FormatSymbol(symbol)
 
-	if customerid == "" {
-		cid := session.Get("id")
-		if cid != nil {
-			customerid = cid.(string)
-		}
+	sessioncid := session.Get("id")
+	var customerid string
+	if sessioncid != nil {
+		customerid = sessioncid.(string)
 	}
+
+	if customerid != "" && isAdmin(c) {
+		customerid = cid
+	}
+
 	if customerid == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "No Customer Data."})
 		return

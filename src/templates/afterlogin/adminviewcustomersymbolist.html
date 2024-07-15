@@ -1,0 +1,40 @@
+{{ template "afterloginheader.html" . }}
+<div class="dashboard">
+    <h1>訂閱資料 - {{.symbol}}</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>種類</th>
+                <th>狀態</th>
+                <th>金額</th>
+                <th>記錄</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{range .data}}
+            <tr>
+                <td>{{.CustomerID}}</td>
+                <td>
+                    {{ if .Simulation }}
+                    模擬
+                    {{ else }}
+                    實盤
+                    {{ end }}
+                </td>
+                <td>
+                    {{ if .Status }}
+                    啟用
+                    {{ else }}
+                    停用
+                    {{ end }}
+                </td>
+                <td>{{.Amount}}</td>
+                <td><a href="/customers/placeorderhistory?symbol={{ .Symbol }}&cid={{.CustomerID}}">記錄</a></td>
+            </tr>
+            {{end}}
+        </tbody>
+    </table>
+</div>
+{{ template "beforeloginfooter.html" . }}
+<script src="/static/js/common.js"></script>

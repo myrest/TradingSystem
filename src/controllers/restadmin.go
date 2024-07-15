@@ -147,3 +147,23 @@ func GetAllSymbol(c *gin.Context) {
 
 	c.JSON(http.StatusOK, rtn)
 }
+
+func GetSubscribeCustomerBySymbol(c *gin.Context) {
+	if !isAdmin(c) {
+		c.JSON(http.StatusForbidden, gin.H{"error": "No Permission."})
+		return
+	}
+	//page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	symbol := c.DefaultQuery("symbol", "")
+
+	customerSymbolList, err := services.GetSubscribeCustomersBySymbol(context.Background(), symbol)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.HTML(http.StatusOK, "adminviewcustomersymbolist.html", gin.H{
+		"data":   customerSymbolList,
+		"symbol": symbol,
+	})
+}
