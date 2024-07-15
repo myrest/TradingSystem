@@ -25,6 +25,7 @@ func ShowDashboardPage(c *gin.Context) {
 	session := sessions.Default(c)
 	name := session.Get("name")
 	email := session.Get("email")
+	photo := session.Get("photo")
 
 	if name == nil || email == nil {
 		c.Redirect(http.StatusFound, "/login")
@@ -39,6 +40,7 @@ func ShowDashboardPage(c *gin.Context) {
 			c.HTML(http.StatusOK, "iscreatenew.html", gin.H{
 				"Name":  name,
 				"Email": email,
+				"Photo": photo,
 			})
 		} else {
 			c.HTML(http.StatusOK, "dashboard.html", gin.H{
@@ -47,6 +49,7 @@ func ShowDashboardPage(c *gin.Context) {
 				"ApiKey":    customer.APIKey,
 				"SecretKey": customer.SecretKey,
 				"IsAdmin":   customer.IsAdmin,
+				"Photo":     photo,
 			})
 		}
 	} else {
