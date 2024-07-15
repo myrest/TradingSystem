@@ -192,3 +192,17 @@ func GetSubscribeCustomersBySymbol(ctx context.Context, Symbol string) ([]models
 
 	return rtn, nil
 }
+
+func GetCustomerIDByBingxOrderID(ctx context.Context, OrderID string) (string, error) {
+	client := getFirestoreClient()
+	var data models.Log_TvSiginalData
+	iter := client.Collection("placeOrderLog").Where("Result", "==", OrderID).Limit(1).Documents(ctx)
+	doc, err := iter.Next()
+	if err == iterator.Done {
+		return "", errors.New("OrderID not found")
+	}
+
+	doc.DataTo(&data)
+
+	return data.CustomerID, nil
+}
