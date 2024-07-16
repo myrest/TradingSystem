@@ -22,3 +22,5 @@ vendor/
 
 # Firebase
 serviceAccountKey*
+src/serviceAccountKey*
+src/firebaseConfig*

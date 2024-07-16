@@ -33,7 +33,7 @@ func ShowDashboardPage(c *gin.Context) {
 	}
 
 	//todo:新建好像有點問題？
-	customer, err := services.GetCustomerByEmail(email.(string))
+	customer, err := services.GetCustomerByEmail(c, email.(string))
 	if err == nil {
 		if customer == nil {
 			//帳號不存在，要建立一個新

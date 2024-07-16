@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"TradingSystem/src/models"
 	"TradingSystem/src/services"
 	"net/http"
 
@@ -40,7 +39,7 @@ func GoogleAuthCallback(c *gin.Context) {
 	session.Set("email", email)
 	session.Set("photo", photo)
 
-	customer, err := services.GetCustomerByEmail(email)
+	customer, err := services.GetCustomerByEmail(c, email)
 	if err == nil && customer != nil {
 		session.Set("isadmin", customer.IsAdmin)
 		session.Set("id", customer.ID)
@@ -52,24 +51,6 @@ func GoogleAuthCallback(c *gin.Context) {
 
 	if err := session.Save(); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save session"})
-		return
-	}
-
-	c.Redirect(http.StatusFound, "/customers/dashboard")
-}
-
-func CreateAccount(c *gin.Context) {
-	name := c.PostForm("name")
-	email := c.PostForm("email")
-
-	customer := &models.Customer{
-		Name:  name,
-		Email: email,
-	}
-
-	err := services.CreateCustomerAccount(customer)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create account"})
 		return
 	}
 

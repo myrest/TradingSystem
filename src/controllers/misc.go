@@ -16,10 +16,10 @@ func FireAuthConfig(c *gin.Context) {
 		log.Fatalf("Error getting current working directory: %v", err)
 	}
 	firebaseKey := os.Getenv("ENVIRONMENT")
-	if firebaseKey != "" && strings.ToLower(firebaseKey) == "dev" {
-		firebaseKey = "dev"
-	} else {
+	if firebaseKey != "" && strings.ToLower(firebaseKey) == "prod" {
 		firebaseKey = "prod"
+	} else {
+		firebaseKey = "dev"
 	}
 
 	configFilePath := filepath.Join(wd, "./../firebaseConfig_"+firebaseKey+".json")

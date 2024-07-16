@@ -3,6 +3,7 @@ package services
 import (
 	"TradingSystem/src/models"
 	"context"
+	"errors"
 	"log"
 
 	"google.golang.org/api/iterator"
@@ -10,6 +11,10 @@ import (
 
 func CreateCustomer(ctx context.Context, customer *models.Customer) (string, error) {
 	client := getFirestoreClient()
+	dbCustomer, _ := GetCustomerByEmail(ctx, customer.Email)
+	if dbCustomer != nil {
+		return "", errors.New("account exist")
+	}
 
 	doc, _, err := client.Collection("customers").Add(ctx, customer)
 	if err != nil {
@@ -54,8 +59,7 @@ func DeleteCustomer(ctx context.Context, id string) error {
 	return err
 }
 
-func GetCustomerByEmail(email string) (*models.Customer, error) {
-	ctx := context.Background()
+func GetCustomerByEmail(ctx context.Context, email string) (*models.Customer, error) {
 	client := getFirestoreClient()
 
 	iter := client.Collection("customers").Where("Email", "==", email).Limit(1).Documents(ctx)
@@ -75,7 +79,7 @@ func GetCustomerByEmail(email string) (*models.Customer, error) {
 	return &customer, nil
 }
 
-func CreateCustomerAccount(customer *models.Customer) error {
+func CreateCustomerAccountxxxxx(customer *models.Customer) error {
 	ctx := context.Background()
 	client := getFirestoreClient()
 
