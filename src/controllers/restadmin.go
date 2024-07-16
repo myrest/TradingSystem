@@ -4,6 +4,7 @@ import (
 	"TradingSystem/src/models"
 	"TradingSystem/src/services"
 	"context"
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -33,6 +34,38 @@ func AddNewSymbol(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"data": rtn})
+}
+
+func DeleteSymbol(c *gin.Context) {
+
+	log.Printf("DeleteSymbol")
+	if !isAdmin(c) {
+		c.JSON(http.StatusForbidden, gin.H{"error": "No Permission."})
+		return
+	}
+
+	symbol := c.Query("symbol")
+	cert := c.Query("cert")
+	adminSymbol, err := services.GetSymbol(c, symbol, cert)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	err = services.DeleteAdminSymbol(c, adminSymbol.Symbol)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	//把customer的訂閱停掉。
+	err = services.DisableCustomerSymbolStatus(c, adminSymbol.Symbol)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{"data": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"data": ""})
 }
 
 type updateStatusRequest struct {

@@ -10,6 +10,7 @@ func RegisterRestAdminRoutes(r *gin.Engine) {
 	authRoutes := r.Group("/restadmin")
 	{
 		authRoutes.POST("/symbol", controllers.AddNewSymbol)
+		authRoutes.DELETE("/symbol", controllers.DeleteSymbol)
 		authRoutes.PATCH("/symbolStatus", controllers.UpdateStatus)
 		authRoutes.PATCH("/symbolMessage", controllers.UpdateMessage)
 		authRoutes.GET("/symbol", controllers.GetAllSymbol)

@@ -21,7 +21,7 @@
 <!-- 新增/編輯貨幣的模態框 -->
 <div id="cryptoModal" class="modal">
     <div class="modal-content">
-        <span class="close" onclick="closeModal()">&times;</span>
+        <span class="close" onclick="closeDashboardModal()">&times;</span>
         <h2 id="modalTitle">新增/編輯貨幣</h2>
         <p>
             <strong>幣種：</strong>
@@ -35,12 +35,18 @@
     </div>
 </div>
 
-<!-- 顯示資料內容的模態框 -->
-<div id="dataModal" class="modal">
+<!-- 刪除貨幣的模態框 -->
+<div id="cryptoDeleteModal" class="modal">
     <div class="modal-content">
-        <span class="close" onclick="closeDataModal()">&times;</span>
-        <h2 id="dataModalTitle"></h2>
-        <p id="dataModalContent"></p>
+        <span class="close" onclick="closeDashboardModal()">&times;</span>
+        <h2>刪除貨幣</h2>
+        <p>
+            <strong>幣種：</strong>
+            <span id="deleteSymbo"></span>
+            <input type="hidden" id="modalCoinDel">
+            <input type="hidden" id="modalCertDel">
+        </p>
+        <button id="deletesymbobtn" onclick="deleteCrypto()" class="delete-btn">刪除</button>
     </div>
 </div>
 

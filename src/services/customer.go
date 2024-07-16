@@ -59,6 +59,7 @@ func GetCustomerByEmail(email string) (*models.Customer, error) {
 	client := getFirestoreClient()
 
 	iter := client.Collection("customers").Where("Email", "==", email).Limit(1).Documents(ctx)
+	defer iter.Stop()
 	doc, err := iter.Next()
 	if err == iterator.Done {
 		return nil, nil // Customer not found
