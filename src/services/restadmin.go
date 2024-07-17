@@ -13,11 +13,30 @@ import (
 	"google.golang.org/api/iterator"
 )
 
-func CreateNewSymbol(ctx context.Context, Symbol models.AdminCurrencySymbol) (models.AdminCurrencySymbol, error) {
+const (
+	ErrorCode_001 = "symbol not found"
+	ErrorCode_002 = "incorrect Symbol cert"
+)
+
+func CreateNewSymbol(ctx context.Context, Symbol models.AdminCurrencySymbol) (*models.AdminCurrencySymbol, error) {
 	client := getFirestoreClient()
 	Symbol.Cert = common.GenerateRandomString(8)
+
+	//檢查有無重覆
+	if _, err := GetSymbol(ctx, Symbol.Symbol, Symbol.Cert); err != nil && err.Error() != ErrorCode_001 {
+		return nil, err
+	}
+
 	_, _, err := client.Collection("SymbolData").Add(ctx, Symbol)
-	return Symbol, err
+	if err != nil {
+		return nil, err
+	}
+
+	if systemSymbol, err := GetSymbol(ctx, Symbol.Symbol, Symbol.Cert); err != nil {
+		return nil, err
+	} else {
+		return systemSymbol, nil
+	}
 }
 
 func DeleteAdminSymbol(ctx context.Context, Symbol string) error {
@@ -144,19 +163,19 @@ func GetAllSymbol(ctx context.Context) ([]models.AdminCurrencySymbol, error) {
 	return symboList, nil
 }
 
-func GetSymbol(ctx context.Context, Symbol, Cert string) (models.AdminCurrencySymbol, error) {
+func GetSymbol(ctx context.Context, Symbol, Cert string) (*models.AdminCurrencySymbol, error) {
 	client := getFirestoreClient()
-	var rtn models.AdminCurrencySymbol
+	var rtn *models.AdminCurrencySymbol
 	iter := client.Collection("SymbolData").Where("Symbol", "==", Symbol).Limit(1).Documents(ctx)
 	defer iter.Stop()
 	doc, err := iter.Next()
 	if err == iterator.Done {
-		return rtn, errors.New("symbol not found")
+		return nil, errors.New(ErrorCode_001)
 	}
 
 	doc.DataTo(&rtn)
 	if rtn.Cert != Cert {
-		return rtn, errors.New("incorrect Symbol cert")
+		return rtn, errors.New(ErrorCode_002)
 	}
 
 	return rtn, nil

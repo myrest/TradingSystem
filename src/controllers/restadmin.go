@@ -130,9 +130,9 @@ func UpdateMessage(c *gin.Context) {
 
 	data = models.AdminCurrencySymbol{
 		CurrencySymbolBase: models.CurrencySymbolBase{
-			Symbol:  req.Symbol,
-			Message: req.Message,
+			Symbol: req.Symbol,
 		},
+		Message: req.Message,
 	}
 
 	if err := services.UpdateSymbolMessage(context.Background(), data); err != nil {

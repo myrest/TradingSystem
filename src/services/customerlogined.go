@@ -77,3 +77,29 @@ func GetCustomerCurrency(ctx context.Context, customerID string) ([]models.Custo
 
 	return customerCurrencySymbos, nil
 }
+
+func DeleteCustomerCurrency(ctx context.Context, CustomerID, Symbol string) error {
+	client := getFirestoreClient()
+
+	iter := client.Collection("customerssymbol").Where("Symbol", "==", Symbol).
+		Where("CustomerID", "==", CustomerID).
+		Documents(ctx)
+	defer iter.Stop()
+
+	for {
+		doc, err := iter.Next()
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			return err
+		}
+
+		// 删除文档
+		_, err = doc.Ref.Delete(ctx)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}

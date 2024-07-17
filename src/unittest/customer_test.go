@@ -9,8 +9,15 @@ import (
 
 func TestCreateCustomer(t *testing.T) {
 	testEmail := "johndoe@example.com"
+	c := context.Background()
+	CreateCustomerTEST(t, c, testEmail, false)
+	GetCustomerTEST(t, c, testEmail)
+	UpdateCustomerTest(t, c, testEmail)
+	DeleteAccountTest(t, c, testEmail)
+}
+
+func CreateCustomerTEST(t *testing.T, c context.Context, testEmail string, OnlyTestCreation bool) {
 	type args struct {
-		ctx      context.Context
 		customer *models.Customer
 	}
 	tests := []struct {
@@ -22,7 +29,6 @@ func TestCreateCustomer(t *testing.T) {
 		{
 			name: "建立帳號",
 			args: args{
-				ctx: context.Background(),
 				customer: &models.Customer{
 					Name:      "John Doe",
 					Email:     testEmail,
@@ -37,7 +43,6 @@ func TestCreateCustomer(t *testing.T) {
 		{
 			name: "重覆建立帳號",
 			args: args{
-				ctx: context.Background(),
 				customer: &models.Customer{
 					Name:      "John Doe",
 					Email:     testEmail,
@@ -53,7 +58,7 @@ func TestCreateCustomer(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := services.CreateCustomer(tt.args.ctx, tt.args.customer)
+			got, err := services.CreateCustomer(c, tt.args.customer)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("CreateCustomer() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -62,31 +67,31 @@ func TestCreateCustomer(t *testing.T) {
 				t.Errorf("CreateCustomer() = %v, want %v", got, "沒有取得CustomerID")
 			}
 		})
+		if OnlyTestCreation {
+			return
+		}
 	}
+}
 
-	c := context.Background()
-	GetCustomerTEST(t, c, testEmail)
-	UpdateCustomerTest(t, c, testEmail)
+func DeleteAccountTest(t *testing.T, c context.Context, testEmail string) {
+	t.Run("刪除帳號", func(t *testing.T) {
+		dbCustomer, _ := services.GetCustomerByEmail(c, testEmail)
+		if dbCustomer != nil {
+			services.DeleteCustomer(c, dbCustomer.ID)
+		}
 
-	dbCustomer, _ := services.GetCustomerByEmail(c, testEmail)
-	if dbCustomer != nil {
-		services.DeleteCustomer(c, dbCustomer.ID)
-	}
-	t.Run("GetCustomerByEmail", func(t *testing.T) {
 		dbCustomer, err := services.GetCustomerByEmail(c, testEmail)
 		if err != nil {
-			t.Errorf("GetCustomer() error = %v", err)
-			return
+			t.Errorf("GetCustomerByEmail() error = %v", err)
 		}
 		if dbCustomer != nil {
 			t.Errorf("GetCustomerByEmail() 測試 帳號刪除失敗 = %v", dbCustomer.ID)
-			return
 		}
 	})
 }
 
 func GetCustomerTEST(t *testing.T, c context.Context, email string) {
-	t.Run("GetCustomerByEmail", func(t *testing.T) {
+	t.Run("依Email取得帳號資料", func(t *testing.T) {
 		_, err := services.GetCustomerByEmail(c, email)
 		if err != nil {
 			t.Errorf("GetCustomerByEmail() error = %v", err)
@@ -94,14 +99,14 @@ func GetCustomerTEST(t *testing.T, c context.Context, email string) {
 		}
 	})
 
-	t.Run("GetCustomerByEmail", func(t *testing.T) {
+	t.Run("依不存在的Email取得帳號資料", func(t *testing.T) {
 		dbCustomer, err := services.GetCustomerByEmail(c, "NoEmail")
 		if err != nil {
 			t.Errorf("GetCustomerByEmail() error = %v", err)
 			return
 		}
 		if dbCustomer != nil {
-			t.Errorf("GetCustomerByEmail() 怎麼可能有帳號？ = %v", dbCustomer.ID)
+			t.Errorf("GetCustomerByEmail() 不應該取得帳號，CustomerID = %v", dbCustomer.ID)
 			return
 		}
 	})
@@ -109,7 +114,7 @@ func GetCustomerTEST(t *testing.T, c context.Context, email string) {
 
 func UpdateCustomerTest(t *testing.T, c context.Context, email string) {
 	newName := "RoyTEST"
-	t.Run("GetCustomerByEmail", func(t *testing.T) {
+	t.Run("更新帳號", func(t *testing.T) {
 		dbCustomer, err := services.GetCustomerByEmail(c, email)
 		if err != nil {
 			t.Errorf("GetCustomerByEmail() error = %v", err)

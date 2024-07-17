@@ -65,7 +65,6 @@ func init() {
 	if err != nil {
 		log.Fatalf("error initializing Firestore client: %v\n", err)
 	}
-
 }
 
 func getFirestoreClient() *firestore.Client {
