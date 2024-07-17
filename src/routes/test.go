@@ -1,16 +1,15 @@
 package routes
 
 import (
+	"TradingSystem/src/common"
 	"TradingSystem/src/controllers"
-	"os"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 )
 
 func RegisterMyTestRoutes(r *gin.Engine) {
-	firebaseKey := os.Getenv("ENVIRONMENT")
-	if firebaseKey != "" && strings.ToLower(firebaseKey) == "dev" {
+	settings := common.GetEnvironmentSetting()
+	if settings.Env == common.Dev {
 		authRoutes := r.Group("/test")
 		{
 			authRoutes.GET("/getbyid", controllers.GetBingxOrderByID)

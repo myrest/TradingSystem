@@ -78,11 +78,3 @@ func GetCustomerByEmail(ctx context.Context, email string) (*models.Customer, er
 	customer.ID = doc.Ref.ID
 	return &customer, nil
 }
-
-func CreateCustomerAccountxxxxx(customer *models.Customer) error {
-	ctx := context.Background()
-	client := getFirestoreClient()
-
-	_, _, err := client.Collection("customers").Add(ctx, customer)
-	return err
-}
