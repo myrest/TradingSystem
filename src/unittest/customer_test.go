@@ -16,6 +16,7 @@ func TestCreateCustomer(t *testing.T) {
 	DeleteAccountTest(t, c, testEmail)
 }
 
+// 預設都為False
 func CreateCustomerTEST(t *testing.T, c context.Context, testEmail string, OnlyTestCreation bool) {
 	type args struct {
 		customer *models.Customer
@@ -30,11 +31,13 @@ func CreateCustomerTEST(t *testing.T, c context.Context, testEmail string, OnlyT
 			name: "建立帳號",
 			args: args{
 				customer: &models.Customer{
-					Name:      "John Doe",
-					Email:     testEmail,
-					APIKey:    "apikey",
-					SecretKey: "secretkey",
-					IsAdmin:   false,
+					Name:             "John Doe",
+					Email:            testEmail,
+					APIKey:           "apikey",
+					SecretKey:        "secretkey",
+					IsAdmin:          false,
+					IsAutoSubscribe:  false,
+					AutoSubscribReal: false,
 				},
 			},
 			wantNotEmpty: true,

@@ -14,7 +14,7 @@ func TestUpdateCustomerCurrency(t *testing.T) {
 	adminSymbol := "TESTUSDT.P"
 	c := context.Background()
 	//先建立測試需要的資料
-	CreateAdminSymbolTest(t, c, adminSymbol, true)
+	CreateAdminSymbolWithoutAutoSubscriberTest(t, c, adminSymbol, true)
 	CreateCustomerTEST(t, c, testEmail, true)
 
 	//本函式測試標的

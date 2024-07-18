@@ -128,7 +128,7 @@ func GetAllCustomerSymbol(c *gin.Context) {
 		return
 	}
 
-	customersymboList, err := services.GetCustomerCurrency(context.Background(), customerid)
+	customersymboList, err := services.GetAllCustomerCurrency(context.Background(), customerid)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

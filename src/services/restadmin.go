@@ -35,8 +35,50 @@ func CreateNewSymbol(ctx context.Context, Symbol models.AdminCurrencySymbol) (*m
 	if systemSymbol, err := GetSymbol(ctx, Symbol.Symbol, Symbol.Cert); err != nil {
 		return nil, err
 	} else {
+		//處理自動訂閱
+		err = updateAutoSubscriberCustomerSymbol(ctx, *systemSymbol)
+		if err != nil {
+			log.Printf("updateAutoSubscriberCustomerSymbol got error=%v", err)
+		}
 		return systemSymbol, nil
 	}
+}
+
+// 只有在Create的時候才幫有自動訂閱的客戶加上去。
+func updateAutoSubscriberCustomerSymbol(ctx context.Context, AdminSymbol models.AdminCurrencySymbol) error {
+	client := getFirestoreClient()
+
+	//找出有啟用自動訂閱的客戶
+	iter := client.Collection("customers").Where("IsAutoSubscribe", "==", true).
+		Documents(ctx)
+	defer iter.Stop()
+
+	var dbCustomer models.Customer
+
+	for {
+		doc, err := iter.Next()
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			return err
+		}
+		doc.DataTo(&dbCustomer)
+		data := models.CustomerCurrencySymbol{
+			CurrencySymbolBase: models.CurrencySymbolBase{
+				Symbol: AdminSymbol.CurrencySymbolBase.Symbol,
+				Status: true,
+			},
+			Simulation: !dbCustomer.AutoSubscribReal,
+			CustomerID: dbCustomer.ID,
+			Amount:     float64(dbCustomer.AutoSubscribAmount),
+		}
+		err = UpdateCustomerCurrency(ctx, &data)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func DeleteAdminSymbol(ctx context.Context, Symbol string) error {
