@@ -31,11 +31,11 @@ function toggleSubscribeStatus(obj){
     if (obj.innerText == "停用") {
         obj.innerText = "啟用"
         obj.classList.remove("disabled");
-        document.querySelector('#SubscribeType').style.display='block'
+        document.querySelector('#GroupSubscribeType').style.display='block'
     }else{
         obj.classList.add("disabled");
         obj.innerText = "停用"
-        document.querySelector('#SubscribeType').style.display='none'
+        document.querySelector('#GroupSubscribeType').style.display='none'
     }
 }
 

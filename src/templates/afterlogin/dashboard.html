@@ -32,7 +32,7 @@
                         {{ if .AutoSubscribeStatus }}啟用{{ else }}停用{{ end }}
                     </span>
                 </div>
-                <span id="SubscribeType" class="{{ if not .AutoSubscribeStatus }}displayNone{{ end }}">
+                <span id="GroupSubscribeType" class="{{ if not .AutoSubscribeStatus }}displayNone{{ end }}">
                     跟隨盤種：
                     <span class="status-toggle  {{ if not .AutoSubscribeType }}disabled{{ end }}" onclick="toggleSubscribeType(this)" id="SubscribeType">
                         {{ if .AutoSubscribeType }}實盤{{ else }}模擬{{ end }}
