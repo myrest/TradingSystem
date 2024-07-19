@@ -77,6 +77,15 @@ func GetEnvironmentSetting() SystemSettings {
 	root := os.Getenv("KEYROOT")
 	env := os.Getenv("ENVIRONMENT")
 
+	//沒有設定Key的目錄
+	if root == "" {
+		wd, err := os.Getwd()
+		if err != nil {
+			log.Fatalf("Error getting current working directory: %v", err)
+		}
+		root = filepath.Dir(wd)
+	}
+
 	if env == "" || strings.ToLower(env) == "prod" {
 		rtn.Env = Prod
 	} else {
