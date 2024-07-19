@@ -1,4 +1,7 @@
 {{ template "afterloginheader.html" . }}
+<nav class="nav-bar">
+    <button class="back-button" onclick="goBack()">回到上頁</button>
+</nav>
 <div class="dashboard">
     <h1>下單歷史 - {{.symbol}}</h1>
     <table>

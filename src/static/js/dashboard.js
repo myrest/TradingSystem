@@ -8,9 +8,19 @@ function showAddModal() {
     document.getElementById('cryptoModal').style.display = 'block';
 }
 
+// 顯示刪除貨幣模態框
+function showDeleteModal(Symbol, Cert) {
+    document.getElementById('deleteSymbo').textContent = Symbol
+    document.getElementById('modalCoinDel').value = Symbol;
+    document.getElementById('modalCertDel').value = Cert;
+    document.getElementById('cryptoDeleteModal').style.display = 'block';
+}
+
+
 // 關閉模態框
-function closeModal() {
+function closeDashboardModal() {
     document.getElementById('cryptoModal').style.display = 'none';
+    document.getElementById('cryptoDeleteModal').style.display = 'none';
 }
 
 function fetchSymbolData() {
@@ -43,6 +53,7 @@ function renderCryptoTable() {
                 <td><span class="status-toggle ${item.status ? '' : 'disabled'}" onclick="toggleStatus('${item.symbol}')">${item.status ? '啟用' : '停用'}</span></td>
                 <td>
                     <button onclick="editCrypto('${item.symbol}')">編輯</button>
+                    <button class="delete-btn" onclick="showDeleteModal('${item.symbol}', '${item.cert}')">刪除</button>
                 </td>
                 <td>
                     <a href="/restadmin/subscriber?symbol=${item.symbol}">訂閱者</a>
@@ -72,7 +83,7 @@ function toggleStatus(symbol) {
         }).then(response => {
             if (!response.ok) {
                 console.error(`Failed to update status for item ${item} to ${status}`);
-            }else{
+            } else {
                 renderCryptoTable();
             }
         });
@@ -103,10 +114,11 @@ function saveCrypto() {
                             symbol: data.data.symbol,
                             status: data.data.status,
                             message: data.data.message,
-                            cert : data.data.cert,
+                            cert: data.data.cert,
                             positionsize: '',
                         }
                     );
+                    renderCryptoTable();
                 })
             }
         })
@@ -127,11 +139,34 @@ function saveCrypto() {
         }).then(response => {
             if (!response.ok) {
                 console.error(`Failed to update status for item ${item} to ${status}`);
+            } else {
+                renderCryptoTable();
             }
         });
     }
-    renderCryptoTable();
-    closeModal();
+    closeDashboardModal();
+}
+
+// 刪除加密貨幣數據
+function deleteCrypto() {
+    const symbol = document.getElementById('modalCoinDel').value;
+    const cert = document.getElementById('modalCertDel').value;
+
+    fetch('/restadmin/symbol?symbol=' + symbol + '&cert=' + cert, {
+        method: 'DELETE',
+    }).then(response => {
+        if (response.ok) {
+            response.json().then(data => {
+                const crypto = coinData.find(item => item.symbol === symbol);
+                const index = array.indexOf(crypto);
+                if (index > -1) { // only splice array when item is found
+                    array.splice(index, 1); // 2nd parameter means remove one item only
+                }
+            })
+            renderCryptoTable();
+        }
+    })
+    closeDashboardModal();
 }
 
 // 顯示編輯貨幣模態框
@@ -146,12 +181,13 @@ function editCrypto(id) {
 }
 
 // 初始化頁面
-fetchSymbolData()
+fetchSymbolData();
 renderCryptoTable();
+closeDashboardModal();
 
 // 窗口點擊事件，用於關閉模態框
 window.onclick = function (event) {
-    if (event.target == document.getElementById('cryptoModal')) {
-        closeModal();
+    if (event.target == document.getElementById('cryptoModal') || event.target == document.getElementById('cryptoDeleteModal')) {
+        closeDashboardModal();
     }
 }

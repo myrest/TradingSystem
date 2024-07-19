@@ -13,17 +13,131 @@ import (
 	"google.golang.org/api/iterator"
 )
 
-func CreateNewSymbol(ctx context.Context, Symbol models.AdminCurrencySymbol) (models.AdminCurrencySymbol, error) {
+const (
+	ErrorCode_001 = "symbol not found"
+	ErrorCode_002 = "incorrect Symbol cert"
+)
+
+func CreateNewSymbol(ctx context.Context, Symbol models.AdminCurrencySymbol) (*models.AdminCurrencySymbol, error) {
 	client := getFirestoreClient()
 	Symbol.Cert = common.GenerateRandomString(8)
+
+	//檢查有無重覆
+	if _, err := GetSymbol(ctx, Symbol.Symbol, Symbol.Cert); err != nil && err.Error() != ErrorCode_001 {
+		return nil, err
+	}
+
 	_, _, err := client.Collection("SymbolData").Add(ctx, Symbol)
-	return Symbol, err
+	if err != nil {
+		return nil, err
+	}
+
+	if systemSymbol, err := GetSymbol(ctx, Symbol.Symbol, Symbol.Cert); err != nil {
+		return nil, err
+	} else {
+		//處理自動訂閱
+		err = updateAutoSubscriberCustomerSymbol(ctx, *systemSymbol)
+		if err != nil {
+			log.Printf("updateAutoSubscriberCustomerSymbol got error=%v", err)
+		}
+		return systemSymbol, nil
+	}
+}
+
+// 只有在Create的時候才幫有自動訂閱的客戶加上去。
+func updateAutoSubscriberCustomerSymbol(ctx context.Context, AdminSymbol models.AdminCurrencySymbol) error {
+	client := getFirestoreClient()
+
+	//找出有啟用自動訂閱的客戶
+	iter := client.Collection("customers").Where("IsAutoSubscribe", "==", true).
+		Documents(ctx)
+	defer iter.Stop()
+
+	var dbCustomer models.Customer
+
+	for {
+		doc, err := iter.Next()
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			return err
+		}
+		doc.DataTo(&dbCustomer)
+		data := models.CustomerCurrencySymbol{
+			CurrencySymbolBase: models.CurrencySymbolBase{
+				Symbol: AdminSymbol.CurrencySymbolBase.Symbol,
+				Status: true,
+			},
+			Simulation: !dbCustomer.AutoSubscribReal,
+			CustomerID: dbCustomer.ID,
+			Amount:     float64(dbCustomer.AutoSubscribAmount),
+		}
+		err = UpdateCustomerCurrency(ctx, &data)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func DeleteAdminSymbol(ctx context.Context, Symbol string) error {
+	client := getFirestoreClient()
+
+	iter := client.Collection("SymbolData").Where("Symbol", "==", Symbol).Documents(ctx)
+	defer iter.Stop()
+
+	for {
+		doc, err := iter.Next()
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			return err
+		}
+
+		// 删除文档
+		_, err = doc.Ref.Delete(ctx)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func DisableCustomerSymbolStatus(ctx context.Context, Symbol string) error {
+	client := getFirestoreClient()
+
+	// 使用 Firestore 批量写入操作
+	bulkWriter := client.BulkWriter(ctx)
+
+	iter := client.Collection("customerssymbol").Where("Symbol", "==", Symbol).Documents(ctx)
+	defer iter.Stop()
+
+	for {
+		doc, err := iter.Next()
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			return err
+		}
+		updates := []firestore.Update{}
+		updates = append(updates, firestore.Update{ // Append update for each doc
+			Path:  "Status",
+			Value: false,
+		})
+		bulkWriter.Update(doc.Ref, updates)
+	}
+	bulkWriter.Flush()
+	return nil
 }
 
 func getSymbolFromDB(ctx context.Context, symbol string) (*firestore.DocumentSnapshot, error) {
 	client := getFirestoreClient()
 
 	iter := client.Collection("SymbolData").Where("Symbol", "==", symbol).Limit(1).Documents(ctx)
+	defer iter.Stop()
 	doc, err := iter.Next()
 	if err != nil {
 		return nil, err
@@ -66,6 +180,7 @@ func UpdateSymbolMessage(ctx context.Context, Symbol models.AdminCurrencySymbol)
 func GetAllSymbol(ctx context.Context) ([]models.AdminCurrencySymbol, error) {
 	client := getFirestoreClient()
 	iter := client.Collection("SymbolData").Documents(ctx)
+	defer iter.Stop()
 
 	var symboList []models.AdminCurrencySymbol
 	for {
@@ -90,18 +205,19 @@ func GetAllSymbol(ctx context.Context) ([]models.AdminCurrencySymbol, error) {
 	return symboList, nil
 }
 
-func GetSymbol(ctx context.Context, Symbol, Cert string) (models.AdminCurrencySymbol, error) {
+func GetSymbol(ctx context.Context, Symbol, Cert string) (*models.AdminCurrencySymbol, error) {
 	client := getFirestoreClient()
-	var rtn models.AdminCurrencySymbol
+	var rtn *models.AdminCurrencySymbol
 	iter := client.Collection("SymbolData").Where("Symbol", "==", Symbol).Limit(1).Documents(ctx)
+	defer iter.Stop()
 	doc, err := iter.Next()
 	if err == iterator.Done {
-		return rtn, errors.New("symbol not found")
+		return nil, errors.New(ErrorCode_001)
 	}
 
 	doc.DataTo(&rtn)
 	if rtn.Cert != Cert {
-		return rtn, errors.New("incorrect Symbol cert")
+		return rtn, errors.New(ErrorCode_002)
 	}
 
 	return rtn, nil
@@ -131,7 +247,7 @@ func GetLatestWebhook(ctx context.Context) ([]models.TvWebhookData, error) {
 				//OrderBy("Time", firestore.Desc).
 				Limit(1).
 				Documents(ctx)
-
+			defer iter.Stop()
 			doc, err := iter.Next()
 			if err == iterator.Done {
 				mu.Lock()
@@ -197,6 +313,7 @@ func GetCustomerIDByBingxOrderID(ctx context.Context, OrderID string) (string, e
 	client := getFirestoreClient()
 	var data models.Log_TvSiginalData
 	iter := client.Collection("placeOrderLog").Where("Result", "==", OrderID).Limit(1).Documents(ctx)
+	defer iter.Stop()
 	doc, err := iter.Next()
 	if err == iterator.Done {
 		return "", errors.New("OrderID not found")

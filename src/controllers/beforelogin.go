@@ -30,7 +30,7 @@ func CreateCustomer(c *gin.Context) {
 		Email: session.Get("email").(string),
 	}
 	//先查該Email是否有被用掉。
-	dbCustomer, err := services.GetCustomerByEmail(customer.Email)
+	dbCustomer, err := services.GetCustomerByEmail(c, customer.Email)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error getting customer"})
 		return
@@ -65,16 +65,20 @@ func UpdateCustomer(c *gin.Context) {
 
 	session := sessions.Default(c)
 	email := session.Get("email")
-	dbCustomer, err := services.GetCustomerByEmail(email.(string))
+	dbCustomer, err := services.GetCustomerByEmail(c, email.(string))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Customer data not exist."})
 		return
 	}
 
-	dbCustomer.APIKey = strings.TrimSpace(customer.APIKey)
-	dbCustomer.SecretKey = strings.TrimSpace(customer.SecretKey)
+	customer.APIKey = strings.TrimSpace(customer.APIKey)
+	customer.SecretKey = strings.TrimSpace(customer.SecretKey)
+	//因為ID, Name, Email不可改，所以拿原來的套回去
+	customer.ID = dbCustomer.ID
+	customer.Name = dbCustomer.Name
+	customer.Email = dbCustomer.Email
 
-	if err := services.UpdateCustomer(context.Background(), dbCustomer); err != nil {
+	if err := services.UpdateCustomer(context.Background(), &customer); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error updating customer"})
 		return
 	}

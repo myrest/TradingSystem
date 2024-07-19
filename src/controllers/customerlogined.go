@@ -32,8 +32,7 @@ func ShowDashboardPage(c *gin.Context) {
 		return
 	}
 
-	//todo:新建好像有點問題？
-	customer, err := services.GetCustomerByEmail(email.(string))
+	customer, err := services.GetCustomerByEmail(c, email.(string))
 	if err == nil {
 		if customer == nil {
 			//帳號不存在，要建立一個新
@@ -44,12 +43,15 @@ func ShowDashboardPage(c *gin.Context) {
 			})
 		} else {
 			c.HTML(http.StatusOK, "dashboard.html", gin.H{
-				"Name":      name,
-				"Email":     email,
-				"ApiKey":    customer.APIKey,
-				"SecretKey": customer.SecretKey,
-				"IsAdmin":   customer.IsAdmin,
-				"Photo":     photo,
+				"Name":                name,
+				"Email":               email,
+				"ApiKey":              customer.APIKey,
+				"SecretKey":           customer.SecretKey,
+				"IsAdmin":             customer.IsAdmin,
+				"Photo":               photo,
+				"AutoSubscribeStatus": customer.IsAutoSubscribe,
+				"AutoSubscribeType":   customer.AutoSubscribReal,
+				"AutoSubscribeAmount": customer.AutoSubscribAmount,
 			})
 		}
 	} else {
@@ -128,7 +130,7 @@ func GetAllCustomerSymbol(c *gin.Context) {
 		return
 	}
 
-	customersymboList, err := services.GetCustomerCurrency(context.Background(), customerid)
+	customersymboList, err := services.GetAllCustomerCurrency(context.Background(), customerid)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -157,13 +159,13 @@ func mergeSymboLists(systemSymboList []models.AdminCurrencySymbol, customersymbo
 			// 如果 systemSymboList 中的 Symbol 存在于 customerSymboMap 中
 			result = append(result, models.CustomerCurrencySymboResponse{
 				CurrencySymbolBase: models.CurrencySymbolBase{
-					Symbol:  customerSymbol.Symbol,
-					Status:  customerSymbol.Status,
-					Message: Symbol.Message,
+					Symbol: customerSymbol.Symbol,
+					Status: customerSymbol.Status,
 				},
 				SystemStatus: systemStatus,
 				Amount:       customerSymbol.Amount,
 				Simulation:   customerSymbol.Simulation,
+				Message:      Symbol.Message,
 			})
 		} else {
 			// 如果 systemSymboList 中的 Symbol 不存在于 customerSymboMap 中，创建一个新的
@@ -177,13 +179,13 @@ func mergeSymboLists(systemSymboList []models.AdminCurrencySymbol, customersymbo
 			}
 			result = append(result, models.CustomerCurrencySymboResponse{
 				CurrencySymbolBase: models.CurrencySymbolBase{
-					Symbol:  newCustomerSymbol.Symbol,
-					Status:  newCustomerSymbol.Status,
-					Message: newCustomerSymbol.Message,
+					Symbol: newCustomerSymbol.Symbol,
+					Status: newCustomerSymbol.Status,
 				},
 				SystemStatus: systemStatus,
 				Amount:       newCustomerSymbol.Amount,
 				Simulation:   newCustomerSymbol.Simulation,
+				Message:      "The symbol do not exist in the system.",
 			})
 		}
 	}

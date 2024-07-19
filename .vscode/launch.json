@@ -18,6 +18,7 @@
             "mode": "auto",
             "program": "${workspaceFolder}/src/main.go",
             "env": {
+                "KEYROOT": "/Users/roy_tai/TradingSystem/",
                 "GIN_MODE": "debug",
                 "ENVIRONMENT" : "dev",
             }

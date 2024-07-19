@@ -12,6 +12,8 @@ require (
 	google.golang.org/api v0.186.0
 )
 
+require github.com/joho/godotenv v1.5.1
+
 require (
 	cloud.google.com/go v0.115.0 // indirect
 	cloud.google.com/go/auth v0.6.0 // indirect

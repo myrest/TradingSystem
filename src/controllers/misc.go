@@ -1,35 +1,27 @@
 package controllers
 
 import (
+	"TradingSystem/src/common"
 	"log"
 	"net/http"
 	"os"
-	"path/filepath"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 )
 
-func FireAuthConfig(c *gin.Context) {
-	wd, err := os.Getwd()
-	if err != nil {
-		log.Fatalf("Error getting current working directory: %v", err)
-	}
-	firebaseKey := os.Getenv("ENVIRONMENT")
-	if firebaseKey != "" && strings.ToLower(firebaseKey) == "dev" {
-		firebaseKey = "dev"
-	} else {
-		firebaseKey = "prod"
-	}
+var OauthContent []byte
 
-	configFilePath := filepath.Join(wd, "./../firebaseConfig_"+firebaseKey+".json")
+func init() {
+	settings := common.GetEnvironmentSetting()
 
-	fileContent, err := os.ReadFile(configFilePath)
+	fileContent, err := os.ReadFile(settings.OAuthKeyFullPath)
 	if err != nil {
 		log.Printf("Error reading JSON file: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to read configuration file"})
 		return
 	}
+	OauthContent = fileContent
+}
 
-	c.Data(http.StatusOK, "application/json", fileContent)
+func FireAuthConfig(c *gin.Context) {
+	c.Data(http.StatusOK, "application/json", OauthContent)
 }

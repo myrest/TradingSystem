@@ -4,9 +4,6 @@ import (
 	"TradingSystem/src/common"
 	"context"
 	"log"
-	"os"
-	"path/filepath"
-	"strings"
 	"sync"
 
 	"cloud.google.com/go/firestore"
@@ -45,22 +42,11 @@ func init() {
 	ctx := context.Background()
 	var err error
 
-	wd, err := os.Getwd()
-	if err != nil {
-		log.Fatalf("Error getting current working directory: %v", err)
-	}
-	firebaseKey := os.Getenv("ENVIRONMENT")
-	if firebaseKey != "" && strings.ToLower(firebaseKey) == "dev" {
-		firebaseKey = "dev"
-	} else {
-		firebaseKey = "prod"
-	}
-
-	credsPath := filepath.Join(wd, "./../serviceAccountKey_"+firebaseKey+".json")
+	settings := common.GetEnvironmentSetting()
 
 	var sa option.ClientOption
-	if common.IsFileExists(credsPath) {
-		sa = option.WithCredentialsFile(credsPath)
+	if common.IsFileExists(settings.FireBaseKeyFullPath) {
+		sa = option.WithCredentialsFile(settings.FireBaseKeyFullPath)
 	} else {
 		creds, err := getSecret(ctx, "projects/635522974118/secrets/GOOGLE_APPLICATION_CREDENTIALS/versions/latest")
 		if err != nil {
@@ -79,7 +65,6 @@ func init() {
 	if err != nil {
 		log.Fatalf("error initializing Firestore client: %v\n", err)
 	}
-
 }
 
 func getFirestoreClient() *firestore.Client {

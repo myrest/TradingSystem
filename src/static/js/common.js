@@ -18,9 +18,16 @@ function logout() {
 function saveKeys() {
     const apiKey = document.getElementById('apiKey').value;
     const secretKey = document.getElementById('secretKey').value;
+    const autosubscribe = document.getElementById('SubscribeStatus').innerText == "啟用";
+    const subscribtype = document.getElementById('SubscribeType').innerText != "實盤";
+    const amount = Number(document.getElementById('SubscribeAmount').value);
+    
     const data = {
         apiKey,
         secretKey,
+        autosubscribe,
+        subscribtype,
+        amount
     };
 
     fetch('/customers/update', {
