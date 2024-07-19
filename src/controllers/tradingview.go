@@ -101,9 +101,15 @@ func processPlaceOrder(Customer models.CustomerCurrencySymboWithCustomer, tv mod
 			oepntrade.PositionSide = bingx.ShortPositionSideType
 		}
 	}
+
 	//計算下單數量
 	var profit float64
 	placeAmount := tv.TVData.Contracts * Customer.Amount / 100
+	if Customer.Simulation {
+		//模擬盤固定10000U
+		placeAmount = 10000 / 100
+	}
+
 	if (tv.PlaceOrderType.Side == bingx.BuySideType && tv.PlaceOrderType.PositionSideType == bingx.ShortPositionSideType) ||
 		(tv.PlaceOrderType.Side == bingx.SellSideType && tv.PlaceOrderType.PositionSideType == bingx.LongPositionSideType) {
 		if oepntrade.AvailableAmt < placeAmount {
