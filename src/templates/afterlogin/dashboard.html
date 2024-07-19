@@ -10,36 +10,57 @@
         <button class="logout-btn" onclick="logout()">登出</button>
     </div>
 
-{{ if .IsAdmin }}
+    {{ if .IsAdmin }}
     {{ template "adminblock.html" . }}
-{{ else }}
+    {{ else }}
     <div class="api-keys">
-        <h2>API Keys</h2>
-        <p>
-            <strong>API Key：</strong>
-            <input type="text" id="apiKey" placeholder="Enter API Key" value="{{ .ApiKey }}">
-        </p>
-        <p>
-            <strong>Secret Key：</strong>
-            <input type="text" id="secretKey" placeholder="Enter Secret Key" value="{{ .SecretKey }}">
-        </p>
-        <button onclick="saveKeys()">保存</button>
+        <div class="api-keys-header" onclick="toggleCustomerSettings()">
+            <h2>設定</h2>
+        </div>
+        <div class="api-keys-content">
+            <p>
+                <strong>API Key：</strong>
+                <input type="text" id="apiKey" placeholder="Enter API Key" value="{{ .ApiKey }}">
+                <strong>Secret Key：</strong>
+                <input type="text" id="secretKey" placeholder="Enter Secret Key" value="{{ .SecretKey }}">
+            </p>
+            <div class="auto-follow-settings">
+                <h3>自動跟單設定</h3>
+                <div class="setting-group">
+                    自動跟隨新幣種狀態：
+                    <span class="status-toggle {{ if not .AutoSubscribeStatus }}disabled{{ end }}" onclick="toggleSubscribeStatus(this)" id="SubscribeStatus">
+                        {{ if .AutoSubscribeStatus }}啟用{{ else }}停用{{ end }}
+                    </span>
+                </div>
+                <span id="SubscribeType" class="{{ if not .AutoSubscribeStatus }}displayNone{{ end }}">
+                    跟隨盤種：
+                    <span class="status-toggle  {{ if not .AutoSubscribeType }}disabled{{ end }}" onclick="toggleSubscribeType(this)" id="SubscribeType">
+                        {{ if .AutoSubscribeType }}實盤{{ else }}模擬{{ end }}
+                    </span>
+                    <div id="amountSetting" class="setting-group {{ if not .AutoSubscribeType }}displayNone{{ end }}">
+                        <label for="amount">金額：</label>
+                        <input type="number" id="SubscribeAmount" value="{{ .AutoSubscribeAmount }}" placeholder="輸入跟單金額">
+                    </div>
+                </span>
+            </div>
+            <button onclick="saveKeys()">保存</button>
+        </div>
     </div>
     {{ template "customerblock.html" . }}
-{{ end }}
+    {{ end }}
 
-{{ template "beforeloginfooter.html" . }}
+    {{ template "beforeloginfooter.html" . }}
 
-<!-- 顯示資料內容的模態框 -->
-<div id="dataModal" class="modal">
-    <div class="modal-content">
-        <span class="close" onclick="closeDataModal()">&times;</span>
-        <h2 id="dataModalTitle"></h2>
-        <p id="dataModalContent"></p>
+    <!-- 顯示資料內容的模態框 -->
+    <div id="dataModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeDataModal()">&times;</span>
+            <h2 id="dataModalTitle"></h2>
+            <p id="dataModalContent"></p>
+        </div>
     </div>
-</div>
 
-<script src="/static/js/common.js"></script>
-<script>
-    document.getElementById('userAvatar').textContent = "X"
-</script>
+    <script src="/static/js/common.js"></script>
+    <script>
+        document.getElementById('userAvatar').textContent = "X"
+    </script>

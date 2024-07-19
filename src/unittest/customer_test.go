@@ -31,13 +31,8 @@ func CreateCustomerTEST(t *testing.T, c context.Context, testEmail string, OnlyT
 			name: "建立帳號",
 			args: args{
 				customer: &models.Customer{
-					Name:             "John Doe",
-					Email:            testEmail,
-					APIKey:           "apikey",
-					SecretKey:        "secretkey",
-					IsAdmin:          false,
-					IsAutoSubscribe:  false,
-					AutoSubscribReal: false,
+					Name:  "John Doe",
+					Email: testEmail,
 				},
 			},
 			wantNotEmpty: true,

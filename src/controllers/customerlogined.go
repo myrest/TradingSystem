@@ -32,7 +32,6 @@ func ShowDashboardPage(c *gin.Context) {
 		return
 	}
 
-	//todo:新建好像有點問題？
 	customer, err := services.GetCustomerByEmail(c, email.(string))
 	if err == nil {
 		if customer == nil {
@@ -44,12 +43,15 @@ func ShowDashboardPage(c *gin.Context) {
 			})
 		} else {
 			c.HTML(http.StatusOK, "dashboard.html", gin.H{
-				"Name":      name,
-				"Email":     email,
-				"ApiKey":    customer.APIKey,
-				"SecretKey": customer.SecretKey,
-				"IsAdmin":   customer.IsAdmin,
-				"Photo":     photo,
+				"Name":                name,
+				"Email":               email,
+				"ApiKey":              customer.APIKey,
+				"SecretKey":           customer.SecretKey,
+				"IsAdmin":             customer.IsAdmin,
+				"Photo":               photo,
+				"AutoSubscribeStatus": customer.IsAutoSubscribe,
+				"AutoSubscribeType":   customer.AutoSubscribReal,
+				"AutoSubscribeAmount": customer.AutoSubscribAmount,
 			})
 		}
 	} else {

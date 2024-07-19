@@ -71,10 +71,14 @@ func UpdateCustomer(c *gin.Context) {
 		return
 	}
 
-	dbCustomer.APIKey = strings.TrimSpace(customer.APIKey)
-	dbCustomer.SecretKey = strings.TrimSpace(customer.SecretKey)
+	customer.APIKey = strings.TrimSpace(customer.APIKey)
+	customer.SecretKey = strings.TrimSpace(customer.SecretKey)
+	//因為ID, Name, Email不可改，所以拿原來的套回去
+	customer.ID = dbCustomer.ID
+	customer.Name = dbCustomer.Name
+	customer.Email = dbCustomer.Email
 
-	if err := services.UpdateCustomer(context.Background(), dbCustomer); err != nil {
+	if err := services.UpdateCustomer(context.Background(), &customer); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error updating customer"})
 		return
 	}
