@@ -71,8 +71,10 @@ func preProcessPlaceOrder(c *gin.Context, WebhookData models.TvWebhookData) erro
 
 func processPlaceOrder(Customer models.CustomerCurrencySymboWithCustomer, tv models.TvSiginalData, TvWebHookLog, APIKey, SecertKey string) {
 	client := bingx.NewClient(APIKey, SecertKey, Customer.Simulation)
+	//client.Debug = true
 	// 定义日期字符串的格式
 	const layout = "2006-01-02 15:04:05"
+	ctx := context.Background()
 
 	placeOrderLog := models.Log_TvSiginalData{
 		PlaceOrderType: tv.PlaceOrderType,
@@ -84,10 +86,10 @@ func processPlaceOrder(Customer models.CustomerCurrencySymboWithCustomer, tv mod
 	}
 
 	//查出目前持倉情況
-	positions, err := client.NewGetOpenPositionsService().Symbol(tv.TVData.Symbol).Do(context.Background())
+	positions, err := client.NewGetOpenPositionsService().Symbol(tv.TVData.Symbol).Do(ctx)
 	if err != nil {
 		placeOrderLog.Result = "Get open position failed."
-		asyncWriteTVsignalData(placeOrderLog)
+		asyncWriteTVsignalData(placeOrderLog, ctx)
 		return
 	}
 
@@ -106,8 +108,8 @@ func processPlaceOrder(Customer models.CustomerCurrencySymboWithCustomer, tv mod
 	var profit float64
 	placeAmount := tv.TVData.Contracts * Customer.Amount / 100
 	if Customer.Simulation {
-		//模擬盤固定10000U
-		placeAmount = 10000 / 100
+		//模擬盤固定使用10000U計算
+		placeAmount = tv.TVData.Contracts * 10000 / 100
 	}
 
 	if (tv.PlaceOrderType.Side == bingx.BuySideType && tv.PlaceOrderType.PositionSideType == bingx.ShortPositionSideType) ||
@@ -125,7 +127,7 @@ func processPlaceOrder(Customer models.CustomerCurrencySymboWithCustomer, tv mod
 
 	if placeAmount == 0 {
 		placeOrderLog.Result = "Place amount is 0."
-		asyncWriteTVsignalData(placeOrderLog)
+		asyncWriteTVsignalData(placeOrderLog, ctx)
 		return
 	}
 
@@ -136,12 +138,12 @@ func processPlaceOrder(Customer models.CustomerCurrencySymboWithCustomer, tv mod
 		Quantity(placeAmount).
 		Type(bingx.MarketOrderType).
 		Side(tv.PlaceOrderType.Side).
-		Do(context.Background())
+		Do(ctx)
 
 	//如果下單有問題，就記錄下來後return
 	if err != nil {
 		placeOrderLog.Result = "Place order failed:" + err.Error()
-		asyncWriteTVsignalData(placeOrderLog)
+		asyncWriteTVsignalData(placeOrderLog, ctx)
 		return
 	}
 	log.Printf("Customer:%s %v order created: %+v", Customer.CustomerID, bingx.MarketOrderType, order)
@@ -154,7 +156,7 @@ func processPlaceOrder(Customer models.CustomerCurrencySymboWithCustomer, tv mod
 	placedOrder, err := client.NewGetOrderService().
 		Symbol(tv.TVData.Symbol).
 		OrderId(order.OrderId).
-		Do(context.Background())
+		Do(ctx)
 
 	//無法取得下單的資料
 	if err != nil {
@@ -166,13 +168,13 @@ func processPlaceOrder(Customer models.CustomerCurrencySymboWithCustomer, tv mod
 
 	placeOrderLog.Profit = profit
 	placeOrderLog.Price = placedPrice
-	asyncWriteTVsignalData(placeOrderLog)
+	asyncWriteTVsignalData(placeOrderLog, ctx)
 }
 
 // 寫log
-func asyncWriteTVsignalData(tvdata models.Log_TvSiginalData) {
+func asyncWriteTVsignalData(tvdata models.Log_TvSiginalData, c context.Context) {
 	go func(data models.Log_TvSiginalData) {
-		_, err := services.SaveCustomerPlaceOrderResultLog(context.Background(), data)
+		_, err := services.SaveCustomerPlaceOrderResultLog(c, data)
 		if err != nil {
 			log.Printf("Failed to save webhook data: %v", err)
 		}

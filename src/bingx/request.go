@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"reflect"
+	"strconv"
 )
 
 type params map[string]interface{}
@@ -28,7 +29,19 @@ func (r *request) addParam(key string, value interface{}) *request {
 	if r.query == nil {
 		r.query = url.Values{}
 	}
-	r.query.Add(key, fmt.Sprintf("%v", value))
+	var strValue string
+	switch v := value.(type) {
+	case float64:
+		// 使用 strconv.FormatFloat 避免科学记号
+		strValue = strconv.FormatFloat(v, 'f', -1, 64)
+	case float32:
+		// 如果是 float32，同样使用 strconv.FormatFloat
+		strValue = strconv.FormatFloat(float64(v), 'f', -1, 32)
+	default:
+		strValue = fmt.Sprintf("%v", value)
+	}
+
+	r.query.Add(key, strValue)
 	return r
 }
 
