@@ -60,7 +60,8 @@ func (s *CreateOrderService) Quantity(quantity float64) *CreateOrderService {
 }
 
 type CreateOrderResponse struct {
-	OrderId int64 `json:"orderId"`
+	OrderId   int64  `json:"orderId"`
+	OrderId_A string `json:"orderID"` //BingX的Bug導致
 }
 
 func (s *CreateOrderService) Do(ctx context.Context, opts ...RequestOption) (res *CreateOrderResponse, err error) {
