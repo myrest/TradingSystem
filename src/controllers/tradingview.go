@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"TradingSystem/src/bingx"
+	"TradingSystem/src/common"
 	"TradingSystem/src/models"
 	"TradingSystem/src/services"
 	"context"
@@ -71,7 +72,7 @@ func preProcessPlaceOrder(c *gin.Context, WebhookData models.TvWebhookData) erro
 
 func processPlaceOrder(Customer models.CustomerCurrencySymboWithCustomer, tv models.TvSiginalData, TvWebHookLog, APIKey, SecertKey string) {
 	client := bingx.NewClient(APIKey, SecertKey, Customer.Simulation)
-	//client.Debug = true
+	// client.Debug = true
 	// 定义日期字符串的格式
 	const layout = "2006-01-02 15:04:05"
 	ctx := context.Background()
@@ -94,18 +95,30 @@ func processPlaceOrder(Customer models.CustomerCurrencySymboWithCustomer, tv mod
 	}
 
 	var oepntrade openPosition //目前持倉
-	if len(*positions) > 0 {
-		amount, _ := strconv.ParseFloat((*positions)[0].AvailableAmt, 64)
-		oepntrade.AvailableAmt = amount
-		if strings.ToLower((*positions)[0].PositionSide) == "long" {
-			oepntrade.PositionSide = bingx.LongPositionSideType
-		} else {
-			oepntrade.PositionSide = bingx.ShortPositionSideType
+	var totalAmount float64    //總倉位
+	var totalPrice float64     //總成本
+	var totalFee float64       //總雜支，包含資金費率、手續費
+
+	//這裏假設由系統來下單，只會持倉固定方向，所以全部累計
+	for i, position := range *positions {
+		amount := common.Decimal(position.AvailableAmt)
+		price := common.Decimal(position.AvgPrice)
+		fee := common.Decimal(position.RealisedProfit)
+
+		totalAmount += amount
+		totalPrice += price * amount
+		totalFee += fee
+		if i == 0 {
+			if strings.ToLower(position.PositionSide) == "long" {
+				oepntrade.PositionSide = bingx.LongPositionSideType
+			} else {
+				oepntrade.PositionSide = bingx.ShortPositionSideType
+			}
 		}
 	}
+	oepntrade.AvailableAmt = totalAmount
 
 	//計算下單數量
-	var profit float64
 	placeAmount := tv.TVData.Contracts * Customer.Amount / 100
 	if Customer.Simulation {
 		//模擬盤固定使用10000U計算
@@ -163,11 +176,29 @@ func processPlaceOrder(Customer models.CustomerCurrencySymboWithCustomer, tv mod
 		placeOrderLog.Result = placeOrderLog.Result + "\nGet placed order failed:" + err.Error()
 	}
 
-	profit, _ = strconv.ParseFloat(placedOrder.Profit, 64)
-	placedPrice, _ := strconv.ParseFloat(placedOrder.AveragePrice, 64)
+	//profit := common.Decimal(placedOrder.Profit)
+	placedPrice := common.Decimal(placedOrder.AveragePrice)
+	fee := common.Decimal(placedOrder.Fee)
 
-	placeOrderLog.Profit = profit
+	//placeOrderLog.Profit = profit //取不到值，所以要自己算。
 	placeOrderLog.Price = placedPrice
+
+	if tv.TVData.PositionSize == 0 {
+		//平倉，計算收益
+		totalFee = totalFee + fee
+		placeValue := placedPrice * placeAmount //成交額
+
+		if strings.ToLower(string(placedOrder.PositionSide)) == "long" {
+			//平多，place - 持倉
+			placeOrderLog.Profit = placeValue - totalPrice
+		} else {
+			//平空，持倉 - place
+			placeOrderLog.Profit = totalPrice - placeValue
+		}
+		placeOrderLog.Profit = common.Decimal(placeOrderLog.Profit)
+		placeOrderLog.Fee = totalFee
+	}
+
 	asyncWriteTVsignalData(placeOrderLog, ctx)
 }
 
