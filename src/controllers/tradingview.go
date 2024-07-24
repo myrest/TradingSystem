@@ -119,7 +119,11 @@ func processPlaceOrder(Customer models.CustomerCurrencySymboWithCustomer, tv mod
 	oepntrade.AvailableAmt = totalAmount
 
 	//計算下單數量
-	placeAmount := tv.TVData.Contracts * Customer.Amount / 100
+	Leverage := Customer.Leverage
+	if Leverage == 0 { //向下相容，為了舊客戶，沒有Leverage設定
+		Leverage = 10
+	}
+	placeAmount := tv.TVData.Contracts * Customer.Amount * Customer.Leverage / 1000
 	if Customer.Simulation {
 		//模擬盤固定使用10000U計算
 		placeAmount = tv.TVData.Contracts * 10000 / 100

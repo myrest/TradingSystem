@@ -14,28 +14,28 @@ function toggleCustomerSettings() {
 var kk
 
 //切換實盤、模擬盤
-function toggleSubscribeType(obj){
+function toggleSubscribeType(obj) {
     if (obj.innerText == "實盤") {
         obj.innerText = "模擬"
         obj.classList.add("disabled");
-        document.querySelector('#amountSetting').style.display='none'
-    }else{
+        document.querySelector('#amountSetting').style.visibility = 'hidden'
+    } else {
         obj.classList.remove("disabled");
         obj.innerText = "實盤"
-        document.querySelector('#amountSetting').style.display='block'
+        document.querySelector('#amountSetting').style.visibility = 'visible'
     }
 }
 
 //自動跟單切換手動、自動
-function toggleSubscribeStatus(obj){
+function toggleSubscribeStatus(obj) {
     if (obj.innerText == "停用") {
         obj.innerText = "啟用"
         obj.classList.remove("disabled");
-        document.querySelector('#GroupSubscribeType').style.display='block'
-    }else{
+        document.querySelector('#GroupSubscribeType').style.visibility = 'visible'
+    } else {
         obj.classList.add("disabled");
         obj.innerText = "停用"
-        document.querySelector('#GroupSubscribeType').style.display='none'
+        document.querySelector('#GroupSubscribeType').style.visibility = 'hidden'
     }
 }
 
@@ -68,12 +68,12 @@ function renderCryptoTable() {
     tableBody.innerHTML = '';
     coinData.forEach(item => {
         sysdisabled = ""
-        if (item.SystemStatus == "Disabled"){
+        if (item.SystemStatus == "Disabled") {
             sysdisabled = "SysDisabled"
         }
-        if (item.simulation){
+        if (item.simulation) {
             displayamount = 'displayNone'
-        }else{
+        } else {
             displayamount = 'displayBlock'
         }
         const row = `
@@ -81,7 +81,12 @@ function renderCryptoTable() {
                 <td>${item.symbol} <span class="info-icon" onclick="showDataModal('${item.symbol}', '${item.message.replace(/\n/g, '<br>')}')"><i class="fa-regular fa-file"></i></span></td>
                 <td><span class="status-toggle ${item.status ? '' : 'disabled'} ${sysdisabled}" onclick="updateCustomerCurrency('${item.symbol}', 'Status')">${item.status ? '啟用' : '停用'}</span></td>
                 <td><span class="status-toggle ${!item.simulation ? '' : 'disabled'} ${sysdisabled}" onclick="updateCustomerCurrency('${item.symbol}', 'Simulation')">${item.simulation ? '模擬' : '實盤'}</span></td>
-                <td><input type="text" class="amount-input ${displayamount}" name="amount-${item.symbol}" value="${item.amount || 0}" ${item.SystemStatus} onchange="updateCustomerCurrency('${item.symbol}', 'Amount')"></td>
+                <td>
+                    <span class="${displayamount}" >
+                        <input type="text" style="width:30%" name="amount-${item.symbol}" value="${item.amount || 0}" ${item.SystemStatus} onchange="updateCustomerCurrency('${item.symbol}', 'Amount')">
+                        X <input type="text" style="width:50px" name="leverage-${item.symbol}" value="${item.leverage || 0}" ${item.SystemStatus} onchange="updateCustomerCurrency('${item.symbol}', 'Amount')">
+                    </span>
+                </td>
                 <td><a href="/customers/placeorderhistory?symbol=${item.symbol}">記錄</a></td>
             </tr>
         `;
@@ -114,14 +119,16 @@ function _updateCustomerSymbol(data) {
 function updateCustomerCurrency(Symbol, updatetype) {
     const crypto = coinData.find(item => item.symbol === Symbol);
     if (crypto) {
-        if (crypto.SystemStatus != "Enabled"){
+        if (crypto.SystemStatus != "Enabled") {
             alert('該幣種目前停止用。');
             return
         }
-        switch  (updatetype){
+        switch (updatetype) {
             case "Amount":
                 const amount = document.getElementsByName('amount-' + Symbol)[0].value;
+                const leverage = document.getElementsByName('leverage-' + Symbol)[0].value < 1 ? 1 : document.getElementsByName('leverage-' + Symbol)[0].value;
                 crypto.amount = amount
+                crypto.leverage = leverage
                 break;
             case "Status":
                 crypto.status = crypto.status ? false : true;
@@ -133,6 +140,7 @@ function updateCustomerCurrency(Symbol, updatetype) {
             'symbol': Symbol,
             'status': crypto.status.toString(),
             'amount': crypto.amount.toString(),
+            'leverage': crypto.leverage.toString(),
             'simulation': crypto.simulation.toString(),
         };
         _updateCustomerSymbol(customersymbol)
@@ -141,7 +149,7 @@ function updateCustomerCurrency(Symbol, updatetype) {
 
 // 初始化頁面
 fetchSymbolData()
-renderCryptoTable();
+//renderCryptoTable();
 
 // 窗口點擊事件，用於關閉模態框
 window.onclick = function (event) {

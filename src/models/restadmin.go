@@ -14,6 +14,7 @@ type AdminCurrencySymbol struct {
 type CustomerCurrencySymbol struct {
 	CurrencySymbolBase
 	Amount     float64 `json:"amount"`
+	Leverage   float64 `json:"leverage"`
 	Simulation bool    `json:"simulation"`
 	CustomerID string
 }
@@ -21,6 +22,7 @@ type CustomerCurrencySymbol struct {
 type CustomerCurrencySymboResponse struct {
 	CurrencySymbolBase
 	Amount       float64 `json:"amount"`
+	Leverage     float64 `json:"leverage"`
 	Simulation   bool    `json:"simulation"`
 	Message      string  `json:"message"`
 	SystemStatus string
