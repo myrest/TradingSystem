@@ -86,22 +86,18 @@ func UpdateCustomerSymbol(c *gin.Context) {
 
 	session := sessions.Default(c)
 	input.CustomerID = session.Get("id").(string)
-	var APIkey, SecretKey string
 
-	iAPIkey := session.Get("apikey")
-	iSecretKey := session.Get("secertkey")
-	if iAPIkey != nil {
-		APIkey = iAPIkey.(string)
-	}
-	if iSecretKey != nil {
-		SecretKey = iSecretKey.(string)
+	customerid := session.Get("id").(string)
+	dbCustomer, err := services.GetCustomer(c, customerid)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 	}
 
 	var errormessage string
 
 	//有key，啟用時要檢查餘額
-	if APIkey != "" && SecretKey != "" && input.Status {
-		freeamount, err := services.GetAccountBalance(APIkey, SecretKey)
+	if dbCustomer.APIKey != "" && dbCustomer.SecretKey != "" && input.Status {
+		freeamount, err := services.GetAccountBalance(dbCustomer.APIKey, dbCustomer.SecretKey)
 		if err != nil || input.Amount > freeamount {
 			if err != nil {
 				errormessage = err.Error()
@@ -111,7 +107,7 @@ func UpdateCustomerSymbol(c *gin.Context) {
 		}
 	}
 
-	err := services.UpdateCustomerCurrency(context.Background(), &input)
+	err = services.UpdateCustomerCurrency(context.Background(), &input)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Update customer Symbol failed. " + err.Error()})
 		return
@@ -272,7 +268,8 @@ func GetPlaceOrderHistoryBySymbol(c *gin.Context) {
 		customerid = sessioncid.(string)
 	}
 
-	if customerid != "" && isAdmin(c) {
+	//只有管理員可以看到其它人的記錄。
+	if customerid != "" && session.Get("isadmin") != nil && session.Get("isadmin").(bool) {
 		customerid = cid
 	}
 

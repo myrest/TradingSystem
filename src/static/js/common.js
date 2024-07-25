@@ -60,3 +60,23 @@ function showDataModal(coin, data) {
 function closeDataModal() {
     document.getElementById('dataModal').style.display = 'none';
 }
+
+//系統功能列
+function toggleSystemMenu() {
+    const menuPopup = document.getElementById('menuPopup');
+    if (menuPopup.style.display === 'none' || menuPopup.style.display === '') {
+        menuPopup.style.display = 'block';
+    } else {
+        menuPopup.style.display = 'none';
+    }
+}
+
+// Close the system menu if clicked outside
+window.onclick = function(event) {
+    if (!event.target.matches('.menu-button') && !event.target.matches('.fa-bars')) {
+        const menuPopup = document.getElementById('menuPopup');
+        if (menuPopup.style.display === 'block') {
+            menuPopup.style.display = 'none';
+        }
+    }
+}

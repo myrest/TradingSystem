@@ -113,18 +113,17 @@ button.delete-btn {
 .api-keys-header {
     cursor: pointer;
     display: flex;
-    justify-content: space-between;
     align-items: center;
 }
 .api-keys-content {
     padding: 15px;
     display: none;
 }
-.api-keys-header:after {
+.api-keys-header::before {
     content: '\002B'; /* Unicode character for "plus" sign (+) */
     font-size: 20px;
 }
-.api-keys-header.active:after {
+.api-keys-header.active::before {
     content: "\2212"; /* Unicode character for "minus" sign (-) */
 }
 
@@ -262,4 +261,59 @@ th {
 
 .high-message{
     color: red;
+}
+
+/*功能選單*/
+.title-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.menu-button {
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    transition: color 0.3s ease;    
+}
+
+.menu-popup {
+    display: none;
+    background-color: white;
+    border: 1px solid #ccc;
+    padding: 10px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    float: right;
+}
+
+.menu-popup ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+
+.menu-popup ul li {
+    padding: 5px 0;
+}
+
+.menu-popup ul li {
+    padding: 10px 15px;
+    transition: background-color 0.3s ease;
+}
+
+.menu-popup ul li:hover {
+    background-color: #f8f9fa;
+}
+
+.menu-popup ul li a {
+    text-decoration: none;
+    color: #333;
+    display: block;
+    font-size: 16px;
+}
+
+.menu-popup ul li a i {
+    margin-right: 10px;
+    width: 20px;
+    text-align: center;
 }

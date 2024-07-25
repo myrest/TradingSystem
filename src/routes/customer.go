@@ -2,12 +2,14 @@ package routes
 
 import (
 	"TradingSystem/src/controllers"
+	"TradingSystem/src/middleware"
 
 	"github.com/gin-gonic/gin"
 )
 
 func RegisterCustomerRoutes(r *gin.Engine) {
 	customerRoutes := r.Group("/customers")
+	customerRoutes.Use(middleware.CustomerMiddleware())
 	{
 		customerRoutes.GET("/placeorderhistory", controllers.PlaceOrderHistory)
 		customerRoutes.GET("/getplaceorderhistory", controllers.GetPlaceOrderHistoryBySymbol)

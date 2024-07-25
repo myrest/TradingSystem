@@ -2,12 +2,14 @@ package routes
 
 import (
 	"TradingSystem/src/controllers"
+	"TradingSystem/src/middleware"
 
 	"github.com/gin-gonic/gin"
 )
 
 func RegisterRestAdminRoutes(r *gin.Engine) {
 	authRoutes := r.Group("/restadmin")
+	authRoutes.Use(middleware.AdminMiddleware())
 	{
 		authRoutes.POST("/symbol", controllers.AddNewSymbol)
 		authRoutes.DELETE("/symbol", controllers.DeleteSymbol)

@@ -4,17 +4,12 @@ import (
 	"TradingSystem/src/models"
 	"TradingSystem/src/services"
 	"context"
-	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
 
 func AddNewSymbol(c *gin.Context) {
-	if !isAdmin(c) {
-		c.JSON(http.StatusForbidden, gin.H{"error": "No Permission."})
-		return
-	}
 	var data models.AdminCurrencySymbol
 
 	if err := c.BindJSON(&data); err != nil {
@@ -37,13 +32,6 @@ func AddNewSymbol(c *gin.Context) {
 }
 
 func DeleteSymbol(c *gin.Context) {
-
-	log.Printf("DeleteSymbol")
-	if !isAdmin(c) {
-		c.JSON(http.StatusForbidden, gin.H{"error": "No Permission."})
-		return
-	}
-
 	symbol := c.Query("symbol")
 	cert := c.Query("cert")
 	adminSymbol, err := services.GetSymbol(c, symbol, cert)
@@ -74,10 +62,6 @@ type updateStatusRequest struct {
 }
 
 func UpdateStatus(c *gin.Context) {
-	if !isAdmin(c) {
-		c.JSON(http.StatusForbidden, gin.H{"error": "No Permission."})
-		return
-	}
 	var data models.AdminCurrencySymbol
 	var req updateStatusRequest
 
@@ -111,10 +95,6 @@ type updateMessageRequest struct {
 }
 
 func UpdateMessage(c *gin.Context) {
-	if !isAdmin(c) {
-		c.JSON(http.StatusForbidden, gin.H{"error": "No Permission."})
-		return
-	}
 	var data models.AdminCurrencySymbol
 	var req updateMessageRequest
 
@@ -142,11 +122,6 @@ func UpdateMessage(c *gin.Context) {
 }
 
 func GetAllSymbol(c *gin.Context) {
-	if !isAdmin(c) {
-		c.JSON(http.StatusForbidden, gin.H{"error": "No Permission."})
-		return
-	}
-
 	var rtn []models.AdminSymboListUI
 
 	symboList, err := services.GetAllSymbol(context.Background())
@@ -182,10 +157,6 @@ func GetAllSymbol(c *gin.Context) {
 }
 
 func GetSubscribeCustomerBySymbol(c *gin.Context) {
-	if !isAdmin(c) {
-		c.JSON(http.StatusForbidden, gin.H{"error": "No Permission."})
-		return
-	}
 	//page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	symbol := c.DefaultQuery("symbol", "")
 
