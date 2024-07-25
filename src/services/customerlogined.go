@@ -1,6 +1,8 @@
 package services
 
 import (
+	"TradingSystem/src/bingx"
+	"TradingSystem/src/common"
 	"TradingSystem/src/models"
 	"context"
 	"errors"
@@ -44,13 +46,45 @@ func UpdateCustomerCurrency(ctx context.Context, customercurrency *models.Custom
 		return err
 	}
 
+	//改為固定10倍
+	if customercurrency.Simulation {
+		customercurrency.Leverage = 10
+	}
+
 	var data models.CustomerCurrencySymbol
 	doc.DataTo(&data)
 	data.Status = customercurrency.Status
 	data.Amount = customercurrency.Amount
+	data.Leverage = customercurrency.Leverage
 	data.Simulation = customercurrency.Simulation
 
 	_, err = client.Collection("customerssymbol").Doc(doc.Ref.ID).Set(ctx, data)
+
+	if err != nil {
+		return err
+	}
+
+	if customercurrency.Status {
+		//幫客戶改槓桿
+		bingxclient := bingx.NewClient(customer.APIKey, customer.SecretKey, customercurrency.Simulation)
+		//改多單槓桿
+		_, err = bingxclient.NewSetTradService().
+			Symbol(common.FormatSymbol(customercurrency.Symbol)).
+			PositionSide(bingx.LongPositionSideType).
+			Leverage(int64(customercurrency.Leverage)).
+			Do(ctx)
+		if err != nil {
+			return err
+		}
+
+		_, err = bingxclient.NewSetTradService().
+			Symbol(common.FormatSymbol(customercurrency.Symbol)).
+			PositionSide(bingx.ShortPositionSideType).
+			Leverage(int64(customercurrency.Leverage)).
+			Do(ctx)
+
+	}
+
 	return err
 }
 

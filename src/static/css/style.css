@@ -252,9 +252,14 @@ th {
 }
 
 .displayNone{
-    display: none;
+    visibility: hidden;
 }
 
 .displayBlock{
-    display: block;
+    
+    visibility: visible;
+}
+
+.high-message{
+    color: red;
 }

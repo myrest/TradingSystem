@@ -302,3 +302,11 @@ func (c *Client) NewGetOpenOrdersService() *GetOpenOrdersService {
 func (c *Client) NewGetKlinesService() *GetKlinesService {
 	return &GetKlinesService{c: c}
 }
+
+func (c *Client) NewGetTradService() *GetTradeService {
+	return &GetTradeService{c: c}
+}
+
+func (c *Client) NewSetTradService() *SetTradeService {
+	return &SetTradeService{c: c}
+}

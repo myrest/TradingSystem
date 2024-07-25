@@ -72,6 +72,7 @@ func updateAutoSubscriberCustomerSymbol(ctx context.Context, AdminSymbol models.
 			Simulation: !dbCustomer.AutoSubscribReal,
 			CustomerID: dbCustomer.ID,
 			Amount:     float64(dbCustomer.AutoSubscribAmount),
+			Leverage:   10, //預設10倍槓桿
 		}
 		err = UpdateCustomerCurrency(ctx, &data)
 		if err != nil {

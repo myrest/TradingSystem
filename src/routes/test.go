@@ -13,7 +13,8 @@ func RegisterMyTestRoutes(r *gin.Engine) {
 		authRoutes := r.Group("/test")
 		{
 			authRoutes.GET("/getbyid", controllers.GetBingxOrderByID)
-			authRoutes.GET("/t3", controllers.TESTGetOpenOrder)
+			authRoutes.GET("/t2", controllers.TEST2)
+			authRoutes.GET("/t3", controllers.TEST3)
 		}
 	}
 }

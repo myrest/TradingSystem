@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -95,4 +96,18 @@ func GetEnvironmentSetting() SystemSettings {
 	rtn.FireBaseKeyFullPath = filepath.Join(root, fmt.Sprintf("serviceAccountKey_%s.json", rtn.Env))
 
 	return rtn
+}
+
+func Decimal(value interface{}) float64 {
+	switch value.(type) {
+	case float64:
+		rtn, _ := strconv.ParseFloat(fmt.Sprintf("%.8f", value), 64)
+		return rtn
+	case float32:
+		rtn, _ := strconv.ParseFloat(fmt.Sprintf("%.8f", value), 64)
+		return rtn
+	default:
+		rtn, _ := strconv.ParseFloat(fmt.Sprintf("%s", value), 64)
+		return rtn
+	}
 }

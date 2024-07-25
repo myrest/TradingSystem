@@ -10,8 +10,6 @@ import (
 	"strconv"
 )
 
-type params map[string]interface{}
-
 // API request
 type request struct {
 	method     string
@@ -62,27 +60,11 @@ func (r *request) setParam(key string, value interface{}) *request {
 	return r
 }
 
-// setParams set params with key/values to query string
-func (r *request) setParams(m params) *request {
-	for k, v := range m {
-		r.setParam(k, v)
-	}
-	return r
-}
-
 func (r *request) setFormParam(key string, value interface{}) *request {
 	if r.form == nil {
 		r.form = url.Values{}
 	}
 	r.form.Set(key, fmt.Sprintf("%v", value))
-	return r
-}
-
-// setFormParams set params with key/values to request form body
-func (r *request) setFormParams(m params) *request {
-	for k, v := range m {
-		r.setFormParam(k, v)
-	}
 	return r
 }
 

@@ -18,6 +18,7 @@ type updateCustomerSymboRequest struct {
 	Symbol     string `json:"symbol"`
 	Status     string `json:"status"`
 	Amount     string `json:"amount"`
+	Leverage   string `json:"leverage"`
 	Simulation string `json:"simulation"`
 }
 
@@ -75,13 +76,13 @@ func UpdateCustomerSymbol(c *gin.Context) {
 		},
 		Simulation: req.Simulation == "true",
 	}
-	amount, err := strconv.ParseFloat(req.Amount, 64)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid data"})
-		return
-	} else {
-		input.Amount = amount
+	amount := common.Decimal(req.Amount)
+	leverage := common.Decimal(req.Leverage)
+	if leverage == 0 {
+		leverage = 1
 	}
+	input.Amount = amount
+	input.Leverage = leverage
 
 	session := sessions.Default(c)
 	input.CustomerID = session.Get("id").(string)
@@ -99,9 +100,8 @@ func UpdateCustomerSymbol(c *gin.Context) {
 	var errormessage string
 
 	//有key，啟用時要檢查餘額
-	var freeamount float64
 	if APIkey != "" && SecretKey != "" && input.Status {
-		freeamount, err = services.GetAccountBalance(APIkey, SecretKey)
+		freeamount, err := services.GetAccountBalance(APIkey, SecretKey)
 		if err != nil || input.Amount > freeamount {
 			if err != nil {
 				errormessage = err.Error()
@@ -111,7 +111,7 @@ func UpdateCustomerSymbol(c *gin.Context) {
 		}
 	}
 
-	err = services.UpdateCustomerCurrency(context.Background(), &input)
+	err := services.UpdateCustomerCurrency(context.Background(), &input)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Update customer Symbol failed. " + err.Error()})
 		return
@@ -164,6 +164,7 @@ func mergeSymboLists(systemSymboList []models.AdminCurrencySymbol, customersymbo
 				},
 				SystemStatus: systemStatus,
 				Amount:       customerSymbol.Amount,
+				Leverage:     customerSymbol.Leverage,
 				Simulation:   customerSymbol.Simulation,
 				Message:      Symbol.Message,
 			})
@@ -175,6 +176,7 @@ func mergeSymboLists(systemSymboList []models.AdminCurrencySymbol, customersymbo
 					Status: false,
 				},
 				Amount:     0,
+				Leverage:   1,
 				Simulation: false,
 			}
 			result = append(result, models.CustomerCurrencySymboResponse{
@@ -184,6 +186,7 @@ func mergeSymboLists(systemSymboList []models.AdminCurrencySymbol, customersymbo
 				},
 				SystemStatus: systemStatus,
 				Amount:       newCustomerSymbol.Amount,
+				Leverage:     newCustomerSymbol.Leverage,
 				Simulation:   newCustomerSymbol.Simulation,
 				Message:      "The symbol do not exist in the system.",
 			})
