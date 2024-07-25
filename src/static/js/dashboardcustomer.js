@@ -136,6 +136,9 @@ function updateCustomerCurrency(Symbol, updatetype) {
             default:
                 crypto.simulation = crypto.simulation ? false : true;
         }
+        if (crypto.simulation){
+            crypto.leverage = 10
+        }
         const customersymbol = {
             'symbol': Symbol,
             'status': crypto.status.toString(),
