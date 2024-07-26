@@ -82,12 +82,6 @@ func UpdateCustomer(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error updating customer"})
 		return
 	}
-	session.Set("apikey", dbCustomer.APIKey)
-	session.Set("secertkey", dbCustomer.SecretKey)
-	if err := session.Save(); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save session"})
-		return
-	}
 
 	c.JSON(http.StatusOK, dbCustomer)
 }

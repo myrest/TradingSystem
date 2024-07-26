@@ -21,6 +21,7 @@
                 "KEYROOT": "/Users/roy_tai/TradingSystem/",
                 "GIN_MODE": "debug",
                 "ENVIRONMENT" : "dev",
+                "DEMOCUSTOMERID" : "8LcgaKWUvn1LyUQQj3oP"
             }
         }
     ]

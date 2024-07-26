@@ -10,7 +10,13 @@ import (
 	"google.golang.org/api/iterator"
 )
 
-func UpdateCustomerCurrency(ctx context.Context, customercurrency *models.CustomerCurrencySymbol) error {
+// 預設會幫客戶自動修改槓桿，傳入false可以不修改
+func UpdateCustomerCurrency(ctx context.Context, customercurrency *models.CustomerCurrencySymbol, flag ...bool) error {
+	autoUpdateBingXLeverage := true
+	if len(flag) > 0 {
+		autoUpdateBingXLeverage = flag[0]
+	}
+
 	client := getFirestoreClient()
 	customer, err := GetCustomer(ctx, customercurrency.CustomerID)
 	if err != nil || customer == nil || customer.Email == "" {
@@ -64,7 +70,7 @@ func UpdateCustomerCurrency(ctx context.Context, customercurrency *models.Custom
 		return err
 	}
 
-	if customercurrency.Status {
+	if customercurrency.Status && autoUpdateBingXLeverage {
 		//幫客戶改槓桿
 		bingxclient := bingx.NewClient(customer.APIKey, customer.SecretKey, customercurrency.Simulation)
 		//改多單槓桿

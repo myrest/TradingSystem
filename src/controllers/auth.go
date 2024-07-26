@@ -8,15 +8,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func isAdmin(c *gin.Context) bool {
-	session := sessions.Default(c)
-	isAdmin := session.Get("isadmin")
-	if isAdmin != nil {
-		return isAdmin.(bool)
-	}
-	return false
-}
-
 func GoogleAuthCallback(c *gin.Context) {
 	var req struct {
 		Token string `json:"token"`
@@ -43,8 +34,6 @@ func GoogleAuthCallback(c *gin.Context) {
 	if err == nil && customer != nil {
 		session.Set("isadmin", customer.IsAdmin)
 		session.Set("id", customer.ID)
-		session.Set("apikey", customer.APIKey)
-		session.Set("secertkey", customer.SecretKey)
 	} else {
 		session.Set("isadmin", false)
 	}

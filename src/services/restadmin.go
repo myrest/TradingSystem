@@ -74,7 +74,8 @@ func updateAutoSubscriberCustomerSymbol(ctx context.Context, AdminSymbol models.
 			Amount:     float64(dbCustomer.AutoSubscribAmount),
 			Leverage:   10, //預設10倍槓桿
 		}
-		err = UpdateCustomerCurrency(ctx, &data)
+		//第三個參數表示不改使用者原槓桿
+		err = UpdateCustomerCurrency(ctx, &data, false)
 		if err != nil {
 			return err
 		}

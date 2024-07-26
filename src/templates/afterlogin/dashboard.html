@@ -1,13 +1,24 @@
 {{ template "afterloginheader.html" . }}
 <div class="dashboard">
-    <h1>跟單系統</h1>
+    <div class="title-container">
+        <h1>跟單系統</h1>
+        <button class="menu-button" onclick="toggleSystemMenu()">
+            <i class="fas fa-bars"></i>
+        </button>
+    </div>
+    <div class="menu-popup" id="menuPopup">
+        <ul>
+            <li><a href="/demo/"><i class="fa-solid fa-chart-line"></i>績效展示</a></li>
+            <li style="float: right;"><button class="logout-btn" onclick="logout()">登出</button></li>
+        </ul>
+    </div>
+
     <div class="user-info">
         <div class="user-avatar" id="userAvatar"><img src="{{ .Photo }}"></div>
         <div class="user-details">
             <h3 id="userName">{{ .Name }}</h3>
             <p id="userEmail">{{ .Email }}</p>
         </div>
-        <button class="logout-btn" onclick="logout()">登出</button>
     </div>
 
     {{ if .IsAdmin }}
@@ -28,18 +39,21 @@
                 <h3>自動跟單設定</h3>
                 <div class="setting-group">
                     自動跟隨新幣種狀態：
-                    <span class="status-toggle {{ if not .AutoSubscribeStatus }}disabled{{ end }}" onclick="toggleSubscribeStatus(this)" id="SubscribeStatus">
+                    <span class="status-toggle {{ if not .AutoSubscribeStatus }}disabled{{ end }}"
+                        onclick="toggleSubscribeStatus(this)" id="SubscribeStatus">
                         {{ if .AutoSubscribeStatus }}啟用{{ else }}停用{{ end }}
                     </span>
                 </div>
                 <span id="GroupSubscribeType" class="{{ if not .AutoSubscribeStatus }}displayNone{{ end }}">
                     跟隨盤種：
-                    <span class="status-toggle  {{ if not .AutoSubscribeType }}disabled{{ end }}" onclick="toggleSubscribeType(this)" id="SubscribeType">
+                    <span class="status-toggle  {{ if not .AutoSubscribeType }}disabled{{ end }}"
+                        onclick="toggleSubscribeType(this)" id="SubscribeType">
                         {{ if .AutoSubscribeType }}實盤{{ else }}模擬{{ end }}
                     </span>
                     <div id="amountSetting" class="setting-group {{ if not .AutoSubscribeType }}displayNone{{ end }}">
                         <label for="amount">金額：</label>
-                        <input type="number" id="SubscribeAmount" value="{{ .AutoSubscribeAmount }}" placeholder="輸入跟單金額">X10倍槓桿
+                        <input type="number" id="SubscribeAmount" value="{{ .AutoSubscribeAmount }}"
+                            placeholder="輸入跟單金額">X10倍槓桿
                     </div>
                 </span>
             </div>
