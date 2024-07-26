@@ -21,6 +21,7 @@ type SystemSettings struct {
 	FireBaseKeyFullPath string
 	OAuthKeyFullPath    string
 	Env                 EnviromentType
+	DemoCustomerID      string
 }
 
 type EnviromentType string
@@ -29,6 +30,8 @@ const (
 	Prod EnviromentType = "prod"
 	Dev  EnviromentType = "dev"
 )
+
+var systemSettings SystemSettings
 
 func DecodeGzip(data []byte) ([]byte, error) {
 	reader, err := gzip.NewReader(bytes.NewReader(data))
@@ -70,6 +73,10 @@ func IsFileExists(filePath string) bool {
 }
 
 func GetEnvironmentSetting() SystemSettings {
+	if systemSettings.Env != "" {
+		return systemSettings
+	}
+
 	var rtn SystemSettings
 	wd, _ := os.Getwd()
 	if err := godotenv.Load(filepath.Join(wd, ".env")); err != nil {
@@ -77,6 +84,7 @@ func GetEnvironmentSetting() SystemSettings {
 	}
 	root := os.Getenv("KEYROOT")
 	env := os.Getenv("ENVIRONMENT")
+	democustomerid := os.Getenv("DEMOCUSTOMERID")
 
 	//沒有設定Key的目錄
 	if root == "" {
@@ -94,17 +102,24 @@ func GetEnvironmentSetting() SystemSettings {
 	}
 	rtn.OAuthKeyFullPath = filepath.Join(root, fmt.Sprintf("firebaseConfig_%s.json", rtn.Env))
 	rtn.FireBaseKeyFullPath = filepath.Join(root, fmt.Sprintf("serviceAccountKey_%s.json", rtn.Env))
+	rtn.DemoCustomerID = democustomerid
 
+	systemSettings = rtn
 	return rtn
 }
 
-func Decimal(value interface{}) float64 {
+func Decimal(value interface{}, rounds ...int) float64 {
+	round := 8
+	if rounds != nil {
+		round = rounds[0]
+	}
+	format := fmt.Sprintf("%%.%df", round)
 	switch value.(type) {
 	case float64:
-		rtn, _ := strconv.ParseFloat(fmt.Sprintf("%.8f", value), 64)
+		rtn, _ := strconv.ParseFloat(fmt.Sprintf(format, value), 64)
 		return rtn
 	case float32:
-		rtn, _ := strconv.ParseFloat(fmt.Sprintf("%.8f", value), 64)
+		rtn, _ := strconv.ParseFloat(fmt.Sprintf(format, value), 64)
 		return rtn
 	default:
 		rtn, _ := strconv.ParseFloat(fmt.Sprintf("%s", value), 64)

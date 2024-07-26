@@ -3,27 +3,27 @@ package controllers
 import (
 	"TradingSystem/src/services"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
 
 func DemoList(c *gin.Context) {
-	customerid := "8LcgaKWUvn1LyUQQj3oP"
+	d := c.Query("d")
+	days, _ := strconv.Atoi(d)
+	if days == 0 {
+		days = 7
+	} else if days > 30 {
+		days = 30
+	}
 
-	systemSymboList, err := services.GetAllSymbol(c)
+	systemSymboList, err := services.GetDemoCurrencyList(c, days)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-
-	customersymboList, err := services.GetAllCustomerCurrency(c, customerid)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	mergedList := mergeSymboLists(systemSymboList, customersymboList)
 	c.HTML(http.StatusOK, "demosymbolist.html", gin.H{
-		"data": mergedList,
+		"data": systemSymboList,
+		"days": days,
 	})
 }
