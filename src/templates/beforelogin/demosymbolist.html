@@ -1,0 +1,23 @@
+{{ template "beforeloginheader.html" . }}
+<div class="dashboard">
+    <div class="crypto-table">
+        <h2>實時績效展示</h2>
+        <table id="cryptoTable">
+            <thead>
+                <tr>
+                    <th>幣種</th>
+                    <th>記錄</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{range .data}}
+                <tr>
+                    <td>{{.Symbol}}</td>
+                    <td><a href="/demo/history?symbol={{.Symbol}}">記錄</a></td>
+                </tr>
+                {{end}}
+            </tbody>
+        </table>
+    </div>
+</div>
+{{ template "beforeloginfooter.html" . }}

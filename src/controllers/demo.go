@@ -1,25 +1,29 @@
 package controllers
 
 import (
+	"TradingSystem/src/services"
 	"net/http"
 
-	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 )
 
 func DemoList(c *gin.Context) {
-	if isAdministrator(c) {
-		c.JSON(http.StatusOK, gin.H{"data": "OK"})
-	} else {
-		c.JSON(http.StatusOK, gin.H{"data": "Not OK"})
-	}
-}
+	customerid := "8LcgaKWUvn1LyUQQj3oP"
 
-func isAdministrator(c *gin.Context) bool {
-	session := sessions.Default(c)
-	isAdmin := session.Get("isadmin")
-	if isAdmin != nil {
-		return isAdmin.(bool)
+	systemSymboList, err := services.GetAllSymbol(c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
 	}
-	return false
+
+	customersymboList, err := services.GetAllCustomerCurrency(c, customerid)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	mergedList := mergeSymboLists(systemSymboList, customersymboList)
+	c.HTML(http.StatusOK, "demosymbolist.html", gin.H{
+		"data": mergedList,
+	})
 }
