@@ -98,6 +98,7 @@
                     <th>虧損次數</th>
                     <th>交易額</th>
                     <th>勝率</th>
+                    <th>記錄</th>
                 </tr>
             </thead>
             <tbody>
@@ -111,6 +112,7 @@
                     <td>{{.LossCount}}</td>
                     <td>{{.Amount}}</td>
                     <td>{{.Winrate}}</td>
+                    <td><a onclick="displayHistory('{{.Symbol}}')" href="#">記錄</a></td>
                 </tr>
                 {{end}}
             </tbody>
@@ -143,7 +145,7 @@
                     break;
                 }
             }
-            
+
             ll = selElmnt.length;
             a = document.createElement("DIV");
             a.setAttribute("class", "select-selected");
@@ -212,5 +214,9 @@
 
     function redirect(days) {
         window.location.href = "/demo?d=" + document.getElementById('timeRange').value
+    }
+
+    function displayHistory(symbol) {
+        window.location.href = "/demo/history?symbol=" + symbol + "&d=" + document.getElementById('timeRange').value
     }
 </script>

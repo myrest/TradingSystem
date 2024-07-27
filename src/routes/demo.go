@@ -10,5 +10,6 @@ func RegisterDemoRoutes(r *gin.Engine) {
 	authRoutes := r.Group("/demo")
 	{
 		authRoutes.GET("/", controllers.DemoList)
+		authRoutes.GET("/history", controllers.DemoHistory)
 	}
 }
