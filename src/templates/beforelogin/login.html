@@ -1,7 +1,14 @@
 {{ template "beforeloginheader.html" . }}
 
-
+<style>
+    .demo-icon {
+        color: #ff8157;
+        cursor: pointer;
+        float: right;
+    }
+</style>
 <div class="login-box">
+    <span class="fa-solid fa-chart-line demo-icon" id="demo-icon">實時績效</span>
     <h1>跟單系統</h1>
     <button id="login-button" class="btn">
         <i class="fab fa-google"></i>
@@ -45,6 +52,10 @@
             console.error('Error fetching config:', error);
             document.getElementById('loader').style.display = 'none';
         });
+
+    document.getElementById('demo-icon').addEventListener('click', () => {
+        window.location.href = '/demo';
+    });        
 </script>
 
 {{ template "beforeloginfooter.html" . }}

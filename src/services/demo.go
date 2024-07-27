@@ -40,6 +40,10 @@ func GetDemoCurrencyList(ctx context.Context, numberOfDays int) ([]models.DemoSy
 			return nil, err
 		}
 
+		if log.Price == 0 {
+			continue
+		}
+
 		symbol, exists := symbollist[log.Symbol]
 		var CloseCount, OpenCount, WinCount, LossCount int32
 		Amount := log.Amount * log.Price
@@ -85,6 +89,43 @@ func GetDemoCurrencyList(ctx context.Context, numberOfDays int) ([]models.DemoSy
 	sort.Slice(rtn, func(i, j int) bool {
 		return rtn[i].Profit > rtn[j].Profit
 	})
+
+	return rtn, nil
+}
+
+func GetDemoHistory(ctx context.Context, numberOfDays int, Symbol string) ([]models.Log_TvSiginalData, error) {
+	const layout = "2006-01-02"
+	systemSettings := common.GetEnvironmentSetting()
+	DaysAgo := time.Now().UTC().AddDate(0, 0, numberOfDays*-1).Format(layout)
+	client := getFirestoreClient()
+	//先找出所有的History
+	iter := client.Collection("placeOrderLog").
+		Where("CustomerID", "==", systemSettings.DemoCustomerID).
+		Where("Symbol", "==", Symbol).
+		Where("Time", ">", DaysAgo).
+		Documents(ctx)
+	defer iter.Stop()
+
+	rtn := []models.Log_TvSiginalData{}
+
+	for {
+		doc, err := iter.Next()
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			return nil, err
+		}
+
+		var log models.Log_TvSiginalData
+		if err := doc.DataTo(&log); err != nil {
+			return nil, err
+		}
+		if log.Price == 0 {
+			continue
+		}
+		rtn = append(rtn, log)
+	}
 
 	return rtn, nil
 }

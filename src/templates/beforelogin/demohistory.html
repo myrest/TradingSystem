@@ -1,0 +1,34 @@
+{{ template "afterloginheader.html" . }}
+<nav class="nav-bar">
+    <button class="back-button" onclick="window.location.href='/demo?d={{.days}}'">回到上頁</button>
+</nav>
+<div class="dashboard">
+    <h1>下單歷史 - {{.symbol}}</h1>
+    <p>手續費：內含開倉、平倉手續費及持倉資金費率總合。</p>
+    <p>利潤：為交易盈虧。</p>
+    <table>
+        <thead>
+            <tr>
+                <th>時間</th>
+                <th>交易類型</th>
+                <th>價格</th>
+                <th>數量</th>
+                <th>手續費</th>
+                <th>獲利</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{range .data}}
+            <tr>
+                <td>{{.Time}}</td>
+                <td>{{.Position}}</td>
+                <td>{{.Price}}</td>
+                <td>{{.Amount | formatFloat64}}</td>
+                <td>{{.Fee | formatFloat64}}</td>
+                <td>{{.Profit}}</td>
+            </tr>
+            {{end}}
+        </tbody>
+    </table>
+</div>
+{{ template "beforeloginfooter.html" . }}
