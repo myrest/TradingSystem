@@ -102,8 +102,8 @@ func GetPlaceOrderHistory(ctx context.Context, Symbol, CustomerID string, page, 
 	client := getFirestoreClient()
 
 	query := client.Collection("placeOrderLog").
-		Where("Symbol", "==", Symbol).
 		Where("CustomerID", "==", CustomerID).
+		Where("Symbol", "==", Symbol).
 		OrderBy("Time", firestore.Desc).
 		Offset((page - 1) * pageSize).
 		Limit(pageSize)
@@ -137,8 +137,8 @@ func getTotalPages(ctx context.Context, Symbol, CustomerID string, pageSize int)
 
 	// Firestore COUNT query
 	query := client.Collection("placeOrderLog").
-		Where("Symbol", "==", Symbol).
-		Where("CustomerID", "==", CustomerID)
+		Where("CustomerID", "==", CustomerID).
+		Where("Symbol", "==", Symbol)
 
 	countQuery := query.NewAggregationQuery().WithCount("all")
 	results, err := countQuery.Get(ctx)

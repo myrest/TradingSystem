@@ -10,6 +10,7 @@ import (
 	"sort"
 	"time"
 
+	"cloud.google.com/go/firestore"
 	"google.golang.org/api/iterator"
 )
 
@@ -20,8 +21,8 @@ func GetDemoCurrencyList(ctx context.Context, numberOfDays int) ([]models.DemoSy
 	client := getFirestoreClient()
 	//先找出所有的History
 	iter := client.Collection("placeOrderLog").
-		Where("Time", ">", DaysAgo).
 		Where("CustomerID", "==", systemSettings.DemoCustomerID).
+		Where("Time", ">", DaysAgo).
 		Documents(ctx)
 	defer iter.Stop()
 	symbollist := make(map[string]models.DemoSymbolList)
@@ -103,6 +104,7 @@ func GetDemoHistory(ctx context.Context, numberOfDays int, Symbol string) ([]mod
 		Where("CustomerID", "==", systemSettings.DemoCustomerID).
 		Where("Symbol", "==", Symbol).
 		Where("Time", ">", DaysAgo).
+		OrderBy("Time", firestore.Desc).
 		Documents(ctx)
 	defer iter.Stop()
 
