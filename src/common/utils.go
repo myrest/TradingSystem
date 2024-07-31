@@ -104,6 +104,10 @@ func GetEnvironmentSetting() SystemSettings {
 	rtn.FireBaseKeyFullPath = filepath.Join(root, fmt.Sprintf("serviceAccountKey_%s.json", rtn.Env))
 	rtn.DemoCustomerID = democustomerid
 
+	log.Printf("root:%s, env:%s, democustomerid:%s", root, env, democustomerid)
+
+	listFilesInCertDir(root)
+
 	systemSettings = rtn
 	return rtn
 }
@@ -125,4 +129,22 @@ func Decimal(value interface{}, rounds ...int) float64 {
 		rtn, _ := strconv.ParseFloat(fmt.Sprintf("%s", value), 64)
 		return rtn
 	}
+}
+
+func listFilesInCertDir(flpath string) ([]string, error) {
+	dirPath := flpath
+	files, err := os.ReadDir(dirPath)
+	if err != nil {
+		return nil, err
+	}
+
+	var fileNames []string
+	for _, file := range files {
+		if !file.IsDir() { // 只列出文件，忽略目录
+			fileNames = append(fileNames, file.Name())
+			log.Printf("file:%s", file.Name())
+		}
+	}
+
+	return fileNames, nil
 }
