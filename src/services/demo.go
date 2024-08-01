@@ -64,13 +64,13 @@ func GetDemoCurrencyList(ctx context.Context, numberOfDays int) ([]models.DemoSy
 			symbol.OpenCount += OpenCount
 			symbol.WinCount += WinCount
 			symbol.LossCount += LossCount
-			symbol.Profit += log.Profit
+			symbol.Profit += log.Profit + log.Fee
 			symbol.Amount += Amount
 			symbollist[log.Symbol] = symbol
 		} else {
 			symbollist[log.Symbol] = models.DemoSymbolList{
 				Symbol:     log.Symbol,
-				Profit:     log.Profit,
+				Profit:     log.Profit + log.Fee,
 				CloseCount: CloseCount,
 				OpenCount:  OpenCount,
 				WinCount:   WinCount,

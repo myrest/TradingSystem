@@ -317,3 +317,7 @@ th {
     width: 20px;
     text-align: center;
 }
+
+.alignright{
+    float: right;
+}

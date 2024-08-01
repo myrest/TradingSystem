@@ -12,7 +12,7 @@
             "processId": "${command:pickProcess}"
         },
         {
-            "name": "Launch Package",
+            "name": "RunOnDevelopment",
             "type": "go",
             "request": "launch",
             "mode": "auto",
@@ -22,6 +22,19 @@
                 "GIN_MODE": "debug",
                 "ENVIRONMENT" : "dev",
                 "DEMOCUSTOMERID" : "8LcgaKWUvn1LyUQQj3oP"
+            }
+        },
+        {
+            "name": "RunOnProduction",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}/src/main.go",
+            "env": {
+                "KEYROOT": "/Users/roy_tai/TradingSystem/",
+                "GIN_MODE": "debug",
+                "ENVIRONMENT" : "prod",
+                "DEMOCUSTOMERID" : "JgvUcCIg95lyuXh61j4f"
             }
         }
     ]
