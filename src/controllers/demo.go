@@ -18,7 +18,7 @@ func DemoList(c *gin.Context) {
 		days = 30
 	}
 
-	systemSymboList, err := services.GetDemoCurrencyList(c, days)
+	systemSymboList, err := services.GetDemoCurrencyList(c, days, true)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -46,7 +46,7 @@ func DemoHistory(c *gin.Context) {
 	}
 
 	var rtn []Log_PlaceBetHistoryUI
-	list, err := services.GetDemoHistory(c, days, symbol)
+	list, err := services.GetDemoHistory(c, days, symbol, true)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

@@ -22,6 +22,7 @@ type SystemSettings struct {
 	OAuthKeyFullPath    string
 	Env                 EnviromentType
 	DemoCustomerID      string
+	TempCacheFolder     string
 }
 
 type EnviromentType string
@@ -85,6 +86,7 @@ func GetEnvironmentSetting() SystemSettings {
 	root := os.Getenv("KEYROOT")
 	env := os.Getenv("ENVIRONMENT")
 	democustomerid := os.Getenv("DEMOCUSTOMERID")
+	tmpCacheFolder := os.Getenv("TEMPCACHEFOLDER")
 
 	//沒有設定Key的目錄
 	if root == "" {
@@ -103,6 +105,7 @@ func GetEnvironmentSetting() SystemSettings {
 	rtn.OAuthKeyFullPath = filepath.Join(root, fmt.Sprintf("firebaseConfig_%s.json", rtn.Env))
 	rtn.FireBaseKeyFullPath = filepath.Join(root, fmt.Sprintf("serviceAccountKey_%s.json", rtn.Env))
 	rtn.DemoCustomerID = democustomerid
+	rtn.TempCacheFolder = filepath.Join(wd, tmpCacheFolder)
 
 	log.Printf("root:%s, env:%s, democustomerid:%s", root, env, democustomerid)
 
