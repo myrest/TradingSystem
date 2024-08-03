@@ -66,6 +66,7 @@ func preProcessPlaceOrder(c *gin.Context, WebhookData models.TvWebhookData) erro
 		}(customerList[i])
 	}
 	wg.Wait()
+	//要更新績效的cache
 
 	return nil
 }

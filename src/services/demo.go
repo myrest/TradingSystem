@@ -8,16 +8,26 @@ import (
 	"fmt"
 	"math"
 	"sort"
+	"strconv"
 	"time"
 
 	"cloud.google.com/go/firestore"
 	"google.golang.org/api/iterator"
 )
 
-func GetDemoCurrencyList(ctx context.Context, numberOfDays int) ([]models.DemoSymbolList, error) {
+func GetDemoCurrencyList(ctx context.Context, numberOfDays int, isFromCache bool) ([]models.DemoSymbolList, error) {
 	const layout = "2006-01-02"
 	systemSettings := common.GetEnvironmentSetting()
 	DaysAgo := time.Now().UTC().AddDate(0, 0, numberOfDays*-1).Format(layout)
+	cacheKey := getLog_TVCacheKey(systemSettings.DemoCustomerID, "SymbolList", strconv.Itoa(numberOfDays))
+
+	if isFromCache {
+		data, err := loadDemoSymbolListCache(cacheKey)
+		if err == nil {
+			return data, nil
+		}
+	}
+
 	client := getFirestoreClient()
 	//先找出所有的History
 	iter := client.Collection("placeOrderLog").
@@ -91,15 +101,30 @@ func GetDemoCurrencyList(ctx context.Context, numberOfDays int) ([]models.DemoSy
 		return rtn[i].Profit > rtn[j].Profit
 	})
 
+	// 写入缓存
+	err := saveDemoSymbolListCache(cacheKey, rtn)
+	if err != nil {
+		return nil, err
+	}
+
 	return rtn, nil
 }
 
-func GetDemoHistory(ctx context.Context, numberOfDays int, Symbol string) ([]models.Log_TvSiginalData, error) {
+func GetDemoHistory(ctx context.Context, numberOfDays int, Symbol string, isFromCache bool) ([]models.Log_TvSiginalData, error) {
 	const layout = "2006-01-02"
 	systemSettings := common.GetEnvironmentSetting()
 	DaysAgo := time.Now().UTC().AddDate(0, 0, numberOfDays*-1).Format(layout)
+	cacheKey := getLog_TVCacheKey(systemSettings.DemoCustomerID, Symbol, strconv.Itoa(numberOfDays))
+
+	if isFromCache {
+		data, err := loadLog_TVCache(cacheKey)
+		if err == nil {
+			return data, nil
+		}
+	}
+
 	client := getFirestoreClient()
-	//先找出所有的History
+	// 先找出所有的History
 	iter := client.Collection("placeOrderLog").
 		Where("CustomerID", "==", systemSettings.DemoCustomerID).
 		Where("Symbol", "==", Symbol).
@@ -127,6 +152,12 @@ func GetDemoHistory(ctx context.Context, numberOfDays int, Symbol string) ([]mod
 			continue
 		}
 		rtn = append(rtn, log)
+	}
+
+	// 写入缓存
+	err := saveLog_TVCache(cacheKey, rtn)
+	if err != nil {
+		return nil, err
 	}
 
 	return rtn, nil
