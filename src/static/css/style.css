@@ -321,3 +321,8 @@ th {
 .alignright{
     float: right;
 }
+
+.demo-icon {
+    color: #ff8157;
+    cursor: pointer;
+}

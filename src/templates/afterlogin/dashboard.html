@@ -8,7 +8,11 @@
     </div>
     <div class="menu-popup" id="menuPopup">
         <ul>
-            <li><a href="/demo/"><i class="fa-solid fa-chart-line"></i>績效展示</a></li>
+            <li><a href="/demo/">
+                    <span class="fa-solid fa-chart-line demo-icon">
+                        績效展示</span></a></li>
+            <li><a href="/subaccount/"><span class="fa-solid fa-users">
+                        子帳戶管理</span></a></li>
             <li style="float: right;"><button class="logout-btn" onclick="logout()">登出</button></li>
         </ul>
     </div>
@@ -74,7 +78,6 @@
         </div>
     </div>
 
-    <script src="/static/js/common.js"></script>
     <script>
         document.getElementById('userAvatar').textContent = "X"
     </script>
