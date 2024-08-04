@@ -1,8 +1,23 @@
-let subaccounts = [
-    { id: 1, name: "子帳號1" },
-    { id: 2, name: "子帳號2" },
-    { id: 3, name: "子帳號3" }
-];
+let subaccounts = [];
+
+function fetchSubaccountData() {
+    fetch('/subaccount/list')
+        .then(response => {
+            if (response.ok) {
+                response.json().then(data => {
+                    if (!response.ok) {
+                        return;
+                    } else {
+                        subaccounts = data
+                        renderCryptoTable()
+                    }
+                }).catch(error => {
+                    console.error('Error fetching Subaccount data:', error);
+                });
+            }
+        })
+}
+
 
 function renderSubaccounts() {
     const tableBody = document.getElementById('subaccountTableBody');
@@ -12,8 +27,8 @@ function renderSubaccounts() {
             <tr>
                 <td>${account.name}</td>
                 <td>
-                    <button class="action-button edit-button" onclick="editSubaccount(${account.id})">修改</button>
-                    <button class="action-button delete-button" onclick="deleteSubaccount(${account.id})">刪除</button>
+                    <button class="action-button edit-button" onclick="editSubaccount(${account.name})">修改</button>
+                    <button class="action-button delete-button" onclick="deleteSubaccount(${account.name})">刪除</button>
                 </td>
             </tr>
         `;
@@ -22,13 +37,28 @@ function renderSubaccounts() {
 }
 
 function addSubaccount() {
-    const name = document.getElementById('newSubaccountName').value;
-    if (name) {
-        const newId = subaccounts.length + 1;
-        subaccounts.push({ id: newId, name: name });
-        renderSubaccounts();
-        document.getElementById('newSubaccountName').value = '';
-    }
+    const data = {
+        'accountname': document.getElementById('newSubaccountName').value
+    };    
+    fetch(`/subaccount/update`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+    }).then(response => {
+        if (!response.ok) {
+            response.text().then(x => alert(`Failed to update Subaccount (${data.accountname}): ` + JSON.parse(x).error))
+        } else {
+            response.text().then(x => {
+                subaccounts.push({ accountname: data.accountname });
+                renderSubaccounts();
+                document.getElementById('newSubaccountName').value = '';
+            })
+        }
+    }).catch(error => {
+        console.error('Error:', error);
+    });
 }
 
 function editSubaccount(id) {

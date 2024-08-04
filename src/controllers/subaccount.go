@@ -1,15 +1,19 @@
 package controllers
 
 import (
+	"TradingSystem/src/models"
 	"TradingSystem/src/services"
 	"net/http"
-	"strconv"
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 )
 
 func SubaccountList(c *gin.Context) {
+	c.HTML(http.StatusOK, "subaccountmanagememt.html", gin.H{})
+}
+
+func GetSubaccountList(c *gin.Context) {
 	session := sessions.Default(c)
 	customerid := session.Get("id").(string)
 
@@ -18,27 +22,67 @@ func SubaccountList(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	c.HTML(http.StatusOK, "subaccountmanagememt.html", gin.H{
-		"data": subaccounts,
-	})
+	c.JSON(http.StatusOK, gin.H{"data": subaccounts})
 }
 
 func ModifySubAccount(c *gin.Context) {
-	d := c.Query("d")
-	days, _ := strconv.Atoi(d)
-	if days == 0 {
-		days = 7
-	} else if days > 30 {
-		days = 30
+	var req models.SubAccountUI
+
+	if err := c.BindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid data"})
+		return
 	}
 
-	systemSymboList, err := services.GetDemoCurrencyList(c, days, true)
+	session := sessions.Default(c)
+	customerid := session.Get("id").(string)
+
+	request := models.SubAccount{
+		DocumentRefID: req.DocumentRefID,
+		SubAccountDB: models.SubAccountDB{
+			AccountName: req.AccountName,
+			CustomerID:  customerid,
+		},
+	}
+
+	rtn, err := services.UpdateSubaccount(c, request)
+
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	c.HTML(http.StatusOK, "demosymbolist.html", gin.H{
-		"data": systemSymboList,
-		"days": days,
+
+	c.JSON(http.StatusOK, gin.H{
+		"data": rtn,
+	})
+}
+
+func DeleteSubAccount(c *gin.Context) {
+	var req models.SubAccountUI
+
+	if err := c.BindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid data"})
+		return
+	}
+
+	session := sessions.Default(c)
+	customerid := session.Get("id").(string)
+
+	request := models.SubAccount{
+		DocumentRefID: req.DocumentRefID,
+		SubAccountDB: models.SubAccountDB{
+			AccountName: req.AccountName,
+			CustomerID:  customerid,
+		},
+	}
+
+	err := services.DeleteSubaccount(c, request)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"data": "OK",
 	})
 }

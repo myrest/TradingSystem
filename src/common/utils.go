@@ -109,8 +109,7 @@ func GetEnvironmentSetting() SystemSettings {
 
 	log.Printf("root:%s, env:%s, democustomerid:%s", root, env, democustomerid)
 
-	listFilesInCertDir(root)
-
+	//listFilesInCertDir(root)
 	systemSettings = rtn
 	return rtn
 }

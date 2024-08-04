@@ -1,20 +1,3 @@
-.subaccount-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 20px;
-}
-
-.subaccount-table th,
-.subaccount-table td {
-    border: 1px solid #ddd;
-    padding: 8px;
-    text-align: left;
-}
-
-.subaccount-table th {
-    background-color: #f2f2f2;
-}
-
 .action-button {
     margin-right: 5px;
     padding: 5px 10px;

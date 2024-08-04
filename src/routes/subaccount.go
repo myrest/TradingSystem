@@ -12,7 +12,9 @@ func RegisterSubaccountRoutes(r *gin.Engine) {
 	customerRoutes.Use(middleware.CustomerMiddleware())
 	{
 		customerRoutes.GET("/", controllers.SubaccountList)
-		customerRoutes.POST("/update", controllers.ModifySubAccount)
+		customerRoutes.POST("/", controllers.ModifySubAccount)
+		customerRoutes.DELETE("/", controllers.DeleteSubAccount)
+		customerRoutes.GET("/list", controllers.GetSubaccountList)
 	}
 
 }

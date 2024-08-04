@@ -32,26 +32,12 @@ h4 {
 }
 
 .user-info {
-    display: flex;
     align-items: center;
     gap: 20px;
     background-color: #f0f0f0;
     padding: 15px;
     border-radius: 8px;
     margin-bottom: 20px;
-}
-
-.user-avatar {
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    background-color: #4285F4;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    color: white;
-    font-size: 24px;
-    font-weight: bold;
 }
 
 .user-details {
@@ -265,9 +251,10 @@ th {
 
 /*功能選單*/
 .title-container {
-    display: flex;
     justify-content: space-between;
     align-items: center;
+    position: relative;
+    float: right;
 }
 
 .menu-button {
@@ -278,11 +265,15 @@ th {
 }
 
 .menu-popup {
-    display: none;
+    position: relative;
+    top: 55px;
+    right: -55px;
     background-color: white;
-    border: 1px solid #ccc;
-    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
     box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    display: none;
+    z-index: 1000;
     float: right;
 }
 
