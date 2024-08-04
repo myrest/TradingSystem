@@ -21,17 +21,21 @@ func GetSubaccountListByID(ctx context.Context, CustomerID string) ([]models.Sub
 		Documents(ctx)
 	defer iter.Stop()
 
-	doc, err := iter.Next()
+	for {
+		doc, err := iter.Next()
 
-	if err == iterator.Done {
-		return nil, nil
-	} else if err != nil {
-		return nil, err
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			return nil, err
+		}
+
+		var data models.SubAccount
+		doc.DataTo(&data)
+		data.DocumentRefID = doc.Ref.ID
+		rtn = append(rtn, data)
 	}
-	var data models.SubAccount
-	doc.DataTo(&data)
-	data.DocumentRefID = doc.Ref.ID
-	rtn = append(rtn, data)
 
 	return rtn, nil
 }

@@ -47,6 +47,7 @@ func CreateCustomer(c *gin.Context) {
 		return
 	}
 	session.Set("id", id)
+	session.Set("subaccountrfid", "")
 
 	if err := session.Save(); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save session"})

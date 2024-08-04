@@ -27,6 +27,13 @@ func ShowDashboardPage(c *gin.Context) {
 	name := session.Get("name")
 	email := session.Get("email")
 	photo := session.Get("photo")
+	subaccountrfid := session.Get("subaccountrfid")
+	subaccountname := session.Get("subaccountname")
+
+	if subaccountrfid != nil {
+		//目前為子帳號
+		name = subaccountname.(string)
+	}
 
 	if name == nil || email == nil {
 		c.Redirect(http.StatusFound, "/login")

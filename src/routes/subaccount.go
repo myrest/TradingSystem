@@ -15,6 +15,7 @@ func RegisterSubaccountRoutes(r *gin.Engine) {
 		customerRoutes.POST("/", controllers.ModifySubAccount)
 		customerRoutes.DELETE("/", controllers.DeleteSubAccount)
 		customerRoutes.GET("/list", controllers.GetSubaccountList)
+		customerRoutes.POST("/switch", controllers.SwitchSubAccount)
 	}
 
 }
