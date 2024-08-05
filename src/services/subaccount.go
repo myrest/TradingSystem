@@ -5,6 +5,9 @@ import (
 	"context"
 	"errors"
 
+	"cloud.google.com/go/firestore"
+	"github.com/gin-contrib/sessions"
+	"github.com/gin-gonic/gin"
 	"google.golang.org/api/iterator"
 )
 
@@ -95,12 +98,30 @@ func UpdateSubaccount(ctx context.Context, Data models.SubAccount) (models.SubAc
 		if subAccount != nil {
 			return rtn, errors.New("accout name is duplicate")
 		}
-		ref, _, err := client.Collection(SubAccountColliectionName).Add(ctx, Data.SubAccountDB)
+		err = client.RunTransaction(ctx, func(ctx context.Context, tx *firestore.Transaction) error {
+			//建立Customer Data
+			customer := models.Customer{
+				Name:  Data.AccountName,
+				Email: Data.CustomerID,
+			}
+			customerREFID, err := CreateCustomer(ctx, &customer)
+
+			if err != nil {
+				return err
+			}
+			Data.SubCustomerID = customerREFID
+			ref, _, err := client.Collection(SubAccountColliectionName).Add(ctx, Data.SubAccountDB)
+			if err != nil {
+				return err
+			}
+
+			Data.DocumentRefID = ref.ID
+			return nil
+		})
+
 		if err != nil {
 			return rtn, err
 		}
-
-		Data.DocumentRefID = ref.ID
 
 		return Data, nil
 	} else {
@@ -150,5 +171,58 @@ func DeleteSubaccount(ctx context.Context, Data models.SubAccount) error {
 	if err != nil {
 		return err
 	}
+	return nil
+}
+
+func SwitchToSubAccount(c *gin.Context, SubAccountREFID string) error {
+	//取得當下的CustomerID
+	session := sessions.Default(c)
+	var ParentID string
+	IparentCustomerID := session.Get("parentid")
+	if IparentCustomerID != nil {
+		ParentID = IparentCustomerID.(string)
+	}
+	contextC := context.Background()
+
+	//檢查SubAccountREFID是否存在
+	subaccount, err := GetSubaccountByID(contextC, SubAccountREFID)
+	if err != nil {
+		return err
+	}
+	//檢查是否能Switch
+	if subaccount.CustomerID != ParentID {
+		return errors.New("you do not have permission to switch to")
+	}
+
+	session.Set("id", subaccount.SubCustomerID)
+	session.Set("name", subaccount.AccountName)
+	if err := session.Save(); err != nil {
+		return errors.New("failed to save session")
+	}
+
+	return nil
+}
+
+func SwitchToMainAccount(c *gin.Context) error {
+	//取得當下的CustomerID
+	session := sessions.Default(c)
+	var ParentID string
+	IparentCustomerID := session.Get("parentid")
+	if IparentCustomerID != nil {
+		ParentID = IparentCustomerID.(string)
+	}
+	contextC := context.Background()
+
+	account, err := GetCustomer(contextC, ParentID)
+	if err != nil {
+		return err
+	}
+
+	session.Set("id", account.ID)
+	session.Set("name", account.Name)
+	if err := session.Save(); err != nil {
+		return errors.New("failed to save session")
+	}
+
 	return nil
 }

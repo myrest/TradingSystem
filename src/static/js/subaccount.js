@@ -8,8 +8,8 @@ function renderSubaccounts() {
             <tr>
                 <td>${account.accountname}</td>
                 <td>
-                    <button class="action-button edit-button" onclick="editSubaccount('${account.accountname}')">修改</button>
-                    <button class="action-button delete-button" onclick="deleteSubaccount('${account.accountname}')">刪除</button>
+                    <!-- button class="action-button edit-button" onclick="editSubaccount('${account.accountname}')">修改</button>
+                    <button class="action-button delete-button" onclick="deleteSubaccount('${account.accountname}')">刪除</button -->
                     <button class="action-button delete-button" onclick="switchSubaccount('${account.accountname}')">切換</button>
                 </td>
             </tr>
@@ -26,13 +26,15 @@ function fetchSubaccountData() {
                         return;
                     } else {
                         subaccounts = []
-                        data.data.forEach(subacc => {
-                            subaccounts.push({
-                                accountname: subacc.accountname,
-                                refid: subacc.refid
-                            });
-                        })
-                        renderSubaccounts()
+                        if (data.data != null) {
+                            data.data.forEach(subacc => {
+                                subaccounts.push({
+                                    accountname: subacc.accountname,
+                                    refid: subacc.refid
+                                });
+                            })
+                            renderSubaccounts()
+                        }
                     }
                 }).catch(error => {
                     console.error('Error fetching Subaccount data:', error);
@@ -94,7 +96,7 @@ function saveEditSubaccount() {
             if (response.ok) {
                 renderSubaccounts();
                 closeEditModal();
-            }else{
+            } else {
                 alert(response.json())
             }
         })
@@ -114,7 +116,7 @@ function deleteSubaccount(id) {
             if (response.ok) {
                 subaccounts = subaccounts.filter(a => a.accountname !== id);
                 renderSubaccounts();
-            }else{
+            } else {
                 alert(response.json())
             }
         })
@@ -126,7 +128,7 @@ function closeEditModal() {
     document.getElementById('editsubaccountModal').style.display = 'none';
 }
 
-function switchSubaccount(id){
+function switchSubaccount(id) {
     const data = subaccounts.find(a => a.accountname === id);
     if (data) {
         fetch('/subaccount/switch', {
@@ -138,13 +140,32 @@ function switchSubaccount(id){
         }).then(response => {
             if (response.ok) {
                 window.location.href = '/';
-            }else{
+            } else {
                 alert(response.json())
             }
         })
     }
 }
 
+function switchback() {
+    data = {
+        accountname: "_MAIN_",
+        refid: "_MAIN_",
+    }
+    fetch('/subaccount/switch', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+    }).then(response => {
+        if (response.ok) {
+            window.location.href = '/';
+        } else {
+            alert(response.json())
+        }
+    })
+}
 // 初始化頁面
 document.addEventListener('DOMContentLoaded', () => {
     fetchSubaccountData()

@@ -133,7 +133,8 @@ func Decimal(value interface{}, rounds ...int) float64 {
 	}
 }
 
-func listFilesInCertDir(flpath string) ([]string, error) {
+// 純Debug用
+func ListFilesInCertDir(flpath string) ([]string, error) {
 	dirPath := flpath
 	files, err := os.ReadDir(dirPath)
 	if err != nil {

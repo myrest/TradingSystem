@@ -21,7 +21,7 @@ function saveKeys() {
     const autosubscribe = document.getElementById('SubscribeStatus').innerText == "啟用";
     const subscribtype = document.getElementById('SubscribeType').innerText == "實盤";
     const amount = Number(document.getElementById('SubscribeAmount').value);
-    
+
     const data = {
         apiKey,
         secretKey,
@@ -72,11 +72,13 @@ function toggleSystemMenu() {
 }
 
 // Close the system menu if clicked outside
-window.onclick = function(event) {
+window.onclick = function (event) {
     if (!event.target.matches('.menu-button') && !event.target.matches('.fa-bars')) {
         const menuPopup = document.getElementById('menuPopup');
-        if (menuPopup.style.display === 'block') {
-            menuPopup.style.display = 'none';
+        if (menuPopup != null) {
+            if (menuPopup.style.display === 'block') {
+                menuPopup.style.display = 'none';
+            }
         }
     }
 }

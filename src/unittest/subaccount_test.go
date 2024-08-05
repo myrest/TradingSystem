@@ -14,7 +14,7 @@ func TestCreateSubAccount(t *testing.T) {
 	sampleData := models.SubAccount{
 		SubAccountDB: models.SubAccountDB{
 			CustomerID:  testCustomerID,
-			AccountName: "ThisisFirstSubaccount",
+			AccountName: "ThisisFirstSubaccountName",
 		},
 	}
 
@@ -23,6 +23,8 @@ func TestCreateSubAccount(t *testing.T) {
 	dbSubaccount := dbSubaccounts[0] //應該只會有一筆，且為第一筆
 	dbSecondsubaccount := UpdateSubaccountTest(t, c, dbSubaccount)
 	DeleteSubaccountTest(t, c, dbSubaccount, dbSecondsubaccount)
+	services.DeleteCustomer(c, dbSubaccount.SubCustomerID)
+	services.DeleteCustomer(c, dbSecondsubaccount.SubCustomerID)
 }
 
 // 建立測試資料

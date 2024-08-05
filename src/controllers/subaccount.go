@@ -95,28 +95,19 @@ func SwitchSubAccount(c *gin.Context) {
 		return
 	}
 
-	session := sessions.Default(c)
-	customerid := session.Get("id").(string)
-
-	subaccount, err := services.GetSubaccountByID(c, req.DocumentRefID)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
+	if req.AccountName == req.DocumentRefID && req.AccountName == "_MAIN_" {
+		err := services.SwitchToMainAccount(c)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+	} else {
+		err := services.SwitchToSubAccount(c, req.DocumentRefID)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
 	}
 
-	if customerid != subaccount.CustomerID {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Permission deny."})
-		return
-	}
-
-	session.Set("subaccountrfid", subaccount.DocumentRefID)
-	session.Set("subaccountname", subaccount.AccountName)
-	if err := session.Save(); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save session"})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"data": "OK",
-	})
+	c.JSON(http.StatusOK, gin.H{"data": "OK"})
 }
