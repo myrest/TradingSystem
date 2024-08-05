@@ -5,15 +5,21 @@ import (
 	"context"
 	"errors"
 	"log"
+	"strings"
 
 	"google.golang.org/api/iterator"
 )
 
 func CreateCustomer(ctx context.Context, customer *models.Customer) (string, error) {
 	client := getFirestoreClient()
-	dbCustomer, _ := GetCustomerByEmail(ctx, customer.Email)
-	if dbCustomer != nil {
-		return "", errors.New("account exist")
+
+	//只有Email格式的要驗Email是否存在，Email為ID型式的為subaccount
+	i := strings.Index(customer.Email, "@")
+	if i > -1 {
+		dbCustomer, _ := GetCustomerByEmail(ctx, customer.Email)
+		if dbCustomer != nil {
+			return "", errors.New("account exist")
+		}
 	}
 
 	doc, _, err := client.Collection("customers").Add(ctx, customer)

@@ -13,4 +13,5 @@ func RegisterRoutes(r *gin.Engine) {
 	RegisterWebhookRoutes(r)
 	RegisterRestAdminRoutes(r)
 	RegisterDemoRoutes(r)
+	RegisterSubaccountRoutes(r)
 }

@@ -1,20 +1,8 @@
 {{ template "afterloginheader.html" . }}
 <div class="dashboard">
-    <div class="title-container">
-        <h1>跟單系統</h1>
-        <button class="menu-button" onclick="toggleSystemMenu()">
-            <i class="fas fa-bars"></i>
-        </button>
-    </div>
-    <div class="menu-popup" id="menuPopup">
-        <ul>
-            <li><a href="/demo/"><i class="fa-solid fa-chart-line"></i>績效展示</a></li>
-            <li style="float: right;"><button class="logout-btn" onclick="logout()">登出</button></li>
-        </ul>
-    </div>
-
+    <h1>跟單系統</h1>
+    {{ template "menu.html" . }}
     <div class="user-info">
-        <div class="user-avatar" id="userAvatar"><img src="{{ .Photo }}"></div>
         <div class="user-details">
             <h3 id="userName">{{ .Name }}</h3>
             <p id="userEmail">{{ .Email }}</p>
@@ -73,8 +61,3 @@
             <p id="dataModalContent"></p>
         </div>
     </div>
-
-    <script src="/static/js/common.js"></script>
-    <script>
-        document.getElementById('userAvatar').textContent = "X"
-    </script>

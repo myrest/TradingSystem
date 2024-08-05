@@ -26,36 +26,55 @@ func ShowDashboardPage(c *gin.Context) {
 	session := sessions.Default(c)
 	name := session.Get("name")
 	email := session.Get("email")
-	photo := session.Get("photo")
 
 	if name == nil || email == nil {
 		c.Redirect(http.StatusFound, "/login")
 		return
 	}
+	//有三種情況
+	//1. 己登Google，但系統還沒建帳號
+	//2. 己登入，用本尊身份
+	//3. 己登入，用分身身份
 
-	customer, err := services.GetCustomerByEmail(c, email.(string))
+	//情境1
+	CustomerByEmail, err := services.GetCustomerByEmail(c, email.(string))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	if CustomerByEmail == nil || CustomerByEmail.ID == "" {
+		//帳號不存在，要建一個新的
+		c.HTML(http.StatusOK, "iscreatenew.html", gin.H{
+			"Name":  name,
+			"Email": email,
+		})
+		return
+	}
+
+	SubCustomerID := session.Get("id").(string)
+	//MainCustomerID := session.Get("parentid").(string)
+	//情境2,3
+
+	customer, err := services.GetCustomer(c, SubCustomerID)
 	if err == nil {
-		if customer == nil {
-			//帳號不存在，要建立一個新
-			c.HTML(http.StatusOK, "iscreatenew.html", gin.H{
-				"Name":  name,
-				"Email": email,
-				"Photo": photo,
-			})
-		} else {
-			c.HTML(http.StatusOK, "dashboard.html", gin.H{
-				"Name":                name,
-				"Email":               email,
-				"ApiKey":              customer.APIKey,
-				"SecretKey":           customer.SecretKey,
-				"IsAdmin":             customer.IsAdmin,
-				"Photo":               photo,
-				"AutoSubscribeStatus": customer.IsAutoSubscribe,
-				"AutoSubscribeType":   customer.AutoSubscribReal,
-				"AutoSubscribeAmount": customer.AutoSubscribAmount,
-			})
-		}
+		c.HTML(http.StatusOK, "dashboard.html", gin.H{
+			"Name":                name,
+			"Email":               email,
+			"ApiKey":              customer.APIKey,
+			"SecretKey":           customer.SecretKey,
+			"IsAdmin":             customer.IsAdmin,
+			"AutoSubscribeStatus": customer.IsAutoSubscribe,
+			"AutoSubscribeType":   customer.AutoSubscribReal,
+			"AutoSubscribeAmount": customer.AutoSubscribAmount,
+		})
 	} else {
+		session := sessions.Default(c)
+		session.Clear()
+		if err := session.Save(); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save session"})
+			return
+		}
 		c.Redirect(http.StatusFound, "/login?GotError")
 	}
 }

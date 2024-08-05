@@ -24,8 +24,8 @@
                 <td>{{.Time}}</td>
                 <td>{{.Position}}</td>
                 <td>{{.Price}}</td>
-                <td>{{.Amount | formatFloat64}}</td>
-                <td>{{.Fee | formatFloat64}}</td>
+                <td>{{.Amount | formatFloat64 6}}</td>
+                <td>{{.Fee | formatFloat64 6}}</td>
                 <td>{{.Profit}}</td>
                 <td>{{.Result}}</td>
             </tr>
@@ -46,4 +46,3 @@
     </div>
 </div>
 {{ template "beforeloginfooter.html" . }}
-<script src="/static/js/common.js"></script>

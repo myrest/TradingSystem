@@ -47,6 +47,7 @@ func CreateCustomer(c *gin.Context) {
 		return
 	}
 	session.Set("id", id)
+	session.Set("parentid", id)
 
 	if err := session.Save(); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save session"})
@@ -64,8 +65,8 @@ func UpdateCustomer(c *gin.Context) {
 	}
 
 	session := sessions.Default(c)
-	email := session.Get("email")
-	dbCustomer, err := services.GetCustomerByEmail(c, email.(string))
+	id := session.Get("id").(string)
+	dbCustomer, err := services.GetCustomer(c, id)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Customer data not exist."})
 		return

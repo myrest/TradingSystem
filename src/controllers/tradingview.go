@@ -90,7 +90,7 @@ func processPlaceOrder(Customer models.CustomerCurrencySymboWithCustomer, tv mod
 	//查出目前持倉情況
 	positions, err := client.NewGetOpenPositionsService().Symbol(tv.TVData.Symbol).Do(ctx)
 	if err != nil {
-		placeOrderLog.Result = "Get open position failed."
+		placeOrderLog.Result = "Get open position failed." + err.Error()
 		asyncWriteTVsignalData(placeOrderLog, ctx)
 		return
 	}

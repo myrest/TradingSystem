@@ -1,0 +1,36 @@
+{{ template "afterloginheader.html" . }}
+<link rel="stylesheet" href="/static/css/subaccount.css" />
+<div class="dashboard">
+    <h1>子帳號管理</h1>
+    {{ template "menu.html" . }}
+    <div class="add-subaccount-form">
+        新增子帳號：<input type="text" id="newSubaccountName" placeholder="輸入子帳號名稱">
+        <button onclick="addSubaccount()">新增</button>
+    </div>
+    <div class="subaccount-list">
+        <h2>子帳號列表</h2>
+        <button onclick="switchback()">切回主帳號</button>
+        <table>
+            <thead>
+                <tr>
+                    <th>帳號名稱</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody id="subaccountTableBody">
+                <!-- 子帳號列表將由 JavaScript 動態填充 -->
+            </tbody>
+        </table>
+    </div>
+
+    <div id="editsubaccountModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeEditModal()">&times;</span>
+            <h2>修改子帳號</h2>
+            <input type="text" id="editSubaccountName" placeholder="輸入新的帳號名稱">
+            <button onclick="saveEditSubaccount()">保存</button>
+        </div>
+    </div>
+
+{{ template "beforeloginfooter.html" . }}
+<script src="/static/js/subaccount.js"></script>

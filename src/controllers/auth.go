@@ -34,6 +34,7 @@ func GoogleAuthCallback(c *gin.Context) {
 	if err == nil && customer != nil {
 		session.Set("isadmin", customer.IsAdmin)
 		session.Set("id", customer.ID)
+		session.Set("parentid", customer.ID)
 	} else {
 		session.Set("isadmin", false)
 	}
