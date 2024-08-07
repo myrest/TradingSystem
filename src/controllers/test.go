@@ -52,6 +52,21 @@ func GetBingxOrderByID(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": placedOrder})
 }
 
+func GetAvailableAmountByID(c *gin.Context) {
+	CustomerID := c.Query("cid")
+	account, err := services.GetCustomer(c, CustomerID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	freeamount, err := services.GetAccountBalance(account.APIKey, account.SecretKey)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusBadRequest, gin.H{"amount": freeamount})
+}
+
 func TEST3(c *gin.Context) {
 	Symbol := c.Query("symbol")
 	CustomerID := c.Query("cid")
