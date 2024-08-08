@@ -35,7 +35,17 @@ func GoogleAuthCallback(c *gin.Context) {
 		session.Set("isadmin", customer.IsAdmin)
 		session.Set("id", customer.ID)
 		session.Set("parentid", customer.ID)
+		services.CustomerEventLog{
+			CustomerID: customer.ID,
+			EventName:  services.EventNameLogin,
+			Message:    email,
+		}.Send(c)
 	} else {
+		services.CustomerEventLog{
+			CustomerID: "NewCommer",
+			EventName:  services.EventNameLogin,
+			Message:    email,
+		}.Send(c)
 		session.Set("isadmin", false)
 	}
 

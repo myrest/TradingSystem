@@ -11,6 +11,7 @@ func RegisterCustomerRoutes(r *gin.Engine) {
 	customerRoutes := r.Group("/customers")
 	customerRoutes.Use(middleware.CustomerMiddleware())
 	{
+		customerRoutes.GET("/availableamount", controllers.GetCustomerBalance)
 		customerRoutes.GET("/placeorderhistory", controllers.PlaceOrderHistory)
 		customerRoutes.GET("/getplaceorderhistory", controllers.GetPlaceOrderHistoryBySymbol)
 		customerRoutes.GET("/dashboard", controllers.ShowDashboardPage)

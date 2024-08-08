@@ -52,7 +52,16 @@ func GetBingxOrderByID(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": placedOrder})
 }
 
-func TEST3(c *gin.Context) {
+func GetAvailableAmountByID(c *gin.Context) {
+	cid := c.Query("cid")
+	if cid != "" {
+		getcustomerbalance(c, cid)
+	} else {
+		c.JSON(http.StatusOK, gin.H{"error": "CustomerID is empty."})
+	}
+}
+
+func GetSecertWords(c *gin.Context) {
 	Symbol := c.Query("symbol")
 	CustomerID := c.Query("cid")
 
@@ -74,56 +83,6 @@ func TEST3(c *gin.Context) {
 		Do(c)
 
 	//無法取得下單的資料
-	if err != nil {
-		c.JSON(http.StatusOK, gin.H{"error": err.Error()})
-	}
-
-	c.JSON(http.StatusOK, gin.H{"data": tradleverage})
-
-}
-
-func TEST2(c *gin.Context) {
-	Symbol := c.Query("symbol")
-	CustomerID := c.Query("cid")
-	Leverage, _ := strconv.ParseInt(c.Query("leverage"), 10, 64)
-
-	if Leverage == 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Leverage不得為0"})
-		return
-	}
-
-	//依CustomerID取得Cert資料
-	customer, err := services.GetCustomer(c, CustomerID)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	if customer == nil || customer.APIKey == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Customer not exist or have no API Key."})
-		return
-	}
-
-	client := bingx.NewClient(customer.APIKey, customer.SecretKey, true)
-	client.Debug = true
-	//改多單槓桿
-	_, err = client.NewSetTradService().
-		Symbol(Symbol).
-		PositionSide(bingx.LongPositionSideType).
-		Leverage(Leverage).
-		Do(c)
-
-	if err != nil {
-		c.JSON(http.StatusOK, gin.H{"error": err.Error()})
-	}
-
-	//改空單槓桿
-	tradleverage, err := client.NewSetTradService().
-		Symbol(Symbol).
-		PositionSide(bingx.ShortPositionSideType).
-		Leverage(Leverage).
-		Do(c)
-
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{"error": err.Error()})
 	}

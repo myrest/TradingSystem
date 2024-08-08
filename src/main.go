@@ -4,6 +4,7 @@ package main
 import (
 	"TradingSystem/src/common"
 	"TradingSystem/src/routes"
+	"TradingSystem/src/services"
 	"html/template"
 	"log"
 	"os"
@@ -22,6 +23,7 @@ func formatFloat64(round int, f float64) string {
 }
 
 func main() {
+	defer services.FlushLogging()
 	r := gin.Default()
 	r.SetFuncMap(template.FuncMap{
 		"subtract": func(a, b int) int {

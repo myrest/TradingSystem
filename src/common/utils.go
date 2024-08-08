@@ -3,6 +3,7 @@ package common
 import (
 	"bytes"
 	"compress/gzip"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -23,7 +24,19 @@ type SystemSettings struct {
 	Env                 EnviromentType
 	DemoCustomerID      string
 	TempCacheFolder     string
+	ProjectID           string
 }
+
+type firebaseConfig struct {
+	APIKey            string `json:"apiKey"`
+	AuthDomain        string `json:"authDomain"`
+	ProjectID         string `json:"projectId"`
+	StorageBucket     string `json:"storageBucket"`
+	MessagingSenderID string `json:"messagingSenderId"`
+	AppID             string `json:"appId"`
+}
+
+const DateTimeLayout = "2006-01-02 15:04:05"
 
 type EnviromentType string
 
@@ -106,12 +119,41 @@ func GetEnvironmentSetting() SystemSettings {
 	rtn.FireBaseKeyFullPath = filepath.Join(root, fmt.Sprintf("serviceAccountKey_%s.json", rtn.Env))
 	rtn.DemoCustomerID = democustomerid
 	rtn.TempCacheFolder = filepath.Join(wd, tmpCacheFolder)
+	projectid, err := getProjectID(rtn.OAuthKeyFullPath)
+	if err != nil {
+		log.Fatalf("Error getting project id: %v", err)
+	}
+	rtn.ProjectID = projectid
 
-	log.Printf("root:%s, env:%s, democustomerid:%s", root, env, democustomerid)
+	//log.Printf("root:%s, env:%s, democustomerid:%s", root, env, democustomerid)
 
 	//listFilesInCertDir(root)
 	systemSettings = rtn
 	return rtn
+}
+
+// GetProjectID reads the firebaseConfig_dev.json file and returns the projectId value
+func getProjectID(filename string) (string, error) {
+	// Open the JSON file
+	file, err := os.Open(filename)
+	if err != nil {
+		return "", fmt.Errorf("failed to open file: %w", err)
+	}
+	defer file.Close()
+
+	// Read the file contents
+	data, err := io.ReadAll(file)
+	if err != nil {
+		return "", fmt.Errorf("failed to read file: %w", err)
+	}
+
+	// Parse the JSON data
+	var config firebaseConfig
+	if err := json.Unmarshal(data, &config); err != nil {
+		return "", fmt.Errorf("failed to unmarshal JSON: %w", err)
+	}
+
+	return config.ProjectID, nil
 }
 
 func Decimal(value interface{}, rounds ...int) float64 {
@@ -150,4 +192,8 @@ func ListFilesInCertDir(flpath string) ([]string, error) {
 	}
 
 	return fileNames, nil
+}
+
+func GetUtcTimeNow() string {
+	return time.Now().UTC().Format(DateTimeLayout)
 }

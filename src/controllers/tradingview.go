@@ -11,7 +11,6 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -75,13 +74,12 @@ func processPlaceOrder(Customer models.CustomerCurrencySymboWithCustomer, tv mod
 	client := bingx.NewClient(APIKey, SecertKey, Customer.Simulation)
 	// client.Debug = true
 	// 定义日期字符串的格式
-	const layout = "2006-01-02 15:04:05"
 	ctx := context.Background()
 
 	placeOrderLog := models.Log_TvSiginalData{
 		PlaceOrderType: tv.PlaceOrderType,
 		CustomerID:     Customer.CustomerID,
-		Time:           time.Now().UTC().Format(layout),
+		Time:           common.GetUtcTimeNow(),
 		Simulation:     Customer.Simulation,
 		WebHookRefID:   TvWebHookLog,
 		Symbol:         tv.Symbol,
