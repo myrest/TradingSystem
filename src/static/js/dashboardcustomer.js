@@ -94,6 +94,28 @@ function renderCryptoTable() {
     });
 }
 
+function getAvailableAmount(obj) {
+    fetch(`/customers/availableamount`, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    }).then(response => {
+        if (!response.ok) {
+            response.text().then(x => alert(`Failed to get balance: ` + JSON.parse(x).error))
+        } else {
+            response.json().then(x => {
+                obj.innerText = x.amount
+                if (x.error != ""){
+                    alert(x.error)
+                }
+            })
+        }
+    }).catch(error => {
+        console.error('Error:', error);
+    });
+}
+
 function _updateCustomerSymbol(data) {
     fetch(`/customers/symbol`, {
         method: 'PATCH',

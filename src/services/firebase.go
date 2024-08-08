@@ -18,8 +18,12 @@ var (
 	firestoreMu     sync.Mutex
 	firestoreClient *firestore.Client
 )
+var secmanagerCert string
 
 func getSecret(ctx context.Context, name string) (string, error) {
+	if secmanagerCert != "" {
+		return secmanagerCert, nil
+	}
 	client, err := secretmanager.NewClient(ctx)
 	if err != nil {
 		return "", err
@@ -34,8 +38,8 @@ func getSecret(ctx context.Context, name string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-
-	return string(result.Payload.Data), nil
+	secmanagerCert = string(result.Payload.Data)
+	return secmanagerCert, nil
 }
 
 func init() {

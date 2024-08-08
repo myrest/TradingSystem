@@ -2,8 +2,10 @@ let subaccounts = [];
 
 function renderSubaccounts() {
     const tableBody = document.getElementById('subaccountTableBody');
+    const youare = document.getElementById('youare').innerText;
     tableBody.innerHTML = '';
     subaccounts.forEach(account => {
+        console.log(account)
         const row = `
             <tr>
                 <td>${account.accountname}</td>
@@ -14,7 +16,9 @@ function renderSubaccounts() {
                 </td>
             </tr>
         `;
-        tableBody.innerHTML += row;
+        if (youare != account.subid){
+            tableBody.innerHTML += row;
+        }
     });
 }
 function fetchSubaccountData() {
@@ -30,7 +34,8 @@ function fetchSubaccountData() {
                             data.data.forEach(subacc => {
                                 subaccounts.push({
                                     accountname: subacc.accountname,
-                                    refid: subacc.refid
+                                    refid: subacc.refid,
+                                    subid: subacc.subid
                                 });
                             })
                             renderSubaccounts()

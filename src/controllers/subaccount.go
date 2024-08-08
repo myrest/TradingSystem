@@ -10,12 +10,20 @@ import (
 )
 
 func SubaccountList(c *gin.Context) {
-	c.HTML(http.StatusOK, "subaccountmanagememt.html", gin.H{})
+	isMainAccount := isMainAccount(c)
+	session := sessions.Default(c)
+	youare := session.Get("id").(string)
+	name := session.Get("name").(string)
+	c.HTML(http.StatusOK, "subaccountmanagememt.html", gin.H{
+		"isMainAccount": isMainAccount,
+		"youare":        youare,
+		"yourname":      name,
+	})
 }
 
 func GetSubaccountList(c *gin.Context) {
 	session := sessions.Default(c)
-	customerid := session.Get("id").(string)
+	customerid := session.Get("parentid").(string)
 
 	subaccounts, err := services.GetSubaccountListByID(c, customerid)
 	if err != nil {
@@ -110,4 +118,16 @@ func SwitchSubAccount(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"data": "OK"})
+}
+
+func isMainAccount(c *gin.Context) bool {
+	session := sessions.Default(c)
+	SubCustomerID := session.Get("id")
+	MainCustomerID := session.Get("parentid")
+
+	if SubCustomerID != nil && MainCustomerID != nil {
+		return SubCustomerID.(string) == MainCustomerID.(string)
+	} else {
+		return false
+	}
 }

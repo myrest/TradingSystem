@@ -3,13 +3,21 @@
 <div class="dashboard">
     <h1>子帳號管理</h1>
     {{ template "menu.html" . }}
+    {{ if .isMainAccount }}
     <div class="add-subaccount-form">
         新增子帳號：<input type="text" id="newSubaccountName" placeholder="輸入子帳號名稱">
         <button onclick="addSubaccount()">新增</button>
     </div>
+    {{ else }}
+    目前帳號：<span>{{ .yourname }}</span>
+    {{ end }}
+    <span id="youare" style="display:none">{{ .youare }}</span>
     <div class="subaccount-list">
-        <h2>子帳號列表</h2>
-        <button onclick="switchback()">切回主帳號</button>
+        {{ if .isMainAccount }}
+            <h2>子帳號列表</h2>
+        {{ else }}
+            <button onclick="switchback()">切回主帳號</button>
+        {{ end }}
         <table>
             <thead>
                 <tr>
@@ -32,5 +40,5 @@
         </div>
     </div>
 
-{{ template "beforeloginfooter.html" . }}
-<script src="/static/js/subaccount.js"></script>
+    {{ template "beforeloginfooter.html" . }}
+    <script src="/static/js/subaccount.js"></script>

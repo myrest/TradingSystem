@@ -79,6 +79,35 @@ func ShowDashboardPage(c *gin.Context) {
 	}
 }
 
+func GetCustomerBalance(c *gin.Context) {
+	session := sessions.Default(c)
+	customerid := session.Get("id").(string)
+	getcustomerbalance(c, customerid)
+}
+
+func getcustomerbalance(c *gin.Context, customerid string) {
+	var freeamount float64
+	dbCustomer, err := services.GetCustomer(c, customerid)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	}
+	//有key，啟用時要檢查餘額
+	if dbCustomer.APIKey != "" && dbCustomer.SecretKey != "" {
+		freeamount, err = services.GetAccountBalance(dbCustomer.APIKey, dbCustomer.SecretKey)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		}
+	}
+	errmsg := ""
+	if dbCustomer.APIKey == "" || dbCustomer.SecretKey == "" {
+		errmsg = "Missing API, Secert Key."
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"error":  errmsg,
+		"amount": freeamount,
+	})
+}
+
 func UpdateCustomerSymbol(c *gin.Context) {
 	var input models.CustomerCurrencySymbol
 	var req updateCustomerSymboRequest
@@ -106,33 +135,13 @@ func UpdateCustomerSymbol(c *gin.Context) {
 	session := sessions.Default(c)
 	input.CustomerID = session.Get("id").(string)
 
-	customerid := session.Get("id").(string)
-	dbCustomer, err := services.GetCustomer(c, customerid)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-	}
-
-	var errormessage string
-
-	//有key，啟用時要檢查餘額
-	if dbCustomer.APIKey != "" && dbCustomer.SecretKey != "" && input.Status {
-		freeamount, err := services.GetAccountBalance(dbCustomer.APIKey, dbCustomer.SecretKey)
-		if err != nil || input.Amount > freeamount {
-			if err != nil {
-				errormessage = err.Error()
-			} else {
-				errormessage = "Balance not enough. Balance: " + strconv.FormatFloat(freeamount, 'f', -1, 64)
-			}
-		}
-	}
-
-	err = services.UpdateCustomerCurrency(context.Background(), &input)
+	err := services.UpdateCustomerCurrency(context.Background(), &input)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Update customer Symbol failed. " + err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, errormessage)
+	c.JSON(http.StatusOK, "")
 }
 
 func GetAllCustomerSymbol(c *gin.Context) {
