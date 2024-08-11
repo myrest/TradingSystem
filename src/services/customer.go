@@ -84,3 +84,23 @@ func GetCustomerByEmail(ctx context.Context, email string) (*models.Customer, er
 	customer.ID = doc.Ref.ID
 	return &customer, nil
 }
+
+func GetCustomerByTgIdentifyKey(ctx context.Context, key string) (*models.Customer, error) {
+	client := getFirestoreClient()
+
+	iter := client.Collection("customers").Where("TgIdentifyKey", "==", key).Limit(1).Documents(ctx)
+	defer iter.Stop()
+	doc, err := iter.Next()
+	if err == iterator.Done {
+		return nil, nil // Customer not found
+	}
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+
+	var customer models.Customer
+	doc.DataTo(&customer)
+	customer.ID = doc.Ref.ID
+	return &customer, nil
+}

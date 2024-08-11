@@ -25,6 +25,7 @@ const (
 	systemEvent   AduitLogType = "SystemEvent"
 
 	EventNameLogin EventNameType = "LoginEvent"
+	PlaceOrder     EventNameType = "PlaceOrder"
 )
 
 type CustomerEventLog struct {

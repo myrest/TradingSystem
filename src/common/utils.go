@@ -25,6 +25,7 @@ type SystemSettings struct {
 	DemoCustomerID      string
 	TempCacheFolder     string
 	ProjectID           string
+	TgToken             string
 }
 
 type firebaseConfig struct {
@@ -63,6 +64,7 @@ func DecodeGzip(data []byte) ([]byte, error) {
 }
 
 const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+const tgToken = "7271183700:AAGkiE2lsj_t251DAdnmZvgq7D-Q2SwUX9M"
 
 func GenerateRandomString(length int) string {
 	seededRand := rand.New(rand.NewSource(time.Now().UnixNano()))
@@ -115,6 +117,7 @@ func GetEnvironmentSetting() SystemSettings {
 	} else {
 		rtn.Env = Dev
 	}
+	rtn.TgToken = tgToken
 	rtn.OAuthKeyFullPath = filepath.Join(root, fmt.Sprintf("firebaseConfig_%s.json", rtn.Env))
 	rtn.FireBaseKeyFullPath = filepath.Join(root, fmt.Sprintf("serviceAccountKey_%s.json", rtn.Env))
 	rtn.DemoCustomerID = democustomerid

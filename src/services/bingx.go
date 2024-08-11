@@ -12,5 +12,5 @@ func GetAccountBalance(APIkey, SecretKey string) (float64, error) {
 	if err != nil {
 		return 0, err
 	}
-	return strconv.ParseFloat((*res).AavailableMargin, 64)
+	return strconv.ParseFloat((*res).Equity, 64)
 }

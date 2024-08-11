@@ -10,4 +10,6 @@ type Customer struct {
 	IsAutoSubscribe    bool   `json:"autosubscribe"`
 	AutoSubscribReal   bool   `json:"subscribtype"`
 	AutoSubscribAmount int    `json:"amount"`
+	TgChatID           int64
+	TgIdentifyKey      string `json:"tgidentifykey"`
 }
