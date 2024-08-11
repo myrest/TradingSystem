@@ -19,5 +19,6 @@ func RegisterCustomerRoutes(r *gin.Engine) {
 		customerRoutes.POST("", controllers.CreateCustomer)
 		customerRoutes.POST("/update", controllers.UpdateCustomer)
 		customerRoutes.PATCH("/symbol", controllers.UpdateCustomerSymbol)
+		customerRoutes.GET("/linktg", controllers.GetTGBot)
 	}
 }

@@ -6,6 +6,7 @@ import (
 	"TradingSystem/src/models"
 	"context"
 	"errors"
+	"log"
 
 	"google.golang.org/api/iterator"
 )
@@ -161,4 +162,24 @@ func DeleteCustomerCurrency(ctx context.Context, CustomerID, Symbol string) erro
 		}
 	}
 	return nil
+}
+
+func GetCustomerByTGChatID(ctx context.Context, ChatID int64) (*models.Customer, error) {
+	client := getFirestoreClient()
+
+	iter := client.Collection("customers").Where("TgChatID", "==", ChatID).Limit(1).Documents(ctx)
+	defer iter.Stop()
+	doc, err := iter.Next()
+	if err == iterator.Done {
+		return nil, nil // Customer not found
+	}
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+
+	var customer models.Customer
+	doc.DataTo(&customer)
+	customer.ID = doc.Ref.ID
+	return &customer, nil
 }
