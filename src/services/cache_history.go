@@ -101,7 +101,7 @@ func loadDemoSymbolListCache(key string) ([]models.DemoSymbolList, error) {
 	return data, err
 }
 
-// 在收到新的Webhook之後，要清掉相關的幣種記錄檔
+// Todo:應該清除相關幣就好
 func RemoveLog_TVExpiredCacheFiles() {
 	cacheMu.Lock()
 	defer cacheMu.Unlock()

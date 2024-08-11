@@ -6,6 +6,7 @@ import (
 	"TradingSystem/src/models"
 	"TradingSystem/src/services"
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -61,20 +62,23 @@ func preProcessPlaceOrder(c *gin.Context, WebhookData models.TvWebhookData) erro
 		wg.Add(1)
 		go func(customer models.CustomerCurrencySymboWithCustomer) {
 			defer wg.Done()
-			processPlaceOrder(customer, tvData, TvWebHookLog, customer.APIKey, customer.SecretKey)
+			processPlaceOrder(customer, tvData, TvWebHookLog, customer.APIKey, customer.SecretKey, c)
 		}(customerList[i])
 	}
 	wg.Wait()
 	//要更新績效的cache
-
+	go func() {
+		//清暫存檔
+		services.RemoveLog_TVExpiredCacheFiles()
+	}()
 	return nil
 }
 
-func processPlaceOrder(Customer models.CustomerCurrencySymboWithCustomer, tv models.TvSiginalData, TvWebHookLog, APIKey, SecertKey string) {
+func processPlaceOrder(Customer models.CustomerCurrencySymboWithCustomer, tv models.TvSiginalData, TvWebHookLog, APIKey, SecertKey string, c *gin.Context) {
 	client := bingx.NewClient(APIKey, SecertKey, Customer.Simulation)
 	// client.Debug = true
 	// 定义日期字符串的格式
-	ctx := context.Background()
+	needSendToTG := false
 
 	placeOrderLog := models.Log_TvSiginalData{
 		PlaceOrderType: tv.PlaceOrderType,
@@ -86,10 +90,10 @@ func processPlaceOrder(Customer models.CustomerCurrencySymboWithCustomer, tv mod
 	}
 
 	//查出目前持倉情況
-	positions, err := client.NewGetOpenPositionsService().Symbol(tv.TVData.Symbol).Do(ctx)
+	positions, err := client.NewGetOpenPositionsService().Symbol(tv.TVData.Symbol).Do(c)
 	if err != nil {
 		placeOrderLog.Result = "Get open position failed." + err.Error()
-		asyncWriteTVsignalData(placeOrderLog, ctx)
+		asyncWriteTVsignalData(needSendToTG, Customer.Customer, placeOrderLog, c)
 		return
 	}
 
@@ -139,11 +143,12 @@ func processPlaceOrder(Customer models.CustomerCurrencySymboWithCustomer, tv mod
 	if tv.TVData.PositionSize == 0 {
 		//全部平倉
 		placeAmount = oepntrade.AvailableAmt
+		needSendToTG = true
 	}
 
 	if placeAmount == 0 {
 		placeOrderLog.Result = "Place amount is 0."
-		asyncWriteTVsignalData(placeOrderLog, ctx)
+		asyncWriteTVsignalData(needSendToTG, Customer.Customer, placeOrderLog, c)
 		return
 	}
 
@@ -154,12 +159,12 @@ func processPlaceOrder(Customer models.CustomerCurrencySymboWithCustomer, tv mod
 		Quantity(placeAmount).
 		Type(bingx.MarketOrderType).
 		Side(tv.PlaceOrderType.Side).
-		Do(ctx)
+		Do(c)
 
 	//如果下單有問題，就記錄下來後return
 	if err != nil {
 		placeOrderLog.Result = "Place order failed:" + err.Error()
-		asyncWriteTVsignalData(placeOrderLog, ctx)
+		asyncWriteTVsignalData(true, Customer.Customer, placeOrderLog, c)
 		return
 	}
 	log.Printf("Customer:%s %v order created: %+v", Customer.CustomerID, bingx.MarketOrderType, order)
@@ -172,7 +177,7 @@ func processPlaceOrder(Customer models.CustomerCurrencySymboWithCustomer, tv mod
 	placedOrder, err := client.NewGetOrderService().
 		Symbol(tv.TVData.Symbol).
 		OrderId(order.OrderId).
-		Do(ctx)
+		Do(c)
 
 	//無法取得下單的資料
 	if err != nil {
@@ -202,15 +207,43 @@ func processPlaceOrder(Customer models.CustomerCurrencySymboWithCustomer, tv mod
 		placeOrderLog.Fee = totalFee
 	}
 
-	asyncWriteTVsignalData(placeOrderLog, ctx)
+	asyncWriteTVsignalData(needSendToTG, Customer.Customer, placeOrderLog, c)
 }
 
 // 寫log
-func asyncWriteTVsignalData(tvdata models.Log_TvSiginalData, c context.Context) {
+func asyncWriteTVsignalData(needSendResult bool, customer models.Customer, tvdata models.Log_TvSiginalData, c *gin.Context) {
 	go func(data models.Log_TvSiginalData) {
 		_, err := services.SaveCustomerPlaceOrderResultLog(c, data)
 		if err != nil {
 			log.Printf("Failed to save webhook data: %v", err)
 		}
+		if needSendResult && customer.TgChatID > 0 {
+			positionside := "多"
+			side := "開"
+			if tvdata.PositionSideType == bingx.ShortPositionSideType {
+				positionside = "空"
+			}
+			if (tvdata.PositionSideType == bingx.ShortPositionSideType && tvdata.Side == bingx.BuySideType) ||
+				(tvdata.PositionSideType == bingx.LongPositionSideType && tvdata.Side == bingx.SellSideType) {
+				side = "平"
+			}
+			tgMessage := fmt.Sprintf("幣種：%s \n方向：%s%s\n結果/單號：%s", tvdata.Symbol, side, positionside, tvdata.Result)
+			if tvdata.Profit != 0 {
+				tgMessage = fmt.Sprintf("%s\n盈虧：%s", tgMessage, formatFloat64(6, tvdata.Profit))
+			}
+			err := services.TGSendMessage(customer.TgChatID, tgMessage)
+			if err != nil {
+				services.CustomerEventLog{
+					CustomerID: customer.ID,
+					EventName:  services.PlaceOrder,
+					Message:    err.Error(),
+				}.Send(c)
+			}
+		}
 	}(tvdata)
+}
+
+func formatFloat64(round int, f float64) string {
+	value := common.Decimal(f, round)
+	return strconv.FormatFloat(value, 'f', -1, 64)
 }
