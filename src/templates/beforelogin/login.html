@@ -22,7 +22,6 @@
                 const provider = new firebase.auth.GoogleAuthProvider();
                 firebase.auth().signInWithPopup(provider)
                     .then(result => {
-                        console.log(result)
                         result.user.getIdToken().then(idToken => {
                             fetch('/auth/google', {
                                 method: 'POST',
@@ -32,8 +31,7 @@
                                 body: JSON.stringify({ token: idToken })
                             }).then(response => {
                                 window.location = response.url
-                            })
-                                .then(data => console.log(data))
+                            }).then(data => console.log(data))
                                 .catch(error => console.error('Error:', error));
                         });
                     })

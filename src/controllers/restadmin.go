@@ -162,8 +162,7 @@ func GetSubscribeCustomerBySymbol(c *gin.Context) {
 
 	customerSymbolList, err := services.GetSubscribeCustomersBySymbol(context.Background(), symbol)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
+		panic(err)
 	}
 
 	c.HTML(http.StatusOK, "adminviewcustomersymbolist.html", gin.H{

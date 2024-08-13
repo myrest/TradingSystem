@@ -13,3 +13,8 @@ type Customer struct {
 	TgChatID           int64
 	TgIdentifyKey      string `json:"tgidentifykey"`
 }
+
+type CustomerMap struct {
+	Parent_CustomerID string
+	Child_CustomerID  []string
+}

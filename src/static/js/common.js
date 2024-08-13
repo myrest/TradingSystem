@@ -3,11 +3,10 @@ function logout() {
     document.getElementById('loader').style.display = 'block';
 
     fetch('/auth/google', {
-        method: 'DELETE',
+        method: 'GET',
         headers: {
             'Content-Type': 'application/json'
-        },
-        body: ""
+        }
     }).then(response => {
         window.location = response.url
     }).then(data => console.log(data))

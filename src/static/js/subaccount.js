@@ -5,7 +5,6 @@ function renderSubaccounts() {
     const youare = document.getElementById('youare').innerText;
     tableBody.innerHTML = '';
     subaccounts.forEach(account => {
-        console.log(account)
         const row = `
             <tr>
                 <td>${account.accountname}</td>
