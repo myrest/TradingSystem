@@ -30,7 +30,15 @@
                                 },
                                 body: JSON.stringify({ token: idToken })
                             }).then(response => {
-                                window.location = response.url
+                                if (response.ok) {
+                                    window.location = response.url
+                                } else {
+                                    response.json().then(data => {
+                                        alert(data.error)
+                                    }).catch(error => {
+                                        console.error('Error:', error);
+                                    });
+                                }
                             }).then(data => console.log(data))
                                 .catch(error => console.error('Error:', error));
                         });

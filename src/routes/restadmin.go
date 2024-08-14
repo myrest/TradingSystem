@@ -17,5 +17,7 @@ func RegisterRestAdminRoutes(r *gin.Engine) {
 		authRoutes.PATCH("/symbolMessage", controllers.UpdateMessage)
 		authRoutes.GET("/symbol", controllers.GetAllSymbol)
 		authRoutes.GET("/subscriber", controllers.GetSubscribeCustomerBySymbol)
+		authRoutes.GET("/customers", controllers.GetAllCustomerList)
+		authRoutes.GET("/customersubscribe", controllers.GetSubscribeSymbolbyCompanyID)
 	}
 }

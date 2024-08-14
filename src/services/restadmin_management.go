@@ -8,13 +8,11 @@ import (
 	"google.golang.org/api/iterator"
 )
 
-func GetMappedCustomerList(ctx context.Context) ([]models.CustomerMap, error) {
-	var rtn []models.CustomerMap
-	customermap := make(map[string]models.CustomerMap)
+func GetMappedCustomerList(ctx context.Context) (map[string]models.CustomerRelationUI, error) {
+	customermap := make(map[string]models.CustomerRelationUI)
 	client := getFirestoreClient()
 	//取出所有的客戶資料
 	iter := client.Collection("customers").Documents(ctx)
-	var customers []models.Customer
 	for {
 		doc, err := iter.Next()
 		if err == iterator.Done {
@@ -31,24 +29,31 @@ func GetMappedCustomerList(ctx context.Context) ([]models.CustomerMap, error) {
 
 		//先建出Parent customer資料
 		if strings.Index(customer.Email, "@") > 0 {
-			customermap[customer.ID] = models.CustomerMap{
-				Parent_CustomerID: customer.ID,
+			//因為是本尊，所以Parent不會有資料
+			customermap[customer.ID] = models.CustomerRelationUI{
+				Customer: customer,
+			}
+		} else {
+			//是sub-customer，等所資料找出來，要補上Parent資料
+			customermap[customer.ID] = models.CustomerRelationUI{
+				Customer: customer,
 			}
 		}
-		customers = append(customers, customer)
 	}
 
-	// 建立 parent-child 关系
-	for _, customer := range customers {
-		if !strings.Contains(customer.Email, "@") {
-			mappedcustomer := customermap[customer.Email]
-			mappedcustomer.Child_CustomerID = append(mappedcustomer.Child_CustomerID, customer.ID)
-			customermap[customer.Email] = mappedcustomer
+	for _, customer := range customermap {
+		if !strings.Contains(customer.Customer.Email, "@") {
+			//找出parent資料。
+			parent := customermap[customer.Customer.Email]
+			//只處理sub customer
+			customermap[customer.Customer.ID] = models.CustomerRelationUI{
+				Parent_CustomerID: parent.Customer.ID,
+				Parent_Email:      parent.Customer.Email,
+				Parent_Name:       parent.Customer.Name,
+				Customer:          customer.Customer,
+			}
 		}
 	}
 
-	for _, value := range customermap {
-		rtn = append(rtn, value)
-	}
-	return rtn, nil
+	return customermap, nil
 }

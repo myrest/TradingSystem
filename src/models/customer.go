@@ -14,7 +14,9 @@ type Customer struct {
 	TgIdentifyKey      string `json:"tgidentifykey"`
 }
 
-type CustomerMap struct {
+type CustomerRelationUI struct {
 	Parent_CustomerID string
-	Child_CustomerID  []string
+	Parent_Email      string
+	Parent_Name       string
+	Customer          Customer
 }

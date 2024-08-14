@@ -19,6 +19,11 @@ type CustomerCurrencySymbol struct {
 	CustomerID string
 }
 
+type CustomerCurrencySymbolUI struct {
+	CustomerCurrencySymbol
+	CustomerRelationUI
+}
+
 type CustomerCurrencySymboResponse struct {
 	CurrencySymbolBase
 	Amount       float64 `json:"amount"`

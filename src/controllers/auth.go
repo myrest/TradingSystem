@@ -15,14 +15,14 @@ func GoogleAuthCallback(c *gin.Context) {
 	}
 
 	if err := c.BindJSON(&req); err != nil {
-		handleCustomError(c, http.StatusBadRequest, "Invalid request", true)
+		handleCustomErrorJson(c, nil, "Invalid request")
 		return
 	}
 
 	session := sessions.Default(c)
 	var googleUser models.GoogleTokenDetail
 	if tokenResult, err := services.VerifyIDTokenAndGetDetails(req.Token); err != nil {
-		handleCustomError(c, http.StatusBadRequest, "Invalid ID token", true)
+		handleCustomErrorJson(c, nil, "Invalid ID token")
 		return
 	} else {
 		googleUser = tokenResult
@@ -53,7 +53,7 @@ func GoogleAuthCallback(c *gin.Context) {
 	}
 
 	if err := session.Save(); err != nil {
-		handleCustomError(c, http.StatusBadRequest, "Failed to save session", true)
+		handleCustomErrorJson(c, nil, "Failed to save session")
 		return
 	}
 
@@ -64,7 +64,7 @@ func GoogleLogout(c *gin.Context) {
 	session := sessions.Default(c)
 	session.Clear()
 	if err := session.Save(); err != nil {
-		handleCustomError(c, http.StatusBadRequest, "Failed to save session")
+		handleCustomErrorJson(c, nil, "Failed to save session")
 		return
 	}
 

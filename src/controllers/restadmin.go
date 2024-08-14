@@ -5,6 +5,7 @@ import (
 	"TradingSystem/src/services"
 	"context"
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -169,4 +170,55 @@ func GetSubscribeCustomerBySymbol(c *gin.Context) {
 		"data":   customerSymbolList,
 		"symbol": symbol,
 	})
+}
+
+func GetAllCustomerList(c *gin.Context) {
+	MappedSubCustomerList, err := services.GetMappedCustomerList(c)
+	if err != nil {
+		return
+	}
+
+	rtn := sortCustomerRelationsByMainSub(MappedSubCustomerList)
+
+	c.HTML(http.StatusOK, "adminviewcustomers.html", gin.H{
+		"data": rtn,
+	})
+}
+
+func GetSubscribeSymbolbyCompanyID(c *gin.Context) {
+	customerid := c.Query("cid")
+	rtn, err := getAllCustomerSymbolByCustomerID(customerid)
+	if err != nil {
+		return
+	}
+	c.HTML(http.StatusOK, "adminviewcustomersubscribe.html", gin.H{
+		"data": rtn,
+		"cid":  customerid,
+	})
+}
+
+// 按照主账号和子账号的关系进行排序
+func sortCustomerRelationsByMainSub(mappedCustomer map[string]models.CustomerRelationUI) []models.CustomerRelationUI {
+	mainAccounts := make(map[string]models.CustomerRelationUI)
+	var rtn []models.CustomerRelationUI
+
+	//先處理Main account，以確保都能找到parent資料
+	for _, value := range mappedCustomer {
+		if strings.Contains(value.Customer.Email, "@") {
+			mainAccounts[value.Customer.ID] = value
+		}
+	}
+
+	//開始Map有sub的資料
+	for _, mainAcc := range mainAccounts {
+		//新增main
+		rtn = append(rtn, mainAcc)
+		//新增sub accounts under that main.
+		for _, value := range mappedCustomer {
+			if value.Parent_CustomerID == mainAcc.Customer.ID {
+				rtn = append(rtn, value)
+			}
+		}
+	}
+	return rtn
 }

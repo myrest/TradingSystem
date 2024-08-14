@@ -287,13 +287,18 @@ func GetLatestWebhook(ctx context.Context) ([]models.TvWebhookData, error) {
 	return rtn, nil
 }
 
-func GetSubscribeCustomersBySymbol(ctx context.Context, Symbol string) ([]models.CustomerCurrencySymbol, error) {
+func GetSubscribeCustomersBySymbol(ctx context.Context, Symbol string) ([]models.CustomerCurrencySymbolUI, error) {
 	client := getFirestoreClient()
+
+	MappedSubCustomerList, err := GetMappedCustomerList(ctx)
+	if err != nil {
+		return nil, err
+	}
 
 	iter := client.Collection("customerssymbol").Where("Symbol", "==", Symbol).Documents(ctx)
 	defer iter.Stop()
 
-	var rtn []models.CustomerCurrencySymbol
+	var rtn []models.CustomerCurrencySymbolUI
 	for {
 		doc, err := iter.Next()
 		if err == iterator.Done {
@@ -305,7 +310,10 @@ func GetSubscribeCustomersBySymbol(ctx context.Context, Symbol string) ([]models
 
 		var data models.CustomerCurrencySymbol
 		doc.DataTo(&data)
-		rtn = append(rtn, data)
+		rtn = append(rtn, models.CustomerCurrencySymbolUI{
+			CustomerCurrencySymbol: data,
+			CustomerRelationUI:     MappedSubCustomerList[data.CustomerID],
+		})
 	}
 
 	return rtn, nil
