@@ -147,22 +147,27 @@ func UpdateCustomerSymbol(c *gin.Context) {
 func GetAllCustomerSymbol(c *gin.Context) {
 	session := sessions.Default(c)
 	customerid := session.Get("id").(string)
+	rtn, err := getAllCustomerSymbolByCustomerID(customerid)
 
+	if err != nil {
+		return
+	}
+
+	c.JSON(http.StatusOK, rtn)
+}
+
+func getAllCustomerSymbolByCustomerID(CustomerID string) ([]models.CustomerCurrencySymboResponse, error) {
 	systemSymboList, err := services.GetAllSymbol(context.Background())
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
+		return nil, err
 	}
 
-	customersymboList, err := services.GetAllCustomerCurrency(context.Background(), customerid)
+	customersymboList, err := services.GetAllCustomerCurrency(context.Background(), CustomerID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
+		return nil, err
 	}
-
 	mergedList := mergeSymboLists(systemSymboList, customersymboList)
-
-	c.JSON(http.StatusOK, mergedList)
+	return mergedList, nil
 }
 
 func mergeSymboLists(systemSymboList []models.AdminCurrencySymbol, customersymboList []models.CustomerCurrencySymbol) []models.CustomerCurrencySymboResponse {

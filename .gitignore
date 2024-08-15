@@ -5,3 +5,4 @@ src/__debug_*
 src/firebaseConfig*
 firebaseConfig_dev.json
 src/TmpCache/*
+src/note.txt

@@ -3,6 +3,7 @@ package main
 //使用myrest005的帳號
 import (
 	"TradingSystem/src/common"
+	"TradingSystem/src/middleware"
 	"TradingSystem/src/routes"
 	"TradingSystem/src/services"
 	"html/template"
@@ -31,6 +32,9 @@ func main() {
 		},
 		"add": func(a, b int) int {
 			return a + b
+		},
+		"timesf": func(a, b float64) float64 {
+			return common.Decimal(a*b, 6)
 		},
 		"iterate": func(start, end int) []int {
 			var result []int
@@ -61,6 +65,7 @@ func main() {
 	r.Static("/static", staticDir)
 	r.StaticFile("/favicon.ico", filepath.Join(staticDir, "favicon.ico"))
 
+	r.Use(middleware.ErrorHandlingMiddleware())
 	routes.RegisterRoutes(r)
 
 	port := os.Getenv("PORT")

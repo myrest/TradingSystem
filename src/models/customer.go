@@ -13,3 +13,10 @@ type Customer struct {
 	TgChatID           int64
 	TgIdentifyKey      string `json:"tgidentifykey"`
 }
+
+type CustomerRelationUI struct {
+	Parent_CustomerID string
+	Parent_Email      string
+	Parent_Name       string
+	Customer          Customer
+}

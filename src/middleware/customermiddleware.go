@@ -20,3 +20,17 @@ func CustomerMiddleware() gin.HandlerFunc {
 		}
 	}
 }
+
+// ErrorHandlingMiddleware 捕获并处理所有错误
+func ErrorHandlingMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		defer func() {
+			if err := recover(); err != nil {
+				// 在此处定义统一的错误响应
+				c.JSON(http.StatusInternalServerError, gin.H{"error": err.(error).Error()})
+				c.Abort()
+			}
+		}()
+		c.Next()
+	}
+}

@@ -1,14 +1,13 @@
 {{ template "afterloginheader.html" . }}
 <div class="dashboard">
-    <h1>訂閱資料 - {{.symbol}}</h1>
+    <h1>訂閱</h1>
     <table>
         <thead>
             <tr>
-                <th>帳號</th>
-                <th>主帳號</th>
-                <th>種類</th>
+                <th>幣種</th>
+                <th>盤種</th>
                 <th>狀態</th>
-                <th>金額</th>
+                <th>投入金額</th>
                 <th>記錄</th>
             </tr>
         </thead>
@@ -16,14 +15,8 @@
             {{range .data}}
             <tr>
                 <td>
-                    {{ if .CustomerRelationUI.Parent_Name }}
-                        {{.CustomerRelationUI.Customer.Name}}
-                    {{ else }}
-                        {{.CustomerRelationUI.Customer.Email}}
-                        ({{.CustomerRelationUI.Customer.Name}})
-                    {{end}}
+                    {{ .CurrencySymbolBase.Symbol }}
                 </td>
-                <td>{{.CustomerRelationUI.Parent_Name}}</td>
                 <td>
                     {{ if .Simulation }}
                     <span class="status-toggle">模擬</span>
@@ -32,14 +25,16 @@
                     {{ end }}
                 </td>
                 <td>
-                    {{ if .Status }}
+                    {{ if .CurrencySymbolBase.Status }}
                     <span class="status-toggle">啟用</span>
                     {{ else }}
                     <span class="status-toggle disabled">停用</span>
                     {{ end }}
                 </td>
-                <td>{{.Amount}}</td>
-                <td><a href="/customers/placeorderhistory?symbol={{ .Symbol }}&cid={{.CustomerID}}">記錄</a></td>
+                <td>
+                    {{ timesf .Amount .Leverage }} = {{ .Amount }} * {{ .Leverage }}倍 
+                </td>
+                <td><a href="/customers/placeorderhistory?symbol={{ .CurrencySymbolBase.Symbol }}&cid={{ $.cid }}">記錄</a></td>
             </tr>
             {{end}}
         </tbody>

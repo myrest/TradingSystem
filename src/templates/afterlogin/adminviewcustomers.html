@@ -1,0 +1,30 @@
+{{ template "afterloginheader.html" . }}
+<div class="dashboard">
+    <h1>客戶列表</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>帳號</th>
+                <th>主帳號</th>
+                <th>訂閱資料</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{range .data}}
+            <tr>
+                <td>
+                    {{ if .Parent_Name }}
+                        {{.Customer.Name}}
+                    {{ else }}
+                        {{.Customer.Email}}
+                        ({{.Customer.Name}})
+                    {{end}}
+                </td>
+                <td>{{.Parent_Name}}</td>
+                <td><a href="/restadmin/customersubscribe?cid={{.Customer.ID}}">訂閱</a></td>
+            </tr>
+            {{end}}
+        </tbody>
+    </table>
+</div>
+{{ template "beforeloginfooter.html" . }}

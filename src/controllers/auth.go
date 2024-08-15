@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"TradingSystem/src/models"
 	"TradingSystem/src/services"
 	"net/http"
 
@@ -14,23 +15,25 @@ func GoogleAuthCallback(c *gin.Context) {
 	}
 
 	if err := c.BindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
-		return
-	}
-
-	uid, email, name, photo, err := services.VerifyIDTokenAndGetDetails(req.Token)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid ID token"})
+		handleCustomErrorJson(c, nil, "Invalid request")
 		return
 	}
 
 	session := sessions.Default(c)
-	session.Set("uid", uid)
-	session.Set("name", name)
-	session.Set("email", email)
-	session.Set("photo", photo)
+	var googleUser models.GoogleTokenDetail
+	if tokenResult, err := services.VerifyIDTokenAndGetDetails(req.Token); err != nil {
+		handleCustomErrorJson(c, nil, "Invalid ID token")
+		return
+	} else {
+		googleUser = tokenResult
+	}
 
-	customer, err := services.GetCustomerByEmail(c, email)
+	session.Set("uid", googleUser.UID)
+	session.Set("name", googleUser.Name)
+	session.Set("email", googleUser.Email)
+	session.Set("photo", googleUser.Photo)
+
+	customer, err := services.GetCustomerByEmail(c, googleUser.Email)
 	if err == nil && customer != nil {
 		session.Set("isadmin", customer.IsAdmin)
 		session.Set("id", customer.ID)
@@ -38,19 +41,19 @@ func GoogleAuthCallback(c *gin.Context) {
 		services.CustomerEventLog{
 			CustomerID: customer.ID,
 			EventName:  services.EventNameLogin,
-			Message:    email,
+			Message:    googleUser.Email,
 		}.Send(c)
 	} else {
 		services.CustomerEventLog{
 			CustomerID: "NewCommer",
 			EventName:  services.EventNameLogin,
-			Message:    email,
+			Message:    googleUser.Email,
 		}.Send(c)
 		session.Set("isadmin", false)
 	}
 
 	if err := session.Save(); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save session"})
+		handleCustomErrorJson(c, nil, "Failed to save session")
 		return
 	}
 
@@ -61,7 +64,7 @@ func GoogleLogout(c *gin.Context) {
 	session := sessions.Default(c)
 	session.Clear()
 	if err := session.Save(); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save session"})
+		handleCustomErrorJson(c, nil, "Failed to save session")
 		return
 	}
 
