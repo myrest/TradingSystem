@@ -32,7 +32,7 @@
                     {{ end }}
                 </td>
                 <td>
-                    {{ addf .Amount .Leverage }} = {{ .Amount }} * {{ .Leverage }}倍 
+                    {{ timesf .Amount .Leverage }} = {{ .Amount }} * {{ .Leverage }}倍 
                 </td>
                 <td><a href="/customers/placeorderhistory?symbol={{ .CurrencySymbolBase.Symbol }}&cid={{ $.cid }}">記錄</a></td>
             </tr>

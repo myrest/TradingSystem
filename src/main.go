@@ -33,8 +33,8 @@ func main() {
 		"add": func(a, b int) int {
 			return a + b
 		},
-		"addf": func(a, b float64) float64 {
-			return common.Decimal(a+b, 6)
+		"timesf": func(a, b float64) float64 {
+			return common.Decimal(a*b, 6)
 		},
 		"iterate": func(start, end int) []int {
 			var result []int
