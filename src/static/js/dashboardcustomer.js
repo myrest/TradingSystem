@@ -1,4 +1,5 @@
 let coinData = []
+const starageRegex = /\[(.*?)\]/;
 
 // 展開設定區塊
 function toggleCustomerSettings() {
@@ -76,9 +77,16 @@ function renderCryptoTable() {
         } else {
             displayamount = 'displayBlock'
         }
+        const matches = item.message.match(starageRegex);
+        if (matches && matches.length > 1) {
+            starageName = matches[1];
+        } else {
+            starageName = "無名"
+        }
         const row = `
             <tr>
                 <td>${item.symbol} <span class="info-icon" onclick="showDataModal('${item.symbol}', '${item.message.replace(/\n/g, '<br>')}')"><i class="fa-regular fa-file"></i></span></td>
+                <td>${starageName}</td>
                 <td><span class="status-toggle ${item.status ? '' : 'disabled'} ${sysdisabled}" onclick="updateCustomerCurrency('${item.symbol}', 'Status')">${item.status ? '啟用' : '停用'}</span></td>
                 <td><span class="status-toggle ${!item.simulation ? '' : 'disabled'} ${sysdisabled}" onclick="updateCustomerCurrency('${item.symbol}', 'Simulation')">${item.simulation ? '模擬' : '實盤'}</span></td>
                 <td>

@@ -1,4 +1,5 @@
 let coinData = []
+const starageRegex = /\[(.*?)\]/;
 
 // 顯示新增貨幣模態框
 function showAddModal() {
@@ -46,9 +47,16 @@ function renderCryptoTable() {
     const tableBody = document.querySelector('#cryptoTable tbody');
     tableBody.innerHTML = '';
     coinData.forEach(item => {
+        const matches = item.message.match(starageRegex);
+        if (matches && matches.length > 1) {
+            starageName = matches[1];
+        } else {
+            starageName = "無名"
+        }
         const row = `
             <tr>
                 <td>${item.symbol} <span class="info-icon" onclick="showDataModal('${item.symbol}', '${item.message.replace(/\n/g, '<br>')}')"><i class="fa-regular fa-file"></i></span></td>
+                <td>${starageName}</td>
                 <td>${item.cert}</td>
                 <td><span class="status-toggle ${item.status ? '' : 'disabled'}" onclick="toggleStatus('${item.symbol}')">${item.status ? '啟用' : '停用'}</span></td>
                 <td>
