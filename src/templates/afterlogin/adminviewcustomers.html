@@ -4,8 +4,8 @@
     <table>
         <thead>
             <tr>
-                <th>帳號</th>
                 <th>主帳號</th>
+                <th>子帳號</th>
                 <th>訂閱資料</th>
             </tr>
         </thead>
@@ -13,14 +13,18 @@
             {{range .data}}
             <tr>
                 <td>
-                    {{ if .Parent_Name }}
+                    {{ if not .Parent_Name }}
                         {{.Customer.Name}}
-                    {{ else }}
-                        {{.Customer.Email}}
-                        ({{.Customer.Name}})
+                        ({{.Customer.Email}})
+                    {{else}}
+                        {{.Parent_Name}}
                     {{end}}
                 </td>
-                <td>{{.Parent_Name}}</td>
+                <td>
+                    {{ if .Parent_Name }}
+                        {{ .Customer.Name }}
+                    {{end}}
+                </td>
                 <td><a href="/restadmin/customersubscribe?cid={{.Customer.ID}}">訂閱</a></td>
             </tr>
             {{end}}
