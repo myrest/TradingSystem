@@ -26,9 +26,6 @@ func GetMappedCustomerList(ctx context.Context) (map[string]models.CustomerRelat
 		if err := doc.DataTo(&customer); err != nil {
 			return nil, err
 		}
-		if customer.IsAdmin { //跳過管理員，管理員不算客戶
-			continue
-		}
 
 		//先建出Parent customer資料
 		if strings.Index(customer.Email, "@") > 0 {
