@@ -10,3 +10,19 @@ type DemoSymbolList struct {
 	Amount     float64 //交易額
 	Winrate    string  //勝率
 }
+
+type CustomerWeeklyReport struct {
+	YearWeek   string //週數 YYYY-MM
+	CustomerID string //客戶ID
+	DemoSymbolList
+}
+
+func (e CustomerWeeklyReport) Merge(obj CustomerWeeklyReport) {
+	e.Amount += obj.Amount
+	e.CloseCount += obj.CloseCount
+	e.LossCount += obj.LossCount
+	e.OpenCount += obj.OpenCount
+	e.Profit += obj.Profit
+	e.WinCount += obj.WinCount
+	e.Winrate += obj.Winrate
+}
