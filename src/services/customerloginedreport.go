@@ -13,6 +13,11 @@ import (
 )
 
 func generateCustomerReport(ctx context.Context, customerID, startDate, endDate string) ([]models.CustomerWeeklyReport, error) {
+	//取出week值
+	weeks := common.GetWeeksInDateRange(common.ParseTime(startDate), common.ParseTime(endDate))
+	if len(weeks) > 1 {
+		return nil, fmt.Errorf("一次只能產生一週的報表資料。%s ~ %s 跨週了。", startDate, endDate)
+	}
 	var rtn []models.CustomerWeeklyReport
 	client := getFirestoreClient()
 	//先找出所有的History
@@ -86,6 +91,7 @@ func generateCustomerReport(ctx context.Context, customerID, startDate, endDate 
 		rtn = append(rtn, models.CustomerWeeklyReport{
 			DemoSymbolList: value,
 			CustomerID:     customerID,
+			YearWeek:       weeks[0],
 		})
 	}
 	return rtn, nil
@@ -115,27 +121,28 @@ func GetCustomerReportCurrencyList(ctx context.Context, customerID, startDate, e
 			Where("YearWeek", "==", week).
 			Documents(ctx)
 		defer iter.Stop()
+		for {
+			doc, err := iter.Next()
+			if err == iterator.Done {
+				break
+			}
+			if err != nil {
+				return nil, err
+			}
 
-		doc, err := iter.Next()
-		if err == iterator.Done {
-			break
-		}
-		if err != nil {
-			return nil, err
-		}
+			var data models.CustomerWeeklyReport
+			doc.DataTo(&data)
+			if weeklyreportbysymbol, exists := mapData[data.Symbol]; exists {
+				inlineReort := mapData[data.Symbol]
+				inlineReort.Merge(weeklyreportbysymbol)
+				mapData[data.Symbol] = inlineReort
+			} else {
+				mapData[data.Symbol] = data
+			}
 
-		var data models.CustomerWeeklyReport
-		doc.DataTo(&data)
-		if weeklyreportbysymbol, exists := mapData[data.Symbol]; exists {
-			inlineReort := mapData[data.Symbol]
-			inlineReort.Merge(weeklyreportbysymbol)
-			mapData[data.Symbol] = inlineReort
-		} else {
-			mapData[data.Symbol] = data
-		}
-
-		if (data.YearWeek == lastWeek) && !lastWeekinReport {
-			lastWeekinReport = true
+			if (data.YearWeek == lastWeek) && !lastWeekinReport {
+				lastWeekinReport = true
+			}
 		}
 	}
 
@@ -178,10 +185,9 @@ func GetCustomerReportCurrencyList(ctx context.Context, customerID, startDate, e
 }
 
 func insertWeeklyReportIntoDB(ctx context.Context, reports []models.CustomerWeeklyReport) error {
-	// DBCustomerWeeklyReport
 	client := getFirestoreClient()
 	for _, data := range reports {
-		_, _, err := client.Collection("DBCustomerWeeklyReport").Add(ctx, data)
+		_, _, err := client.Collection(DBCustomerWeeklyReport).Add(ctx, data)
 		if err != nil {
 			return nil
 		}
