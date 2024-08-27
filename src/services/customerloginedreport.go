@@ -18,6 +18,7 @@ func generateCustomerReport(ctx context.Context, customerID, startDate, endDate 
 	//先找出所有的History
 	iter := client.Collection("placeOrderLog").
 		Where("CustomerID", "==", customerID).
+		Where("Simulation", "==", false).
 		Where("Time", ">=", startDate).
 		Where("Time", "<", endDate).
 		Documents(ctx)
@@ -92,8 +93,7 @@ func generateCustomerReport(ctx context.Context, customerID, startDate, endDate 
 
 const DBCustomerWeeklyReport = "CustomerWeeklyReport"
 
-func GetCustomerReportCurrencyList(ctx context.Context, customerID, startDate, endDate string, BoolFlags ...bool) ([]models.CustomerWeeklyReport, error) {
-	var rtn []models.CustomerWeeklyReport
+func GetCustomerReportCurrencyList(ctx context.Context, customerID, startDate, endDate string) ([]models.CustomerWeeklyReport, error) {
 	var mapData = make(map[string]models.CustomerWeeklyReport)
 	//依日期，取出週數
 	weeks := common.GetWeeksInDateRange(common.ParseTime(startDate), common.ParseTime(endDate))
@@ -112,7 +112,7 @@ func GetCustomerReportCurrencyList(ctx context.Context, customerID, startDate, e
 		//因為不同週數，Symbol有可能重覆，需要相加起來
 		iter := client.Collection(DBCustomerWeeklyReport).
 			Where("CustomerID", "==", customerID).
-			Where("YearWeek", "=", week).
+			Where("YearWeek", "==", week).
 			Documents(ctx)
 		defer iter.Stop()
 
@@ -168,6 +168,11 @@ func GetCustomerReportCurrencyList(ctx context.Context, customerID, startDate, e
 				return nil, err
 			}
 		}
+	}
+
+	var rtn []models.CustomerWeeklyReport
+	for _, report := range mapData {
+		rtn = append(rtn, report)
 	}
 	return rtn, nil
 }

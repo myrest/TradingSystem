@@ -1,10 +1,13 @@
 package controllers
 
 import (
+	"TradingSystem/src/common"
 	"TradingSystem/src/services"
 	"net/http"
 	"strconv"
+	"time"
 
+	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 )
 
@@ -26,5 +29,51 @@ func CustomerReportList(c *gin.Context) {
 		"data": systemSymboList,
 		"days": days,
 	})
+}
 
+func CustomerWeeklyReportList(c *gin.Context) {
+	session := sessions.Default(c)
+	cid := c.DefaultQuery("cid", "")
+
+	customerid := session.Get("id").(string)
+
+	//只有管理員可以看到其它人的記錄。
+	if customerid != "" && session.Get("isadmin") != nil && session.Get("isadmin").(bool) {
+		customerid = cid
+	}
+
+	if customerid == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "No Customer Data."})
+		return
+	}
+
+	d := c.Query("d")
+	reportStartDate := time.Now().UTC()
+
+	if d != "" {
+		reportStartDate = common.ParseTime(d)
+	}
+
+	startDate, endDate := common.GetWeeksStartEndDateByDate(reportStartDate)
+
+	weeklyreport, err := services.GetCustomerReportCurrencyList(c, customerid, startDate, endDate)
+	if err != nil {
+		return
+	}
+
+	//找出星期一清單
+	mondays, err := common.GetPreviousMondays(time.Now().UTC(), 12)
+	if err != nil {
+		return
+	}
+
+	if session.Get("isadmin") == nil || !session.Get("isadmin").(bool) { //不是管理員cid要清掉不給看
+		customerid = ""
+	}
+	c.HTML(http.StatusOK, "weeklyreport.html", gin.H{
+		"data":    weeklyreport,
+		"mondays": mondays,
+		"days":    common.FormatDate(common.ParseTime(startDate)),
+		"cid":     customerid,
+	})
 }

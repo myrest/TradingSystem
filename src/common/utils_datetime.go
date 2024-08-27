@@ -17,6 +17,12 @@ func GetWeeksByDate(date time.Time) string {
 	}
 }
 
+func GetWeeksStartEndDateByDate(date time.Time) (string, string) {
+	week := GetWeeksByDate(date)
+	sd, ed, _ := WeekToDateRange(week)
+	return sd, ed
+}
+
 // WeekToDateRange 根據給定的 YYYY-WW 格式計算起始和結束日期
 func WeekToDateRange(weekStr string) (string, string, error) {
 	var year, week int
@@ -55,6 +61,10 @@ func GetUtcTimeNow() string {
 
 func FormatTime(t time.Time) string {
 	return t.Format("2006-01-02 15:04:05")
+}
+
+func FormatDate(t time.Time) string {
+	return t.Format("2006-01-02")
 }
 
 // 回傳日期區間的週數
@@ -102,6 +112,10 @@ func ParseTime(timeStr string) time.Time {
 		}
 	}
 
+	return TimeMax()
+}
+
+func TimeMax() time.Time {
 	return time.Time{}.AddDate(9999, 12, 31)
 }
 

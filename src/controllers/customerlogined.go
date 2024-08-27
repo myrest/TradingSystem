@@ -284,6 +284,7 @@ func PlaceOrderHistory(c *gin.Context) {
 		"pageSize":   pageSize,
 		"totalPages": totalPages,
 		"symbol":     symbol,
+		"cid":        c.Query("cid"),
 	})
 }
 

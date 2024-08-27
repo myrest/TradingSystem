@@ -1,0 +1,238 @@
+{{ template "beforeloginheader.html" . }}
+<style>
+    .table-container {
+        margin-top: 20px;
+    }
+
+    .dropdown-container {
+        margin-bottom: 20px;
+        display: inline;
+    }
+
+    .custom-select {
+        position: relative;
+        display: inline-block;
+        font-size: 16px;
+        color: #2c3e50;
+    }
+
+    .custom-select select {
+        display: none;
+    }
+
+    .select-selected {
+        background-color: #e3f2fd;
+        border: 1px solid #90caf9;
+        border-radius: 4px;
+        padding: 8px 16px;
+        cursor: pointer;
+    }
+
+    .select-selected:after {
+        position: absolute;
+        content: "";
+        top: 14px;
+        right: 10px;
+        width: 0;
+        height: 0;
+        border: 6px solid transparent;
+        border-color: #1e88e5 transparent transparent transparent;
+    }
+
+    .select-items div,
+    .select-selected {
+        padding: 8px 16px;
+        border: 1px solid transparent;
+        border-color: transparent transparent rgba(30, 136, 229, 0.1) transparent;
+        cursor: pointer;
+    }
+
+    .select-items {
+        position: absolute;
+        background-color: #e3f2fd;
+        top: 100%;
+        left: 0;
+        right: 0;
+        z-index: 99;
+        border: 1px solid #90caf9;
+        border-radius: 0 0 4px 4px;
+    }
+
+    .select-hide {
+        display: none;
+    }
+
+    .select-items div:hover,
+    .same-as-selected {
+        background-color: #bbdefb;
+    }
+
+    #demoCryptoTable {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    #demoCryptoTable td:not(:first-child):not(:last-child) {
+        text-align: right;
+    }
+
+    .home-icon {
+        color: #ff8157;
+        cursor: pointer;
+        float: right;
+    }
+</style>
+<div class="dashboard">
+    <span class="fa-solid fa-house home-icon" id="home-icon">
+        <span>回首頁</span>
+    </span>
+
+    <div class="crypto-table">
+        <h2>週報清單</h2>
+        <div class="dropdown-container">
+            <div class="custom-select" style="width:200px;">
+                <select id="timeRange">
+                    {{range .mondays}}
+                    <option value="{{.}}">{{.}}</option>
+                    {{end}}
+                </select>
+            </div>
+        </div>
+        <span class="alignright" style="margin-top: 23px;">績效為扣除手續費後之盈虧</span>
+        <table id="demoCryptoTable">
+            <thead>
+                <tr>
+                    <th>幣種</th>
+                    <th>績效</th>
+                    <th>平倉次數</th>
+                    <th>開倉次數</th>
+                    <th>盈利次數</th>
+                    <th>虧損次數</th>
+                    <th>交易額</th>
+                    <th>勝率</th>
+                    <th>記錄</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{range .data}}
+                <tr>
+                    <td>{{.Symbol}}</td>
+                    <td>{{.Profit}}</td>
+                    <td>{{.CloseCount}}</td>
+                    <td>{{.OpenCount}}</td>
+                    <td>{{.WinCount}}</td>
+                    <td>{{.LossCount}}</td>
+                    <td>{{.Amount}}</td>
+                    <td>{{.Winrate}}</td>
+                    <td><a onclick="displayHistory('{{.Symbol}}')" href="#">記錄</a></td>
+                </tr>
+                {{end}}
+            </tbody>
+        </table>
+    </div>
+</div>
+<input type="hidden" id="days" value="{{.days}}">
+{{ template "beforeloginfooter.html" . }}
+<script>
+    const cryptoTable = document.getElementById('demoCryptoTable');
+    const rows = cryptoTable.querySelectorAll('tbody tr');
+    const days = document.getElementById('days').value
+    rows.forEach(row => {
+        // 获取交易额单元格
+        const amount = row.cells[6].textContent.trim(); // 假设交易额在第7列（索引为6）, 获取文本并去除前后空格
+        row.cells[6].textContent = parseFloat(amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    });
+
+    document.addEventListener('DOMContentLoaded', function () {
+        var x, i, j, l, ll, selElmnt, a, b, c;
+        x = document.getElementsByClassName("custom-select");
+        l = x.length;
+        for (i = 0; i < l; i++) {
+            selElmnt = x[i].getElementsByTagName("select")[0];
+
+            // Set the default option based on the 'days' variable
+            for (j = 0; j < selElmnt.length; j++) {
+                if (selElmnt.options[j].value == days) {
+                    selElmnt.selectedIndex = j;
+                    break;
+                }
+            }
+
+            ll = selElmnt.length;
+            a = document.createElement("DIV");
+            a.setAttribute("class", "select-selected");
+            a.innerHTML = selElmnt.options[selElmnt.selectedIndex].innerHTML;
+            x[i].appendChild(a);
+            b = document.createElement("DIV");
+            b.setAttribute("class", "select-items select-hide");
+            for (j = 0; j < ll; j++) {
+                c = document.createElement("DIV");
+                c.innerHTML = selElmnt.options[j].innerHTML;
+                c.addEventListener("click", function (e) {
+                    var y, i, k, s, h, sl, yl;
+                    s = this.parentNode.parentNode.getElementsByTagName("select")[0];
+                    sl = s.length;
+                    h = this.parentNode.previousSibling;
+                    for (i = 0; i < sl; i++) {
+                        if (s.options[i].innerHTML == this.innerHTML) {
+                            s.selectedIndex = i;
+                            h.innerHTML = this.innerHTML;
+                            y = this.parentNode.getElementsByClassName("same-as-selected");
+                            yl = y.length;
+                            for (k = 0; k < yl; k++) {
+                                y[k].removeAttribute("class");
+                            }
+                            this.setAttribute("class", "same-as-selected");
+                            //alert("選擇已更改為: " + this.innerHTML);
+                            redirect(s.value)
+                            break;
+                        }
+                    }
+                    h.click();
+                });
+                b.appendChild(c);
+            }
+            x[i].appendChild(b);
+            a.addEventListener("click", function (e) {
+                e.stopPropagation();
+                closeAllSelect(this);
+                this.nextSibling.classList.toggle("select-hide");
+                this.classList.toggle("select-arrow-active");
+            });
+        }
+
+        function closeAllSelect(elmnt) {
+            var x, y, i, xl, yl, arrNo = [];
+            x = document.getElementsByClassName("select-items");
+            y = document.getElementsByClassName("select-selected");
+            xl = x.length;
+            yl = y.length;
+            for (i = 0; i < yl; i++) {
+                if (elmnt == y[i]) {
+                    arrNo.push(i)
+                } else {
+                    y[i].classList.remove("select-arrow-active");
+                }
+            }
+            for (i = 0; i < xl; i++) {
+                if (arrNo.indexOf(i)) {
+                    x[i].classList.add("select-hide");
+                }
+            }
+        }
+
+        document.addEventListener("click", closeAllSelect);
+    });
+
+    function redirect(days) {
+        window.location.href = "?d=" + document.getElementById('timeRange').value + "&cid={{.cid}}"
+    }
+
+    function displayHistory(symbol) {
+        window.location.href = "/demo/history?symbol=" + symbol + "&d=" + document.getElementById('timeRange').value + "&cid={{.cid}}"
+    }
+
+    document.getElementById('home-icon').addEventListener('click', () => {
+        window.location.href = '/';
+    });        
+</script>
