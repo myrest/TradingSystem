@@ -19,5 +19,6 @@ func RegisterRestAdminRoutes(r *gin.Engine) {
 		authRoutes.GET("/subscriber", controllers.GetSubscribeCustomerBySymbol)
 		authRoutes.GET("/customers", controllers.GetAllCustomerList)
 		authRoutes.GET("/customersubscribe", controllers.GetSubscribeSymbolbyCompanyID)
+		authRoutes.GET("/customerdata", controllers.GetCustomerData)
 	}
 }

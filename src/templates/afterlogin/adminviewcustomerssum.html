@@ -1,0 +1,23 @@
+{{ template "afterloginheader.html" . }}
+<div class="dashboard">
+    <h1>{{ .customer.Email}} ({{.customer.Name}})</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>資料表</th>
+                <th>數量</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{range $key, $value := .data}}
+            <tr>
+                <td>{{$key}}</td>
+                <td>{{$value}}</td>
+                <td><a href="/restadmin/deletecustomer?cid={{$.customer.ID}}&type={{$key}}">刪除還沒做</a></td>
+            </tr>
+            {{end}}
+        </tbody>
+    </table>
+</div>
+{{ template "beforeloginfooter.html" . }}
