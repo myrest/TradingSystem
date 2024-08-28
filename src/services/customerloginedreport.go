@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"time"
 
+	"cloud.google.com/go/firestore"
 	"google.golang.org/api/iterator"
 )
 
@@ -99,8 +100,13 @@ func generateCustomerReport(ctx context.Context, customerID, startDate, endDate 
 
 const DBCustomerWeeklyReport = "CustomerWeeklyReport"
 
+// 濃縮成一筆
 func GetCustomerReportCurrencyList(ctx context.Context, customerID, startDate, endDate string) ([]models.CustomerWeeklyReport, error) {
-	var mapData = make(map[string]models.CustomerWeeklyReport)
+	type mapkey struct {
+		Symbol   string
+		YearWeek string
+	}
+	var mapData = make(map[mapkey]models.CustomerWeeklyReport)
 	//依日期，取出週數
 	weeks := common.GetWeeksInDateRange(common.ParseTime(startDate), common.ParseTime(endDate))
 	if len(weeks) == 0 || weeks == nil {
@@ -114,11 +120,15 @@ func GetCustomerReportCurrencyList(ctx context.Context, customerID, startDate, e
 	client := getFirestoreClient()
 
 	for _, week := range weeks {
+		weekKey := mapkey{
+			YearWeek: week,
+		}
 		//依週數取出資料,放入map裏
 		//因為不同週數，Symbol有可能重覆，需要相加起來
 		iter := client.Collection(DBCustomerWeeklyReport).
 			Where("CustomerID", "==", customerID).
 			Where("YearWeek", "==", week).
+			OrderBy("YearWeek", firestore.Asc).
 			Documents(ctx)
 		defer iter.Stop()
 		for {
@@ -132,12 +142,12 @@ func GetCustomerReportCurrencyList(ctx context.Context, customerID, startDate, e
 
 			var data models.CustomerWeeklyReport
 			doc.DataTo(&data)
-			if weeklyreportbysymbol, exists := mapData[data.Symbol]; exists {
-				inlineReort := mapData[data.Symbol]
-				inlineReort.Merge(weeklyreportbysymbol)
-				mapData[data.Symbol] = inlineReort
+			weekKey.Symbol = data.Symbol
+			if weeklyreportbysymbol, exists := mapData[weekKey]; exists {
+				weeklyreportbysymbol.Merge(data)
+				mapData[weekKey] = weeklyreportbysymbol
 			} else {
-				mapData[data.Symbol] = data
+				mapData[weekKey] = data
 			}
 
 			if (data.YearWeek == lastWeek) && !lastWeekinReport {
@@ -148,7 +158,11 @@ func GetCustomerReportCurrencyList(ctx context.Context, customerID, startDate, e
 
 	if !lastWeekinReport {
 		//最後一週報表沒產生，要從DB撈
-		latestReports, err := generateCustomerReport(ctx, customerID, startDate, endDate)
+		lastStartDT, lastEndDT, err := common.WeekToDateRange(lastWeek)
+		if err != nil {
+			return nil, err
+		}
+		latestReports, err := generateCustomerReport(ctx, customerID, lastStartDT, lastEndDT)
 		if err != nil {
 			//寫入log
 			CustomerEventLog{
@@ -157,13 +171,16 @@ func GetCustomerReportCurrencyList(ctx context.Context, customerID, startDate, e
 				Message:    fmt.Sprintf("產生報表錯誤：%s", err.Error()),
 			}.SendWithoutIP()
 		}
+		weekKey := mapkey{
+			YearWeek: lastWeek,
+		}
 		for _, lastWeeklyReport := range latestReports {
-			if weeklyreportbysymbol, exists := mapData[lastWeeklyReport.Symbol]; exists {
-				inlineReort := mapData[lastWeeklyReport.Symbol]
-				inlineReort.Merge(weeklyreportbysymbol)
-				mapData[lastWeeklyReport.Symbol] = inlineReort
+			weekKey.Symbol = lastWeeklyReport.Symbol
+			if weeklyreportbysymbol, exists := mapData[weekKey]; exists {
+				weeklyreportbysymbol.Merge(lastWeeklyReport)
+				mapData[weekKey] = weeklyreportbysymbol
 			} else {
-				mapData[lastWeeklyReport.Symbol] = lastWeeklyReport
+				mapData[weekKey] = lastWeeklyReport
 			}
 		}
 
@@ -193,4 +210,29 @@ func insertWeeklyReportIntoDB(ctx context.Context, reports []models.CustomerWeek
 		}
 	}
 	return nil
+}
+
+func GetCustomerReportCurrencySummaryList(ctx context.Context, customerID, startDate, endDate string) ([]models.CustomerWeeklyReportSummary, error) {
+	var rtn []models.CustomerWeeklyReportSummary
+	middleRtn := make(map[string]models.CustomerWeeklyReportSummary)
+	weeklyData, err := GetCustomerReportCurrencyList(ctx, customerID, startDate, endDate)
+	if err != nil {
+		return nil, err
+	}
+	for _, data := range weeklyData {
+		if weeklyreport, exists := middleRtn[data.YearWeek]; exists {
+			weeklyreport.Profit += data.Profit
+			middleRtn[data.YearWeek] = weeklyreport
+		} else {
+			middleRtn[data.YearWeek] = models.CustomerWeeklyReportSummary{
+				YearWeek: data.YearWeek,
+				Profit:   data.Profit,
+			}
+		}
+	}
+
+	for _, value := range middleRtn {
+		rtn = append(rtn, value)
+	}
+	return rtn, nil
 }

@@ -77,3 +77,43 @@ func CustomerWeeklyReportList(c *gin.Context) {
 		"cid":     customerid,
 	})
 }
+
+func CustomerWeeklyReportSummaryList(c *gin.Context) {
+	session := sessions.Default(c)
+	cid := c.DefaultQuery("cid", "")
+
+	customerid := session.Get("id").(string)
+
+	//只有管理員可以看到其它人的記錄。
+	if customerid != "" && session.Get("isadmin") != nil && session.Get("isadmin").(bool) {
+		customerid = cid
+	}
+
+	if customerid == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "No Customer Data."})
+		return
+	}
+
+	d := c.Query("d")
+	enddate := time.Now().UTC()
+
+	if d != "" {
+		enddate = common.ParseTime(d)
+	}
+
+	reportStartDate := common.FormatDate(enddate.AddDate(0, -2, 0))
+	reportEndDate := common.FormatDate(enddate)
+
+	weeklyreport, err := services.GetCustomerReportCurrencySummaryList(c, customerid, reportStartDate, reportEndDate)
+	if err != nil {
+		return
+	}
+
+	if session.Get("isadmin") == nil || !session.Get("isadmin").(bool) { //不是管理員cid要清掉不給看
+		customerid = ""
+	}
+	c.HTML(http.StatusOK, "weeklyreportsummary.html", gin.H{
+		"data": weeklyreport,
+		"cid":  customerid,
+	})
+}

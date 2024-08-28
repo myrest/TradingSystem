@@ -26,3 +26,8 @@ func (e CustomerWeeklyReport) Merge(obj CustomerWeeklyReport) {
 	e.WinCount += obj.WinCount
 	e.Winrate += obj.Winrate
 }
+
+type CustomerWeeklyReportSummary struct {
+	YearWeek string  //週數 YYYY-MM
+	Profit   float64 //獲利
+}
