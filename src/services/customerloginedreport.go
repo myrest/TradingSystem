@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sort"
 	"time"
 
 	"cloud.google.com/go/firestore"
@@ -100,13 +101,41 @@ func generateCustomerReport(ctx context.Context, customerID, startDate, endDate 
 
 const DBCustomerWeeklyReport = "CustomerWeeklyReport"
 
-// 濃縮成一筆
-func GetCustomerReportCurrencyList(ctx context.Context, customerID, startDate, endDate string) ([]models.CustomerWeeklyReport, error) {
-	type mapkey struct {
-		Symbol   string
-		YearWeek string
+type reportMapkey struct {
+	Symbol   string
+	YearWeek string
+}
+
+func getCustomerFirstPlaceOrderDateTime(ctx context.Context, customerID string) time.Time {
+	client := getFirestoreClient()
+
+	// 查詢所有的 placeOrderLog
+	iter := client.Collection("placeOrderLog").
+		Where("CustomerID", "==", customerID).
+		Where("Simulation", "==", false).
+		OrderBy("Time", firestore.Asc). // 按時間排序
+		Limit(1).                       // 只取第一筆
+		Documents(ctx)
+
+	defer iter.Stop()
+
+	doc, err := iter.Next()
+	if err == iterator.Done {
+		return common.TimeMax()
 	}
-	var mapData = make(map[mapkey]models.CustomerWeeklyReport)
+	if err != nil {
+		return common.TimeMax()
+	}
+
+	var log models.Log_TvSiginalData
+	if err := doc.DataTo(&log); err != nil {
+		return common.TimeMax()
+	}
+	return common.ParseTime(log.Time)
+}
+
+func GetCustomerReportCurrencyList(ctx context.Context, customerID, startDate, endDate string) ([]models.CustomerWeeklyReport, error) {
+	var mapData = make(map[reportMapkey]models.CustomerWeeklyReport)
 	//依日期，取出週數
 	weeks := common.GetWeeksInDateRange(common.ParseTime(startDate), common.ParseTime(endDate))
 	if len(weeks) == 0 || weeks == nil {
@@ -119,78 +148,63 @@ func GetCustomerReportCurrencyList(ctx context.Context, customerID, startDate, e
 
 	client := getFirestoreClient()
 
+	missingWeeks := make(map[string]struct{}, len(weeks))
 	for _, week := range weeks {
-		weekKey := mapkey{
-			YearWeek: week,
-		}
-		//依週數取出資料,放入map裏
-		//因為不同週數，Symbol有可能重覆，需要相加起來
-		iter := client.Collection(DBCustomerWeeklyReport).
-			Where("CustomerID", "==", customerID).
-			Where("YearWeek", "==", week).
-			OrderBy("YearWeek", firestore.Asc).
-			Documents(ctx)
-		defer iter.Stop()
-		for {
-			doc, err := iter.Next()
-			if err == iterator.Done {
-				break
-			}
-			if err != nil {
-				return nil, err
-			}
-
-			var data models.CustomerWeeklyReport
-			doc.DataTo(&data)
-			weekKey.Symbol = data.Symbol
-			if weeklyreportbysymbol, exists := mapData[weekKey]; exists {
-				weeklyreportbysymbol.Merge(data)
-				mapData[weekKey] = weeklyreportbysymbol
-			} else {
-				mapData[weekKey] = data
-			}
-
-			if (data.YearWeek == lastWeek) && !lastWeekinReport {
-				lastWeekinReport = true
-			}
-		}
+		missingWeeks[week] = struct{}{} // 將 weeks 中的項目存入集合
 	}
 
-	if !lastWeekinReport {
-		//最後一週報表沒產生，要從DB撈
-		lastStartDT, lastEndDT, err := common.WeekToDateRange(lastWeek)
+	//因為不同週數，Symbol有可能重覆，需要相加起來
+	iter := client.Collection(DBCustomerWeeklyReport).
+		Where("CustomerID", "==", customerID).
+		Where("YearWeek", "in", weeks).
+		OrderBy("YearWeek", firestore.Asc).
+		Documents(ctx)
+	defer iter.Stop()
+	for {
+		doc, err := iter.Next()
+		if err == iterator.Done {
+			break
+		}
 		if err != nil {
 			return nil, err
 		}
-		latestReports, err := generateCustomerReport(ctx, customerID, lastStartDT, lastEndDT)
-		if err != nil {
-			//寫入log
-			CustomerEventLog{
-				EventName:  WeeklyReport,
-				CustomerID: customerID,
-				Message:    fmt.Sprintf("產生報表錯誤：%s", err.Error()),
-			}.SendWithoutIP()
+
+		var data models.CustomerWeeklyReport
+		doc.DataTo(&data)
+		weekKey := reportMapkey{
+			YearWeek: data.YearWeek,
+			Symbol:   data.Symbol,
 		}
-		weekKey := mapkey{
-			YearWeek: lastWeek,
-		}
-		for _, lastWeeklyReport := range latestReports {
-			weekKey.Symbol = lastWeeklyReport.Symbol
-			if weeklyreportbysymbol, exists := mapData[weekKey]; exists {
-				weeklyreportbysymbol.Merge(lastWeeklyReport)
-				mapData[weekKey] = weeklyreportbysymbol
-			} else {
-				mapData[weekKey] = lastWeeklyReport
-			}
+		if weeklyreportbysymbol, exists := mapData[weekKey]; exists {
+			weeklyreportbysymbol.Merge(data)
+			mapData[weekKey] = weeklyreportbysymbol
+		} else {
+			mapData[weekKey] = data
 		}
 
-		//最後一週有資料且還沒結束，先取得最新的週數
-		systemlastWeek := common.GetWeeksByDate(time.Now().UTC())
-		if systemlastWeek != lastWeek && len(latestReports) > 0 {
-			//表示lastWeek不是當下時間的週數，要寫入DB
-			if err := insertWeeklyReportIntoDB(ctx, latestReports); err != nil {
-				return nil, err
-			}
+		if (data.YearWeek == lastWeek) && !lastWeekinReport {
+			lastWeekinReport = true
+		}
+		// 移除已找到的週數
+		delete(missingWeeks, data.YearWeek)
+	}
+
+	//找出客戶的第一筆資料
+	firstPlaceOrderTime := getCustomerFirstPlaceOrderDateTime(ctx, customerID)
+	//處理尚未產生的週資料
+	for week := range missingWeeks {
+		_, edt, _ := common.WeekToDateRange(week)
+		if common.ParseTime(edt).Before(firstPlaceOrderTime) {
+			continue
+		}
+		getLastWeekReport(ctx, week, customerID, mapData)
+	}
+
+	if !lastWeekinReport {
+		//最後一週報表沒產生，要從DB撈，其中mapData是傳址
+		err := getLastWeekReport(ctx, lastWeek, customerID, mapData)
+		if err != nil {
+			return nil, err
 		}
 	}
 
@@ -199,6 +213,44 @@ func GetCustomerReportCurrencyList(ctx context.Context, customerID, startDate, e
 		rtn = append(rtn, report)
 	}
 	return rtn, nil
+}
+
+func getLastWeekReport(ctx context.Context, lastWeek string, customerID string, mapData map[reportMapkey]models.CustomerWeeklyReport) error {
+	//判斷最後一週有資料且還沒結束，先取得最新的週數
+	lastStartDT, lastEndDT, err := common.WeekToDateRange(lastWeek)
+	if err != nil {
+		return err
+	}
+	latestReports, err := generateCustomerReport(ctx, customerID, lastStartDT, lastEndDT)
+	if err != nil {
+		//寫入log
+		CustomerEventLog{
+			EventName:  WeeklyReport,
+			CustomerID: customerID,
+			Message:    fmt.Sprintf("產生報表錯誤：%s", err.Error()),
+		}.SendWithoutIP()
+	}
+	for _, lastWeeklyReport := range latestReports {
+		weekKey := reportMapkey{
+			YearWeek: lastWeek,
+			Symbol:   lastWeeklyReport.Symbol,
+		}
+		if weeklyreportbysymbol, exists := mapData[weekKey]; exists {
+			weeklyreportbysymbol.Merge(lastWeeklyReport)
+			mapData[weekKey] = weeklyreportbysymbol
+		} else {
+			mapData[weekKey] = lastWeeklyReport
+		}
+	}
+
+	systemlastWeek := common.GetWeeksByDate(time.Now().UTC())
+	//表示lastWeek不是當下時間的週數，要寫入DB
+	if systemlastWeek != lastWeek && len(latestReports) > 0 {
+		if err := insertWeeklyReportIntoDB(ctx, latestReports); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func insertWeeklyReportIntoDB(ctx context.Context, reports []models.CustomerWeeklyReport) error {
@@ -234,5 +286,19 @@ func GetCustomerReportCurrencySummaryList(ctx context.Context, customerID, start
 	for _, value := range middleRtn {
 		rtn = append(rtn, value)
 	}
+
+	// 排序切片
+	sort.Slice(rtn, func(i, j int) bool {
+		// 提取年份和週數
+		var year1, week1, year2, week2 int
+		fmt.Sscanf(rtn[i].YearWeek, "%d-%d", &year1, &week1)
+		fmt.Sscanf(rtn[j].YearWeek, "%d-%d", &year2, &week2)
+
+		// 先比較年份，再比較週數
+		if year1 != year2 {
+			return year1 > year2 // 降冪排序
+		}
+		return week1 > week2 // 降冪排序
+	})
 	return rtn, nil
 }
