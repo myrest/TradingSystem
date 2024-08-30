@@ -37,8 +37,6 @@ type firebaseConfig struct {
 	AppID             string `json:"appId"`
 }
 
-const DateTimeLayout = "2006-01-02 15:04:05"
-
 type EnviromentType string
 
 const (
@@ -195,8 +193,4 @@ func ListFilesInCertDir(flpath string) ([]string, error) {
 	}
 
 	return fileNames, nil
-}
-
-func GetUtcTimeNow() string {
-	return time.Now().UTC().Format(DateTimeLayout)
 }

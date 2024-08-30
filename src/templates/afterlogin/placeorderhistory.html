@@ -34,14 +34,14 @@
     </table>
     <div class="pagination">
         {{if gt .page 1}}
-        <a href="?symbol={{.symbol}}&page={{subtract .page 1}}&pageSize={{.pageSize}}">&laquo;</a>
+        <a href="?symbol={{.symbol}}&page={{subtract .page 1}}&pageSize={{.pageSize}}&cid={{ .cid }}">&laquo;</a>
         {{end}}
         {{range $i := iterate 1 .totalPages}}
-        <a href="?symbol={{$.symbol}}&page={{$i}}&pageSize={{$.pageSize}}" {{if eq $i $.page}}class="active"
+        <a href="?symbol={{$.symbol}}&page={{$i}}&pageSize={{$.pageSize}}&cid={{ $.cid }}" {{if eq $i $.page}}class="active"
             {{end}}>{{$i}}</a>
         {{end}}
         {{if lt .page .totalPages}}
-        <a href="?symbol={{.symbol}}&page={{add .page 1}}&pageSize={{.pageSize}}">&raquo;</a>
+        <a href="?symbol={{.symbol}}&page={{add .page 1}}&pageSize={{.pageSize}}&cid={{ .cid }}">&raquo;</a>
         {{end}}
     </div>
 </div>

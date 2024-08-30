@@ -197,6 +197,17 @@ func GetSubscribeSymbolbyCompanyID(c *gin.Context) {
 	})
 }
 
+func GetCustomerData(c *gin.Context) {
+	customerid := c.Query("cid")
+	data := services.GetCustomerData(c, customerid)
+	customer, _ := services.GetCustomer(c, customerid)
+
+	c.HTML(http.StatusOK, "adminviewcustomerssum.html", gin.H{
+		"data":     data,
+		"customer": customer,
+	})
+}
+
 // 按照主账号和子账号的关系进行排序
 func sortCustomerRelationsByMainSub(mappedCustomer map[string]models.CustomerRelationUI) []models.CustomerRelationUI {
 	mainAccounts := make(map[string]models.CustomerRelationUI)

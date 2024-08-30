@@ -1,0 +1,123 @@
+{{ template "beforeloginheader.html" . }}
+<style>
+    .table-container {
+        margin-top: 20px;
+    }
+
+    .dropdown-container {
+        margin-bottom: 20px;
+        display: inline;
+    }
+
+    .custom-select {
+        position: relative;
+        display: inline-block;
+        font-size: 16px;
+        color: #2c3e50;
+    }
+
+    .custom-select select {
+        display: none;
+    }
+
+    .select-selected {
+        background-color: #e3f2fd;
+        border: 1px solid #90caf9;
+        border-radius: 4px;
+        padding: 8px 16px;
+        cursor: pointer;
+    }
+
+    .select-selected:after {
+        position: absolute;
+        content: "";
+        top: 14px;
+        right: 10px;
+        width: 0;
+        height: 0;
+        border: 6px solid transparent;
+        border-color: #1e88e5 transparent transparent transparent;
+    }
+
+    .select-items div,
+    .select-selected {
+        padding: 8px 16px;
+        border: 1px solid transparent;
+        border-color: transparent transparent rgba(30, 136, 229, 0.1) transparent;
+        cursor: pointer;
+    }
+
+    .select-items {
+        position: absolute;
+        background-color: #e3f2fd;
+        top: 100%;
+        left: 0;
+        right: 0;
+        z-index: 99;
+        border: 1px solid #90caf9;
+        border-radius: 0 0 4px 4px;
+    }
+
+    .select-hide {
+        display: none;
+    }
+
+    .select-items div:hover,
+    .same-as-selected {
+        background-color: #bbdefb;
+    }
+
+    #demoCryptoTable {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    #demoCryptoTable td:not(:first-child):not(:last-child) {
+        text-align: right;
+    }
+
+    .home-icon {
+        color: #ff8157;
+        cursor: pointer;
+        float: right;
+    }
+</style>
+<div class="dashboard">
+    <span class="fa-solid fa-house home-icon" id="home-icon">
+        <span>回首頁</span>
+    </span>
+
+    <div class="crypto-table">
+        <h2>週報清單列表</h2>
+        <span class="alignright" style="margin-top: 23px;">績效為扣除手續費後之盈虧</span>
+        <table id="demoCryptoTable">
+            <thead>
+                <tr>
+                    <th>週別</th>
+                    <th>績效</th>
+                    <th>記錄</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{range .data}}
+                <tr>
+                    <td>{{.YearWeek}} ({{.StartDate}}~{{.EndDate}})</td>
+                    <td>{{.Profit}}</td>
+                    <td><a href="/customers/weeklyreportlist?d={{.StartDate}}&cid={{$.cid}}">記錄</a></td>
+                </tr>
+                {{end}}
+            </tbody>
+        </table>
+    </div>
+</div>
+<input type="hidden" id="days" value="{{.days}}">
+{{ template "beforeloginfooter.html" . }}
+<script>
+    function displayHistory(symbol) {
+        window.location.href = "/demo/history?symbol=" + symbol + "&d=" + document.getElementById('timeRange').value + "&cid={{.cid}}"
+    }
+
+    document.getElementById('home-icon').addEventListener('click', () => {
+        window.location.href = '/';
+    });        
+</script>

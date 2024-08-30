@@ -217,7 +217,7 @@ func mergeSymboLists(systemSymboList []models.AdminCurrencySymbol, customersymbo
 				Amount:       newCustomerSymbol.Amount,
 				Leverage:     newCustomerSymbol.Leverage,
 				Simulation:   newCustomerSymbol.Simulation,
-				Message:      "The symbol do not exist in the system.",
+				Message:      Symbol.Message,
 			})
 		}
 	}
@@ -284,6 +284,7 @@ func PlaceOrderHistory(c *gin.Context) {
 		"pageSize":   pageSize,
 		"totalPages": totalPages,
 		"symbol":     symbol,
+		"cid":        c.Query("cid"),
 	})
 }
 

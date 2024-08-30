@@ -25,7 +25,10 @@
                         {{ .Customer.Name }}
                     {{end}}
                 </td>
-                <td><a href="/restadmin/customersubscribe?cid={{.Customer.ID}}">訂閱</a></td>
+                <td>
+                    <a href="/restadmin/customersubscribe?cid={{.Customer.ID}}">訂閱</a> | 
+                    <a href="/restadmin/customerdata?cid={{.Customer.ID}}">資料</a> <br>
+                </td>
             </tr>
             {{end}}
         </tbody>

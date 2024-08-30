@@ -26,6 +26,7 @@ const (
 
 	EventNameLogin EventNameType = "LoginEvent"
 	PlaceOrder     EventNameType = "PlaceOrder"
+	WeeklyReport   EventNameType = "WeeklyReport"
 )
 
 type CustomerEventLog struct {
@@ -84,16 +85,29 @@ func FlushLogging() {
 	logger.Flush()
 }
 
+func (e CustomerEventLog) SendWithoutIP() {
+	e.sendMessage()
+}
+
 func (e CustomerEventLog) Send(c *gin.Context) {
+	e.sendMessage(c)
+}
+
+func (e CustomerEventLog) sendMessage(cs ...*gin.Context) {
 	go func() {
 		if e.Message != nil {
+			client_ip := "0.0.0.0"
+			if len(cs) > 0 {
+				client_ip = cs[0].ClientIP()
+			}
+
 			entry := logging.Entry{
 				//Timestamp: time.Now(),
 				Severity: logging.Notice,
 				Payload: customerEventLogDB{
 					CustomerEventLog: e,
 					EventTime:        common.GetUtcTimeNow(),
-					RemoteIP:         c.ClientIP(),
+					RemoteIP:         client_ip,
 					LogType:          customerEvent,
 				},
 			}
