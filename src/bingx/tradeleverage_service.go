@@ -60,7 +60,7 @@ func (s *SetTradeService) Do(ctx context.Context, opts ...RequestOption) (res *L
 		r.addParam("symbol", s.symbol)
 	}
 
-	if s.symbol != "" {
+	if s.side != "" {
 		r.addParam("side", s.side)
 	}
 

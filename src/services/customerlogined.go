@@ -11,7 +11,7 @@ import (
 	"google.golang.org/api/iterator"
 )
 
-// 預設會幫客戶自動修改槓桿，傳入false可以不修改
+// 預設會幫客戶自動修改槓桿及全倉，傳入false可以不修改
 func UpdateCustomerCurrency(ctx context.Context, customercurrency *models.CustomerCurrencySymbol, flag ...bool) error {
 	autoUpdateBingXLeverage := true
 	if len(flag) > 0 {
@@ -53,7 +53,7 @@ func UpdateCustomerCurrency(ctx context.Context, customercurrency *models.Custom
 		return err
 	}
 
-	//改為固定10倍
+	//模擬盤固定為10倍
 	if customercurrency.Simulation {
 		customercurrency.Leverage = 10
 	}
@@ -71,7 +71,8 @@ func UpdateCustomerCurrency(ctx context.Context, customercurrency *models.Custom
 		return err
 	}
 
-	if customercurrency.Status && autoUpdateBingXLeverage {
+	//該幣種有啟用，有自動修改，且為實盤才改設定
+	if customercurrency.Status && autoUpdateBingXLeverage && !customercurrency.Simulation {
 		//幫客戶改槓桿
 		bingxclient := bingx.NewClient(customer.APIKey, customer.SecretKey, customercurrency.Simulation)
 		//改多單槓桿
@@ -89,10 +90,20 @@ func UpdateCustomerCurrency(ctx context.Context, customercurrency *models.Custom
 			PositionSide(bingx.ShortPositionSideType).
 			Leverage(int64(customercurrency.Leverage)).
 			Do(ctx)
+		if err != nil {
+			return err
+		}
 
+		//改全倉
+		_, err = bingxclient.NewSetMarginTypeService().
+			Symbol(common.FormatSymbol(customercurrency.Symbol)).
+			Margin(bingx.MarginCrossed).
+			Do(ctx)
+		if err != nil {
+			return err
+		}
 	}
-
-	return err
+	return nil
 }
 
 func GetAllCustomerCurrency(ctx context.Context, customerID string) ([]models.CustomerCurrencySymbol, error) {

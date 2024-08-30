@@ -38,7 +38,7 @@ func CustomerWeeklyReportList(c *gin.Context) {
 	customerid := session.Get("id").(string)
 
 	//只有管理員可以看到其它人的記錄。
-	if customerid != "" && session.Get("isadmin") != nil && session.Get("isadmin").(bool) {
+	if cid != "" && session.Get("isadmin") != nil && session.Get("isadmin").(bool) {
 		customerid = cid
 	}
 
@@ -85,7 +85,7 @@ func CustomerWeeklyReportSummaryList(c *gin.Context) {
 	customerid := session.Get("id").(string)
 
 	//只有管理員可以看到其它人的記錄。
-	if customerid != "" && session.Get("isadmin") != nil && session.Get("isadmin").(bool) {
+	if cid != "" && session.Get("isadmin") != nil && session.Get("isadmin").(bool) {
 		customerid = cid
 	}
 

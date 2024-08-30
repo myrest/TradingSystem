@@ -27,6 +27,7 @@ type SideType string
 
 // PositionSide type of order
 type PositionSideType string
+type MarginTradingType string
 
 // Type of order
 type OrderType string
@@ -51,6 +52,9 @@ const (
 
 	LimitOrderType  OrderType = "LIMIT"
 	MarketOrderType OrderType = "MARKET"
+
+	MarginIsolated MarginTradingType = "ISOLATED"
+	MarginCrossed  MarginTradingType = "CROSSED"
 
 	NewOrderStatus             OrderStatus = "NEW"
 	PartiallyFilledOrderStatus OrderStatus = "PARTIALLY_FILLED"
@@ -309,4 +313,8 @@ func (c *Client) NewGetTradService() *GetTradeService {
 
 func (c *Client) NewSetTradService() *SetTradeService {
 	return &SetTradeService{c: c}
+}
+
+func (c *Client) NewSetMarginTypeService() *SetMarginTypeService {
+	return &SetMarginTypeService{c: c}
 }
