@@ -88,8 +88,9 @@
     </span>
 
     <div class="crypto-table">
-        <h2>週報清單</h2>
-        <div class="dropdown-container">週別：
+        <h2>週報報表</h2>
+        <div class="dropdown-container">本週：{{.week}}<Br>
+            跳至：
             <div class="custom-select" style="width:200px;">
                 <select id="timeRange">
                     {{range .mondays}}

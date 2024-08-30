@@ -88,7 +88,7 @@
     </span>
 
     <div class="crypto-table">
-        <h2>週報清單</h2>
+        <h2>週報清單列表</h2>
         <span class="alignright" style="margin-top: 23px;">績效為扣除手續費後之盈虧</span>
         <table id="demoCryptoTable">
             <thead>
@@ -101,9 +101,9 @@
             <tbody>
                 {{range .data}}
                 <tr>
-                    <td>{{.YearWeek}}</td>
+                    <td>{{.YearWeek}} ({{.StartDate}}~{{.EndDate}})</td>
                     <td>{{.Profit}}</td>
-                    <td><a onclick="displayHistory('{{.YearWeek}}')" href="#">記錄</a></td>
+                    <td><a href="/customers/weeklyreportlist?d={{.StartDate}}&cid={{$.cid}}">記錄</a></td>
                 </tr>
                 {{end}}
             </tbody>

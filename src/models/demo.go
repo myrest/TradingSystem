@@ -31,3 +31,9 @@ type CustomerWeeklyReportSummary struct {
 	YearWeek string  //週數 YYYY-MM
 	Profit   float64 //獲利
 }
+
+type CustomerWeeklyReportSummaryUI struct {
+	CustomerWeeklyReportSummary
+	StartDate string
+	EndDate   string
+}

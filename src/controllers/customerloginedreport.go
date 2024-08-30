@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"TradingSystem/src/common"
+	"TradingSystem/src/models"
 	"TradingSystem/src/services"
 	"net/http"
 	"strconv"
@@ -75,6 +76,7 @@ func CustomerWeeklyReportList(c *gin.Context) {
 		"mondays": mondays,
 		"days":    common.FormatDate(common.ParseTime(startDate)),
 		"cid":     customerid,
+		"week":    common.GetWeeksByDate(common.ParseTime(startDate)),
 	})
 }
 
@@ -112,8 +114,19 @@ func CustomerWeeklyReportSummaryList(c *gin.Context) {
 	if session.Get("isadmin") == nil || !session.Get("isadmin").(bool) { //不是管理員cid要清掉不給看
 		customerid = ""
 	}
+	var rtn []models.CustomerWeeklyReportSummaryUI
+	for _, w := range weeklyreport {
+		stde, enddt, _ := common.WeekToDateRange(w.YearWeek)
+		w.Profit = common.Decimal(w.Profit, 2)
+		rtn = append(rtn, models.CustomerWeeklyReportSummaryUI{
+			CustomerWeeklyReportSummary: w,
+			StartDate:                   stde,
+			EndDate:                     enddt,
+		})
+	}
+
 	c.HTML(http.StatusOK, "weeklyreportsummary.html", gin.H{
-		"data": weeklyreport,
+		"data": rtn,
 		"cid":  customerid,
 	})
 }
