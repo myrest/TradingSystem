@@ -14,13 +14,13 @@ import (
 	"google.golang.org/api/iterator"
 )
 
-func generateCustomerReport(ctx context.Context, customerID, startDate, endDate string) ([]models.CustomerWeeklyReport, error) {
+func generateCustomerReport(ctx context.Context, customerID, startDate, endDate string) ([]models.CustomerProfitReport, error) {
 	//取出week值
 	weeks := common.GetWeeksInDateRange(common.ParseTime(startDate), common.ParseTime(endDate))
 	if len(weeks) > 1 {
 		return nil, fmt.Errorf("一次只能產生一週的報表資料。%s ~ %s 跨週了。", startDate, endDate)
 	}
-	var rtn []models.CustomerWeeklyReport
+	var rtn []models.CustomerProfitReport
 	client := getFirestoreClient()
 	//先找出所有的History
 	iter := client.Collection("placeOrderLog").
@@ -90,7 +90,7 @@ func generateCustomerReport(ctx context.Context, customerID, startDate, endDate 
 		winrate := float64(value.WinCount) / float64(value.WinCount+value.LossCount) * 100
 		value.Winrate = formatWinRate(winrate)
 		value.Profit = common.Decimal(value.Profit, 2)
-		rtn = append(rtn, models.CustomerWeeklyReport{
+		rtn = append(rtn, models.CustomerProfitReport{
 			DemoSymbolList: value,
 			CustomerID:     customerID,
 			YearWeek:       weeks[0],
@@ -134,8 +134,8 @@ func getCustomerFirstPlaceOrderDateTime(ctx context.Context, customerID string) 
 	return common.ParseTime(log.Time)
 }
 
-func GetCustomerReportCurrencyList(ctx context.Context, customerID, startDate, endDate string) ([]models.CustomerWeeklyReport, error) {
-	var mapData = make(map[reportMapkey]models.CustomerWeeklyReport)
+func GetCustomerReportCurrencyList(ctx context.Context, customerID, startDate, endDate string) ([]models.CustomerProfitReport, error) {
+	var mapData = make(map[reportMapkey]models.CustomerProfitReport)
 	//依日期，取出週數
 	weeks := common.GetWeeksInDateRange(common.ParseTime(startDate), common.ParseTime(endDate))
 	if len(weeks) == 0 || weeks == nil {
@@ -169,7 +169,7 @@ func GetCustomerReportCurrencyList(ctx context.Context, customerID, startDate, e
 			return nil, err
 		}
 
-		var data models.CustomerWeeklyReport
+		var data models.CustomerProfitReport
 		doc.DataTo(&data)
 		weekKey := reportMapkey{
 			YearWeek: data.YearWeek,
@@ -208,14 +208,14 @@ func GetCustomerReportCurrencyList(ctx context.Context, customerID, startDate, e
 		}
 	}
 
-	var rtn []models.CustomerWeeklyReport
+	var rtn []models.CustomerProfitReport
 	for _, report := range mapData {
 		rtn = append(rtn, report)
 	}
 	return rtn, nil
 }
 
-func getLastWeekReport(ctx context.Context, lastWeek string, customerID string, mapData map[reportMapkey]models.CustomerWeeklyReport) error {
+func getLastWeekReport(ctx context.Context, lastWeek string, customerID string, mapData map[reportMapkey]models.CustomerProfitReport) error {
 	//判斷最後一週有資料且還沒結束，先取得最新的週數
 	lastStartDT, lastEndDT, err := common.WeekToDateRange(lastWeek)
 	if err != nil {
@@ -253,7 +253,7 @@ func getLastWeekReport(ctx context.Context, lastWeek string, customerID string, 
 	return nil
 }
 
-func insertWeeklyReportIntoDB(ctx context.Context, reports []models.CustomerWeeklyReport) error {
+func insertWeeklyReportIntoDB(ctx context.Context, reports []models.CustomerProfitReport) error {
 	client := getFirestoreClient()
 	for _, data := range reports {
 		_, _, err := client.Collection(DBCustomerWeeklyReport).Add(ctx, data)
@@ -264,9 +264,9 @@ func insertWeeklyReportIntoDB(ctx context.Context, reports []models.CustomerWeek
 	return nil
 }
 
-func GetCustomerReportCurrencySummaryList(ctx context.Context, customerID, startDate, endDate string) ([]models.CustomerWeeklyReportSummary, error) {
-	var rtn []models.CustomerWeeklyReportSummary
-	middleRtn := make(map[string]models.CustomerWeeklyReportSummary)
+func GetCustomerReportCurrencySummaryList(ctx context.Context, customerID, startDate, endDate string) ([]models.CustomerReportSummary, error) {
+	var rtn []models.CustomerReportSummary
+	middleRtn := make(map[string]models.CustomerReportSummary)
 	weeklyData, err := GetCustomerReportCurrencyList(ctx, customerID, startDate, endDate)
 	if err != nil {
 		return nil, err
@@ -276,7 +276,46 @@ func GetCustomerReportCurrencySummaryList(ctx context.Context, customerID, start
 			weeklyreport.Profit += data.Profit
 			middleRtn[data.YearWeek] = weeklyreport
 		} else {
-			middleRtn[data.YearWeek] = models.CustomerWeeklyReportSummary{
+			middleRtn[data.YearWeek] = models.CustomerReportSummary{
+				YearWeek: data.YearWeek,
+				Profit:   data.Profit,
+			}
+		}
+	}
+
+	for _, value := range middleRtn {
+		rtn = append(rtn, value)
+	}
+
+	// 排序切片
+	sort.Slice(rtn, func(i, j int) bool {
+		// 提取年份和週數
+		var year1, week1, year2, week2 int
+		fmt.Sscanf(rtn[i].YearWeek, "%d-%d", &year1, &week1)
+		fmt.Sscanf(rtn[j].YearWeek, "%d-%d", &year2, &week2)
+
+		// 先比較年份，再比較週數
+		if year1 != year2 {
+			return year1 > year2 // 降冪排序
+		}
+		return week1 > week2 // 降冪排序
+	})
+	return rtn, nil
+}
+
+func GetCustomerReportCurrencySummaryListMonthly(ctx context.Context, customerID, startDate, endDate string) ([]models.CustomerReportSummary, error) {
+	var rtn []models.CustomerReportSummary
+	middleRtn := make(map[string]models.CustomerReportSummary)
+	weeklyData, err := GetCustomerReportCurrencyList(ctx, customerID, startDate, endDate)
+	if err != nil {
+		return nil, err
+	}
+	for _, data := range weeklyData {
+		if weeklyreport, exists := middleRtn[data.YearWeek]; exists {
+			weeklyreport.Profit += data.Profit
+			middleRtn[data.YearWeek] = weeklyreport
+		} else {
+			middleRtn[data.YearWeek] = models.CustomerReportSummary{
 				YearWeek: data.YearWeek,
 				Profit:   data.Profit,
 			}

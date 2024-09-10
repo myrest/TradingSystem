@@ -11,13 +11,13 @@ type DemoSymbolList struct {
 	Winrate    string  //勝率
 }
 
-type CustomerWeeklyReport struct {
-	YearWeek   string //週數 YYYY-MM
+type CustomerProfitReport struct {
+	YearWeek   string //週數 YYYY-WW 或月數YYYY-MM
 	CustomerID string //客戶ID
 	DemoSymbolList
 }
 
-func (e CustomerWeeklyReport) Merge(obj CustomerWeeklyReport) {
+func (e CustomerProfitReport) Merge(obj CustomerProfitReport) {
 	e.Amount += obj.Amount
 	e.CloseCount += obj.CloseCount
 	e.LossCount += obj.LossCount
@@ -27,13 +27,13 @@ func (e CustomerWeeklyReport) Merge(obj CustomerWeeklyReport) {
 	e.Winrate += obj.Winrate
 }
 
-type CustomerWeeklyReportSummary struct {
-	YearWeek string  //週數 YYYY-MM
+type CustomerReportSummary struct {
+	YearWeek string  //週數 YYYY-WW 或是月數 YYYY-MM
 	Profit   float64 //獲利
 }
 
-type CustomerWeeklyReportSummaryUI struct {
-	CustomerWeeklyReportSummary
+type CustomerReportSummaryUI struct {
+	CustomerReportSummary
 	StartDate string
 	EndDate   string
 }

@@ -61,7 +61,7 @@ func GetMappedCustomerList(ctx context.Context) (map[string]models.CustomerRelat
 	return customermap, nil
 }
 
-func getCount(ctx context.Context, client *firestore.Client, query *firestore.AggregationQuery) int64 {
+func getCount(ctx context.Context, query *firestore.AggregationQuery) int64 {
 	results, err := query.Get(ctx)
 	if err != nil {
 		return -1
@@ -82,19 +82,19 @@ func GetCustomerData(ctx context.Context, customerID string) map[string]int64 {
 	query := client.Collection("placeOrderLog").
 		Where("CustomerID", "==", customerID)
 	aggregationQuery := query.NewAggregationQuery().WithCount("all") //一定要用all，因為取得的function是用all當key
-	rtn["placeOrderLog"] = getCount(ctx, client, aggregationQuery)
+	rtn["placeOrderLog"] = getCount(ctx, aggregationQuery)
 
 	//customerssymbol
 	query = client.Collection("customerssymbol").
 		Where("CustomerID", "==", customerID)
 	aggregationQuery = query.NewAggregationQuery().WithCount("all")
-	rtn["customerssymbol"] = getCount(ctx, client, aggregationQuery)
+	rtn["customerssymbol"] = getCount(ctx, aggregationQuery)
 
 	//DBCustomerWeeklyReport
 	query = client.Collection("DBCustomerWeeklyReport").
 		Where("CustomerID", "==", customerID)
 	aggregationQuery = query.NewAggregationQuery().WithCount("all")
-	rtn["DBCustomerWeeklyReport"] = getCount(ctx, client, aggregationQuery)
+	rtn["DBCustomerWeeklyReport"] = getCount(ctx, aggregationQuery)
 
 	return rtn
 

@@ -136,3 +136,14 @@ func GetPreviousMondays(date time.Time, n int) ([]string, error) {
 
 	return mondays, nil
 }
+
+// 依日期，回傳該月份起迄日期
+func GetMonthStartEndDate(date time.Time) (time.Time, time.Time) {
+	// 取得該日期的年份和月份
+	year, month, _ := date.Date()
+	// 取得該月份的第一天
+	start := time.Date(year, month, 1, 0, 0, 0, 0, date.Location())
+	// 取得該月份的最後一天
+	end := start.AddDate(0, 1, 0).Add(-time.Nanosecond) // 加一個月再減去一個納秒
+	return start, end
+}

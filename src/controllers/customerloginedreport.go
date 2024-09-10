@@ -114,14 +114,67 @@ func CustomerWeeklyReportSummaryList(c *gin.Context) {
 	if session.Get("isadmin") == nil || !session.Get("isadmin").(bool) { //不是管理員cid要清掉不給看
 		customerid = ""
 	}
-	var rtn []models.CustomerWeeklyReportSummaryUI
+	var rtn []models.CustomerReportSummaryUI
 	for _, w := range weeklyreport {
 		stde, enddt, _ := common.WeekToDateRange(w.YearWeek)
 		w.Profit = common.Decimal(w.Profit, 2)
-		rtn = append(rtn, models.CustomerWeeklyReportSummaryUI{
-			CustomerWeeklyReportSummary: w,
-			StartDate:                   stde,
-			EndDate:                     enddt,
+		rtn = append(rtn, models.CustomerReportSummaryUI{
+			CustomerReportSummary: w,
+			StartDate:             stde,
+			EndDate:               enddt,
+		})
+	}
+
+	c.HTML(http.StatusOK, "weeklyreportsummary.html", gin.H{
+		"data": rtn,
+		"cid":  customerid,
+	})
+}
+
+func CustomerMonthlyReportSummaryList(c *gin.Context) {
+	session := sessions.Default(c)
+	cid := c.DefaultQuery("cid", "")
+
+	customerid := session.Get("id").(string)
+
+	//只有管理員可以看到其它人的記錄。
+	if cid != "" && session.Get("isadmin") != nil && session.Get("isadmin").(bool) {
+		customerid = cid
+	}
+
+	if customerid == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "No Customer Data."})
+		return
+	}
+
+	d := c.Query("d")
+	date := time.Now().UTC()
+
+	if d != "" {
+		date = common.ParseTime(d)
+	}
+
+	//sdt, edt := common.GetMonthStartEndDate(date)
+
+	reportStartDate := common.FormatDate(date.AddDate(0, -2, 0))
+	reportEndDate := common.FormatDate(date)
+
+	weeklyreport, err := services.GetCustomerReportCurrencySummaryList(c, customerid, reportStartDate, reportEndDate)
+	if err != nil {
+		return
+	}
+
+	if session.Get("isadmin") == nil || !session.Get("isadmin").(bool) { //不是管理員cid要清掉不給看
+		customerid = ""
+	}
+	var rtn []models.CustomerReportSummaryUI
+	for _, w := range weeklyreport {
+		stde, enddt, _ := common.WeekToDateRange(w.YearWeek)
+		w.Profit = common.Decimal(w.Profit, 2)
+		rtn = append(rtn, models.CustomerReportSummaryUI{
+			CustomerReportSummary: w,
+			StartDate:             stde,
+			EndDate:               enddt,
 		})
 	}
 
