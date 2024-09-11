@@ -58,9 +58,7 @@ func CustomerWeeklyReportList(c *gin.Context) {
 	startDate, endDate := common.GetWeeksStartEndDateByDate(reportStartDate)
 
 	//將日期區間寫入DB
-	session.Set("report_sdt", startDate)
-	session.Set("report_edt", endDate)
-	_ = session.Save() //不處理失敗
+	common.SetReportStartEndDate(session, startDate, endDate)
 
 	weeklyreport, err := services.GetCustomerWeeklyReportCurrencyList(c, customerid, startDate, endDate)
 	if err != nil {

@@ -1,9 +1,11 @@
 package services
 
 import (
+	"TradingSystem/src/common"
 	"TradingSystem/src/models"
 	"context"
 	"errors"
+	"time"
 
 	"cloud.google.com/go/firestore"
 	"cloud.google.com/go/firestore/apiv1/firestorepb"
@@ -98,12 +100,14 @@ func SaveCustomerPlaceOrderResultLog(ctx context.Context, placeorderlog models.L
 	return doc.ID, nil
 }
 
-func GetPlaceOrderHistory(ctx context.Context, Symbol, CustomerID string, page, pageSize int) ([]models.Log_TvSiginalData, int, error) {
+func GetPlaceOrderHistory(ctx context.Context, Symbol, CustomerID string, sdt, edt time.Time, page, pageSize int) ([]models.Log_TvSiginalData, int, error) {
 	client := getFirestoreClient()
 
 	query := client.Collection("placeOrderLog").
 		Where("CustomerID", "==", CustomerID).
 		Where("Symbol", "==", Symbol).
+		Where("Time", ">=", common.FormatDate(sdt)).
+		Where("Time", "<", common.FormatDate(edt)).
 		OrderBy("Time", firestore.Desc).
 		Offset((page - 1) * pageSize).
 		Limit(pageSize)
@@ -127,19 +131,21 @@ func GetPlaceOrderHistory(ctx context.Context, Symbol, CustomerID string, page, 
 		rtn = append(rtn, history)
 	}
 
-	totalpage, err := getTotalPages(ctx, Symbol, CustomerID, pageSize)
+	totalpage, err := getTotalPages(ctx, Symbol, CustomerID, sdt, edt, pageSize)
 
 	return rtn, totalpage, err
 }
 
-func getTotalPages(ctx context.Context, Symbol, CustomerID string, pageSize int) (int, error) {
+func getTotalPages(ctx context.Context, Symbol, CustomerID string, sdt, edt time.Time, pageSize int) (int, error) {
 	client := getFirestoreClient()
 
 	// Firestore COUNT query
 	query := client.Collection("placeOrderLog").
 		Where("CustomerID", "==", CustomerID).
-		Where("Symbol", "==", Symbol)
-
+		Where("Symbol", "==", Symbol).
+		Where("Time", ">=", common.FormatDate(sdt)).
+		Where("Time", "<", common.FormatDate(edt)).
+		OrderBy("Time", firestore.Desc)
 	countQuery := query.NewAggregationQuery().WithCount("all")
 	results, err := countQuery.Get(ctx)
 	if err != nil {

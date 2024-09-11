@@ -162,3 +162,9 @@ func GetMonthsInRange(start, end time.Time) []string {
 	}
 	return months
 }
+
+func FormateStartEndTimeFor0024(start, end time.Time) (time.Time, time.Time) {
+	start = start.Truncate(24 * time.Hour)
+	end = time.Date(end.Year(), end.Month(), end.Day(), 23, 59, 59, 999, end.Location())
+	return start, end
+}
