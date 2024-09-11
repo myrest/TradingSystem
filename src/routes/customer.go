@@ -22,5 +22,6 @@ func RegisterCustomerRoutes(r *gin.Engine) {
 		customerRoutes.GET("/linktg", controllers.GetTGBot)
 		customerRoutes.GET("/weeklyreportlist", controllers.CustomerWeeklyReportList)
 		customerRoutes.GET("/weeklyreportlistsummary", controllers.CustomerWeeklyReportSummaryList)
+		customerRoutes.GET("/monthlyreportlistsummary", controllers.CustomerMonthlyReportSummaryList)
 	}
 }

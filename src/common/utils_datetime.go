@@ -101,8 +101,10 @@ func GetWeeksInDateRange(startDate, endDate time.Time) []string {
 func ParseTime(timeStr string) time.Time {
 	// 定義可能的時間格式
 	formats := []string{
-		"2006-01-02 15:04:05", // 日期時間格式
+		"2006-01-02 15:04:05", // 日期時間格式-秒
+		"2006-01-02 15:04",    // 日期時間格式-分
 		"2006-01-02",          // 僅日期格式
+		"2006-01",             // 僅月份格式
 	}
 
 	// 嘗試使用所有格式解析
@@ -146,4 +148,17 @@ func GetMonthStartEndDate(date time.Time) (time.Time, time.Time) {
 	// 取得該月份的最後一天
 	end := start.AddDate(0, 1, 0).Add(-time.Nanosecond) // 加一個月再減去一個納秒
 	return start, end
+}
+
+// GetMonthsInRange 接收起始和結束時間，返回中間所有月份的資料陣列，格式為 YYYY-MM
+func GetMonthsInRange(start, end time.Time) []string {
+	var months []string
+	// 取得起始月份
+	current := time.Date(start.Year(), start.Month(), 1, 0, 0, 0, 0, start.Location())
+	for current.Before(end) || current.Equal(end) {
+		months = append(months, current.Format("2006-01"))
+		// 移動到下一個月份
+		current = current.AddDate(0, 1, 0)
+	}
+	return months
 }

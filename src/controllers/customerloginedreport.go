@@ -57,7 +57,12 @@ func CustomerWeeklyReportList(c *gin.Context) {
 
 	startDate, endDate := common.GetWeeksStartEndDateByDate(reportStartDate)
 
-	weeklyreport, err := services.GetCustomerReportCurrencyList(c, customerid, startDate, endDate)
+	//將日期區間寫入DB
+	session.Set("report_sdt", startDate)
+	session.Set("report_edt", endDate)
+	_ = session.Save() //不處理失敗
+
+	weeklyreport, err := services.GetCustomerWeeklyReportCurrencyList(c, customerid, startDate, endDate)
 	if err != nil {
 		return
 	}
@@ -71,12 +76,15 @@ func CustomerWeeklyReportList(c *gin.Context) {
 	if session.Get("isadmin") == nil || !session.Get("isadmin").(bool) { //不是管理員cid要清掉不給看
 		customerid = ""
 	}
+
+	isAdmin := customerid != "" && session.Get("isadmin") != nil && session.Get("isadmin").(bool)
 	c.HTML(http.StatusOK, "weeklyreport.html", gin.H{
 		"data":    weeklyreport,
 		"mondays": mondays,
 		"days":    common.FormatDate(common.ParseTime(startDate)),
 		"cid":     customerid,
 		"week":    common.GetWeeksByDate(common.ParseTime(startDate)),
+		"IsAdmin": isAdmin,
 	})
 }
 
@@ -116,7 +124,7 @@ func CustomerWeeklyReportSummaryList(c *gin.Context) {
 	}
 	var rtn []models.CustomerReportSummaryUI
 	for _, w := range weeklyreport {
-		stde, enddt, _ := common.WeekToDateRange(w.YearWeek)
+		stde, enddt, _ := common.WeekToDateRange(w.YearUnit)
 		w.Profit = common.Decimal(w.Profit, 2)
 		rtn = append(rtn, models.CustomerReportSummaryUI{
 			CustomerReportSummary: w,
@@ -154,12 +162,10 @@ func CustomerMonthlyReportSummaryList(c *gin.Context) {
 		date = common.ParseTime(d)
 	}
 
-	//sdt, edt := common.GetMonthStartEndDate(date)
+	sdt, edt := common.GetMonthStartEndDate(date)
+	sdt = sdt.AddDate(0, -6, 0) //一次取半年的資料
 
-	reportStartDate := common.FormatDate(date.AddDate(0, -2, 0))
-	reportEndDate := common.FormatDate(date)
-
-	weeklyreport, err := services.GetCustomerReportCurrencySummaryList(c, customerid, reportStartDate, reportEndDate)
+	monthlyreport, err := services.GetCustomerReportCurrencySummaryListMonthly(c, customerid, sdt, edt)
 	if err != nil {
 		return
 	}
@@ -168,17 +174,18 @@ func CustomerMonthlyReportSummaryList(c *gin.Context) {
 		customerid = ""
 	}
 	var rtn []models.CustomerReportSummaryUI
-	for _, w := range weeklyreport {
-		stde, enddt, _ := common.WeekToDateRange(w.YearWeek)
+	for _, w := range monthlyreport {
+		dt := common.ParseTime(w.YearUnit)
+		stde, enddt := common.GetMonthStartEndDate(dt)
 		w.Profit = common.Decimal(w.Profit, 2)
 		rtn = append(rtn, models.CustomerReportSummaryUI{
 			CustomerReportSummary: w,
-			StartDate:             stde,
-			EndDate:               enddt,
+			StartDate:             common.FormatDate(stde),
+			EndDate:               common.FormatDate(enddt),
 		})
 	}
 
-	c.HTML(http.StatusOK, "weeklyreportsummary.html", gin.H{
+	c.HTML(http.StatusOK, "monthlyreportsummary.html", gin.H{
 		"data": rtn,
 		"cid":  customerid,
 	})

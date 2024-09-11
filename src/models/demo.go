@@ -12,7 +12,7 @@ type DemoSymbolList struct {
 }
 
 type CustomerProfitReport struct {
-	YearWeek   string //週數 YYYY-WW 或月數YYYY-MM
+	YearUnit   string //週數 YYYY-WW 或月數YYYY-MM
 	CustomerID string //客戶ID
 	DemoSymbolList
 }
@@ -28,7 +28,7 @@ func (e CustomerProfitReport) Merge(obj CustomerProfitReport) {
 }
 
 type CustomerReportSummary struct {
-	YearWeek string  //週數 YYYY-WW 或是月數 YYYY-MM
+	YearUnit string  //週數 YYYY-WW 或是月數 YYYY-MM
 	Profit   float64 //獲利
 }
 

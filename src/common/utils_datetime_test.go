@@ -231,12 +231,35 @@ func TestParseTime(t *testing.T) {
 	type args struct {
 		timeStr string
 	}
+	ansa, _ := time.Parse("2006-01-02 15:04:05", "2024-02-02 01:01:00")
+	ansb, _ := time.Parse("2006-01-02", "2024-02-02")
+	ansc, _ := time.Parse("2006-01", "2024-02")
 	tests := []struct {
 		name string
 		args args
 		want time.Time
 	}{
-		// TODO: Add test cases.
+		{
+			name: "日期時間",
+			args: args{
+				timeStr: "2024-02-02 01:01:00",
+			},
+			want: ansa,
+		},
+		{
+			name: "日期",
+			args: args{
+				timeStr: "2024-02-02",
+			},
+			want: ansb,
+		},
+		{
+			name: "月份",
+			args: args{
+				timeStr: "2024-02",
+			},
+			want: ansc,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

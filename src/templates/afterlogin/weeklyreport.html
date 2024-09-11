@@ -125,7 +125,13 @@
                     <td>{{.LossCount}}</td>
                     <td>{{.Amount}}</td>
                     <td>{{.Winrate}}</td>
-                    <td><a onclick="displayHistory('{{.Symbol}}')" href="#">記錄</a></td>
+                    <td>
+                        {{ if $.IsAdmin }}
+                        <a href="/customers/placeorderhistory?symbol={{.Symbol}}&cid={{ $.cid }}">記錄</a>
+                        {{ else }}
+                        <a href="/customers/placeorderhistory?symbol={{.Symbol}}">記錄</a>
+                        {{ end }}
+                    </td>
                 </tr>
                 {{end}}
             </tbody>
@@ -227,10 +233,6 @@
 
     function redirect(days) {
         window.location.href = "?d=" + document.getElementById('timeRange').value + "&cid={{.cid}}"
-    }
-
-    function displayHistory(symbol) {
-        window.location.href = "/demo/history?symbol=" + symbol + "&d=" + document.getElementById('timeRange').value + "&cid={{.cid}}"
     }
 
     document.getElementById('home-icon').addEventListener('click', () => {
