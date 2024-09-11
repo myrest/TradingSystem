@@ -58,9 +58,7 @@ func CustomerWeeklyReportList(c *gin.Context) {
 	startDate, endDate := common.GetWeeksStartEndDateByDate(reportStartDate)
 
 	//將日期區間寫入DB
-	session.Set("report_sdt", startDate)
-	session.Set("report_edt", endDate)
-	_ = session.Save() //不處理失敗
+	common.SetReportStartEndDate(session, startDate, endDate)
 
 	weeklyreport, err := services.GetCustomerWeeklyReportCurrencyList(c, customerid, startDate, endDate)
 	if err != nil {
@@ -73,6 +71,11 @@ func CustomerWeeklyReportList(c *gin.Context) {
 		return
 	}
 
+	mondaysList := []string{}
+	for _, day := range mondays {
+		mondaysList = append(mondaysList, common.FormatDate(day))
+	}
+
 	if session.Get("isadmin") == nil || !session.Get("isadmin").(bool) { //不是管理員cid要清掉不給看
 		customerid = ""
 	}
@@ -80,7 +83,7 @@ func CustomerWeeklyReportList(c *gin.Context) {
 	isAdmin := customerid != "" && session.Get("isadmin") != nil && session.Get("isadmin").(bool)
 	c.HTML(http.StatusOK, "weeklyreport.html", gin.H{
 		"data":    weeklyreport,
-		"mondays": mondays,
+		"mondays": mondaysList,
 		"days":    common.FormatDate(common.ParseTime(startDate)),
 		"cid":     customerid,
 		"week":    common.GetWeeksByDate(common.ParseTime(startDate)),

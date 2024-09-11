@@ -255,8 +255,9 @@ func PlaceOrderHistory(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "No Customer Data."})
 		return
 	}
+	sdt, edt := common.GetReportStartEndDate(session)
 
-	list, totalPages, err := services.GetPlaceOrderHistory(c, symbol, customerid, page, pageSize)
+	list, totalPages, err := services.GetPlaceOrderHistory(c, symbol, customerid, sdt, edt, page, pageSize)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -311,8 +312,9 @@ func GetPlaceOrderHistoryBySymbol(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "No Customer Data."})
 		return
 	}
+	sdt, edt := common.GetReportStartEndDate(session)
 
-	list, totalPages, err := services.GetPlaceOrderHistory(c, symbol, customerid, page, pageSize)
+	list, totalPages, err := services.GetPlaceOrderHistory(c, symbol, customerid, sdt, edt, page, pageSize)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

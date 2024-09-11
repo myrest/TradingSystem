@@ -136,6 +136,11 @@ func getCustomerFirstPlaceOrderDateTime(ctx context.Context, customerID string) 
 }
 
 func GetCustomerWeeklyReportCurrencyList(ctx context.Context, customerID, startDate, endDate string) ([]models.CustomerProfitReport, error) {
+	//要設定到時、分、秒
+	sdt, edt := common.FormateStartEndTimeFor0024(common.ParseTime(startDate), common.ParseTime(endDate))
+	startDate = common.FormatTime(sdt)
+	endDate = common.FormatTime(edt)
+
 	var mapData = make(map[reportMapkey]models.CustomerProfitReport)
 	//依日期，取出週數
 	weeks := common.GetWeeksInDateRange(common.ParseTime(startDate), common.ParseTime(endDate))

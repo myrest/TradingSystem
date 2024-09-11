@@ -363,7 +363,7 @@ func TestGetPreviousMondays(t *testing.T) {
 				return
 			}
 			for i := range got {
-				if got[i] != tt.want[i] {
+				if got[i] != ParseTime(tt.want[i]) {
 					t.Errorf("GetPreviousMondays() got[%d] = %v, want %v", i, got[i], tt.want[i])
 				}
 			}

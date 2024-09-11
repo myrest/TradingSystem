@@ -122,8 +122,9 @@ func TimeMax() time.Time {
 }
 
 // GetPreviousMondays 根據傳入的日期，返回前 N 個星期一的日期
-func GetPreviousMondays(date time.Time, n int) ([]string, error) {
-	var mondays []string
+func GetPreviousMondays(date time.Time, n int) ([]time.Time, error) {
+	date = date.Truncate(24 * time.Hour) //去掉時分秒
+	var mondays []time.Time
 
 	// 找到最近的星期一
 	offset := int(date.Weekday())                 // 0=Sunday, 1=Monday, ..., 6=Saturday
@@ -132,7 +133,7 @@ func GetPreviousMondays(date time.Time, n int) ([]string, error) {
 
 	// 加入前 N 個星期一
 	for i := 0; i < n; i++ {
-		mondays = append(mondays, previousMonday.Format("2006-01-02"))
+		mondays = append(mondays, previousMonday)
 		previousMonday = previousMonday.AddDate(0, 0, -7) // 向前推算 7 天
 	}
 
@@ -161,4 +162,10 @@ func GetMonthsInRange(start, end time.Time) []string {
 		current = current.AddDate(0, 1, 0)
 	}
 	return months
+}
+
+func FormateStartEndTimeFor0024(start, end time.Time) (time.Time, time.Time) {
+	start = start.Truncate(24 * time.Hour)
+	end = time.Date(end.Year(), end.Month(), end.Day(), 23, 59, 59, 999, end.Location())
+	return start, end
 }
