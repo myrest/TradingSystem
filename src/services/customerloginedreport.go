@@ -136,16 +136,18 @@ func getCustomerFirstPlaceOrderDateTime(ctx context.Context, customerID string) 
 }
 
 func GetCustomerWeeklyReportCurrencyList(ctx context.Context, customerID string, startDate, endDate time.Time) ([]models.CustomerProfitReport, error) {
+	//找出客戶的第一筆資料，如果起始日期早於它，則以第一筆資料為起始日期
+	firstPlaceOrderTime := getCustomerFirstPlaceOrderDateTime(ctx, customerID)
+	if startDate.Before(firstPlaceOrderTime) {
+		startDate = firstPlaceOrderTime
+	}
+
 	var mapData = make(map[reportMapkey]models.CustomerProfitReport)
 	//依日期，取出週數
 	weeks := common.GetWeeksInDateRange(startDate, endDate)
 	if len(weeks) == 0 || weeks == nil {
 		return nil, errors.New("日期區間錯誤。")
 	}
-
-	//用來判斷最後一週的資料有沒有產生。
-	lastWeek := common.GetWeeksByDate(endDate)
-	lastWeekinReport := false
 
 	client := getFirestoreClient()
 
@@ -183,30 +185,13 @@ func GetCustomerWeeklyReportCurrencyList(ctx context.Context, customerID string,
 			mapData[weekKey] = data
 		}
 
-		if (data.YearUnit == lastWeek) && !lastWeekinReport {
-			lastWeekinReport = true
-		}
 		// 移除已找到的週數
 		delete(missingWeeks, data.YearUnit)
 	}
 
-	//找出客戶的第一筆資料
-	firstPlaceOrderTime := getCustomerFirstPlaceOrderDateTime(ctx, customerID)
 	//處理尚未產生的週資料
 	for week := range missingWeeks {
-		_, edt, _ := common.WeekToDateRange(week)
-		if edt.Before(firstPlaceOrderTime) {
-			continue
-		}
-		getLastWeekReport(ctx, week, customerID, mapData)
-	}
-
-	if !lastWeekinReport {
-		//最後一週報表沒產生，要從DB撈，其中mapData是傳址
-		err := getLastWeekReport(ctx, lastWeek, customerID, mapData)
-		if err != nil {
-			return nil, err
-		}
+		getWeekReport(ctx, week, customerID, mapData)
 	}
 
 	var rtn []models.CustomerProfitReport
@@ -383,12 +368,16 @@ func getMonthReport(ctx context.Context, month string, customerID string, mapDat
 	return nil
 }
 
-func getLastWeekReport(ctx context.Context, lastWeek string, customerID string, mapData map[reportMapkey]models.CustomerProfitReport) error {
-	//判斷最後一週有資料且還沒結束，先取得最新的週數
-	lastStartDT, lastEndDT, err := common.WeekToDateRange(lastWeek)
-	if err != nil {
-		return err
+func getWeekReport(ctx context.Context, currentWeek string, customerID string, mapData map[reportMapkey]models.CustomerProfitReport) error {
+	//傳入的map資料中，不應該有相同週數的資料。
+	for key := range mapData {
+		if key.YearUnit == currentWeek {
+			return errors.New("己有相同週數的資料")
+		}
 	}
+
+	//判斷最後一週有資料且還沒結束，先取得最新的週數
+	lastStartDT, lastEndDT, _ := common.WeekToDateRange(currentWeek)
 	latestReports, err := generateCustomerReport(ctx, customerID, lastStartDT, lastEndDT)
 	if err != nil {
 		//寫入log
@@ -400,7 +389,7 @@ func getLastWeekReport(ctx context.Context, lastWeek string, customerID string, 
 	}
 	for _, lastWeeklyReport := range latestReports {
 		weekKey := reportMapkey{
-			YearUnit: lastWeek,
+			YearUnit: currentWeek,
 			Symbol:   lastWeeklyReport.Symbol,
 		}
 		if weeklyreportbysymbol, exists := mapData[weekKey]; exists {
@@ -411,9 +400,9 @@ func getLastWeekReport(ctx context.Context, lastWeek string, customerID string, 
 		}
 	}
 
-	systemlastWeek := common.GetWeeksByDate(time.Now().UTC())
-	//表示lastWeek不是當下時間的週數，要寫入DB
-	if systemlastWeek != lastWeek && len(latestReports) > 0 {
+	systemWeekNow := common.GetWeeksByDate(time.Now().UTC())
+	//表示currentWeek不是當下時間的週數，要寫入DB
+	if systemWeekNow != currentWeek && len(latestReports) > 0 {
 		if err := insertWeeklyReportIntoDB(ctx, latestReports); err != nil {
 			return err
 		}
