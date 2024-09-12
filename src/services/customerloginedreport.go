@@ -233,10 +233,6 @@ func GetCustomerMonthlyReportCurrencyList(ctx context.Context, customerID string
 		return nil, errors.New("日期區間錯誤。")
 	}
 
-	//用來判斷最後一週的資料有沒有產生。
-	lastMonth := common.GetMonthsInRange(endDate, endDate)[0]
-	lastMonthinReport := false
-
 	missingMonths := make(map[string]struct{}, len(months))
 	for _, m := range months {
 		missingMonths[m] = struct{}{} // 將 Month 中的項目存入集合
@@ -271,9 +267,6 @@ func GetCustomerMonthlyReportCurrencyList(ctx context.Context, customerID string
 			mapData[monthKey] = data
 		}
 
-		if (data.YearUnit == lastMonth) && !lastMonthinReport {
-			lastMonthinReport = true
-		}
 		// 移除已找到的月份
 		delete(missingMonths, data.YearUnit)
 	}
@@ -306,8 +299,8 @@ func getMonthReport(ctx context.Context, month string, customerID string, mapDat
 	iter := client.Collection("placeOrderLog").
 		Where("CustomerID", "==", customerID).
 		Where("Simulation", "==", false).
-		Where("Time", ">=", common.FormatDate(sdt)).
-		Where("Time", "<", common.FormatDate(edt)).
+		Where("Time", ">=", common.FormatTime(sdt)).
+		Where("Time", "<", common.FormatTime(edt)).
 		Documents(ctx)
 	defer iter.Stop()
 	symbollist := make(map[string]models.CustomerProfitReport) //Symbol -> Report 資料

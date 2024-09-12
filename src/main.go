@@ -74,5 +74,5 @@ func main() {
 	}
 
 	log.Printf("Server started at :%s", port)
-	log.Fatal(r.Run(":" + port))
+	log.Fatal(r.Run("127.0.0.1:" + port))
 }
