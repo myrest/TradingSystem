@@ -14,9 +14,9 @@ import (
 	"google.golang.org/api/iterator"
 )
 
-func generateCustomerReport(ctx context.Context, customerID, startDate, endDate string) ([]models.CustomerProfitReport, error) {
+func generateCustomerReport(ctx context.Context, customerID string, startDate, endDate time.Time) ([]models.CustomerProfitReport, error) {
 	//取出week值
-	weeks := common.GetWeeksInDateRange(common.ParseTime(startDate), common.ParseTime(endDate))
+	weeks := common.GetWeeksInDateRange(startDate, endDate)
 	if len(weeks) > 1 {
 		return nil, fmt.Errorf("一次只能產生一週的報表資料。%s ~ %s 跨週了。", startDate, endDate)
 	}
@@ -26,8 +26,8 @@ func generateCustomerReport(ctx context.Context, customerID, startDate, endDate 
 	iter := client.Collection("placeOrderLog").
 		Where("CustomerID", "==", customerID).
 		Where("Simulation", "==", false).
-		Where("Time", ">=", startDate).
-		Where("Time", "<", endDate).
+		Where("Time", ">=", common.FormatTime(startDate)).
+		Where("Time", "<", common.FormatTime(endDate)).
 		Documents(ctx)
 	defer iter.Stop()
 	symbollist := make(map[string]models.DemoSymbolList)
@@ -135,21 +135,16 @@ func getCustomerFirstPlaceOrderDateTime(ctx context.Context, customerID string) 
 	return common.ParseTime(log.Time)
 }
 
-func GetCustomerWeeklyReportCurrencyList(ctx context.Context, customerID, startDate, endDate string) ([]models.CustomerProfitReport, error) {
-	//要設定到時、分、秒
-	sdt, edt := common.FormateStartEndTimeFor0024(common.ParseTime(startDate), common.ParseTime(endDate))
-	startDate = common.FormatTime(sdt)
-	endDate = common.FormatTime(edt)
-
+func GetCustomerWeeklyReportCurrencyList(ctx context.Context, customerID string, startDate, endDate time.Time) ([]models.CustomerProfitReport, error) {
 	var mapData = make(map[reportMapkey]models.CustomerProfitReport)
 	//依日期，取出週數
-	weeks := common.GetWeeksInDateRange(common.ParseTime(startDate), common.ParseTime(endDate))
+	weeks := common.GetWeeksInDateRange(startDate, endDate)
 	if len(weeks) == 0 || weeks == nil {
 		return nil, errors.New("日期區間錯誤。")
 	}
 
 	//用來判斷最後一週的資料有沒有產生。
-	lastWeek := common.GetWeeksByDate(common.ParseTime(endDate))
+	lastWeek := common.GetWeeksByDate(endDate)
 	lastWeekinReport := false
 
 	client := getFirestoreClient()
@@ -200,7 +195,7 @@ func GetCustomerWeeklyReportCurrencyList(ctx context.Context, customerID, startD
 	//處理尚未產生的週資料
 	for week := range missingWeeks {
 		_, edt, _ := common.WeekToDateRange(week)
-		if common.ParseTime(edt).Before(firstPlaceOrderTime) {
+		if edt.Before(firstPlaceOrderTime) {
 			continue
 		}
 		getLastWeekReport(ctx, week, customerID, mapData)
@@ -444,7 +439,7 @@ func insertWeeklyReportIntoDB(ctx context.Context, reports []models.CustomerProf
 	return nil
 }
 
-func GetCustomerReportCurrencySummaryList(ctx context.Context, customerID, startDate, endDate string) ([]models.CustomerReportSummary, error) {
+func GetCustomerReportCurrencySummaryList(ctx context.Context, customerID string, startDate, endDate time.Time) ([]models.CustomerReportSummary, error) {
 	var rtn []models.CustomerReportSummary
 	middleRtn := make(map[string]models.CustomerReportSummary)
 	weeklyData, err := GetCustomerWeeklyReportCurrencyList(ctx, customerID, startDate, endDate)

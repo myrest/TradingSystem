@@ -84,9 +84,9 @@ func CustomerWeeklyReportList(c *gin.Context) {
 	c.HTML(http.StatusOK, "weeklyreport.html", gin.H{
 		"data":    weeklyreport,
 		"mondays": mondaysList,
-		"days":    common.FormatDate(common.ParseTime(startDate)),
+		"days":    common.FormatDate(startDate),
 		"cid":     customerid,
-		"week":    common.GetWeeksByDate(common.ParseTime(startDate)),
+		"week":    common.GetWeeksByDate(startDate),
 		"IsAdmin": isAdmin,
 	})
 }
@@ -114,8 +114,8 @@ func CustomerWeeklyReportSummaryList(c *gin.Context) {
 		enddate = common.ParseTime(d)
 	}
 
-	reportStartDate := common.FormatDate(enddate.AddDate(0, -2, 0))
-	reportEndDate := common.FormatDate(enddate)
+	reportStartDate := enddate.AddDate(0, -2, 0).Truncate(24 * time.Hour) //去掉時分秒
+	reportEndDate := time.Date(enddate.Year(), enddate.Month(), enddate.Day(), 23, 59, 59, 0, enddate.Location())
 
 	weeklyreport, err := services.GetCustomerReportCurrencySummaryList(c, customerid, reportStartDate, reportEndDate)
 	if err != nil {
@@ -131,8 +131,8 @@ func CustomerWeeklyReportSummaryList(c *gin.Context) {
 		w.Profit = common.Decimal(w.Profit, 2)
 		rtn = append(rtn, models.CustomerReportSummaryUI{
 			CustomerReportSummary: w,
-			StartDate:             stde,
-			EndDate:               enddt,
+			StartDate:             common.FormatDate(stde),
+			EndDate:               common.FormatDate(enddt),
 		})
 	}
 

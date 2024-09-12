@@ -17,25 +17,25 @@ func GetWeeksByDate(date time.Time) string {
 	}
 }
 
-func GetWeeksStartEndDateByDate(date time.Time) (string, string) {
+func GetWeeksStartEndDateByDate(date time.Time) (time.Time, time.Time) {
 	week := GetWeeksByDate(date)
 	sd, ed, _ := WeekToDateRange(week)
 	return sd, ed
 }
 
 // WeekToDateRange 根據給定的 YYYY-WW 格式計算起始和結束日期
-func WeekToDateRange(weekStr string) (string, string, error) {
+func WeekToDateRange(weekStr string) (time.Time, time.Time, error) {
 	var year, week int
 	_, err := fmt.Sscanf(weekStr, "%d-%d", &year, &week)
 	if year < 0 || week < 1 {
-		return "", "", fmt.Errorf("invalid week number: %d", week)
+		return time.Now().UTC(), time.Now().UTC(), fmt.Errorf("invalid week number: %d", week)
 	}
 	if err != nil {
-		return "", "", err
+		return time.Now().UTC(), time.Now().UTC(), err
 	}
 
 	if week < 1 || week > 53 {
-		return "", "", fmt.Errorf("invalid week number: %d", week)
+		return time.Now().UTC(), time.Now().UTC(), fmt.Errorf("invalid week number: %d", week)
 	}
 
 	// 找到該年的第一天
@@ -47,12 +47,13 @@ func WeekToDateRange(weekStr string) (string, string, error) {
 	}
 
 	// 計算該週的起始日期（週一）
-	startDate := startOfYear.AddDate(0, 0, (week-1)*7)
+	startDate := startOfYear.AddDate(0, 0, (week-1)*7).Truncate(24 * time.Hour) //去時分秒
 
-	// 計算該週的結束日期（週日）
+	// 計算該週的結束日期（週日）加上時分秒
 	endDate := startDate.AddDate(0, 0, 6)
+	endDate = time.Date(endDate.Year(), endDate.Month(), endDate.Day(), 23, 59, 59, 0, endDate.Location())
 
-	return startDate.Format("2006-01-02"), endDate.Format("2006-01-02"), nil
+	return startDate, endDate, nil
 }
 
 func GetUtcTimeNow() string {
@@ -166,6 +167,6 @@ func GetMonthsInRange(start, end time.Time) []string {
 
 func FormateStartEndTimeFor0024(start, end time.Time) (time.Time, time.Time) {
 	start = start.Truncate(24 * time.Hour)
-	end = time.Date(end.Year(), end.Month(), end.Day(), 23, 59, 59, 999, end.Location())
+	end = time.Date(end.Year(), end.Month(), end.Day(), 23, 59, 59, 0, end.Location())
 	return start, end
 }

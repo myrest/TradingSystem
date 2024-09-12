@@ -205,8 +205,8 @@ func GetReportStartEndDate(s sessions.Session) (time.Time, time.Time) {
 	return TimeMax(), TimeMax()
 }
 
-func SetReportStartEndDate(s sessions.Session, sdt, edt string) {
-	s.Set("report_sdt", sdt)
-	s.Set("report_edt", edt)
+func SetReportStartEndDate(s sessions.Session, sdt, edt time.Time) {
+	s.Set("report_sdt", FormatTime(sdt))
+	s.Set("report_edt", FormatTime(edt))
 	_ = s.Save() //不處理失敗
 }
