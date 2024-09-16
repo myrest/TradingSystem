@@ -348,6 +348,8 @@ func getMonthReport(ctx context.Context, month string, customerID string, mapDat
 		}
 	}
 
+	currentMonth := common.GetMonthsInRange(common.GetMonthStartEndDate(time.Now().UTC()))
+
 	//計算勝率，並寫入原mapData資料裏
 	for _, value := range symbollist {
 		winrate := float64(value.WinCount) / float64(value.WinCount+value.LossCount) * 100
@@ -359,10 +361,12 @@ func getMonthReport(ctx context.Context, month string, customerID string, mapDat
 		}
 		mapData[datamapkey] = value
 
-		//Todo: 應該要檢查是否己存在DB裏
-		_, _, err := client.Collection(DBCustomerMonthlyReport).Add(ctx, value)
-		if err != nil {
-			return nil
+		if currentMonth[0] != value.YearUnit { //當月資料因為還沒結束，所以不寫入
+			//Todo: 應該要檢查是否己存在DB裏
+			_, _, err := client.Collection(DBCustomerMonthlyReport).Add(ctx, value)
+			if err != nil {
+				return nil
+			}
 		}
 	}
 	return nil

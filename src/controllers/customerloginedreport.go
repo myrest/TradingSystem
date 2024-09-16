@@ -4,7 +4,9 @@ import (
 	"TradingSystem/src/common"
 	"TradingSystem/src/models"
 	"TradingSystem/src/services"
+	"fmt"
 	"net/http"
+	"sort"
 	"strconv"
 	"time"
 
@@ -81,12 +83,18 @@ func CustomerWeeklyReportList(c *gin.Context) {
 	}
 
 	isAdmin := customerid != "" && session.Get("isadmin") != nil && session.Get("isadmin").(bool)
+
+	// 排序切片
+	sort.Slice(weeklyreport, func(i, j int) bool {
+		return weeklyreport[i].Symbol > weeklyreport[j].Symbol // 降冪排序
+	})
+
 	c.HTML(http.StatusOK, "weeklyreport.html", gin.H{
 		"data":    weeklyreport,
 		"mondays": mondaysList,
 		"days":    common.FormatDate(startDate),
 		"cid":     customerid,
-		"week":    common.GetWeeksByDate(startDate),
+		"week":    fmt.Sprintf("%s ~ %s (%s)", common.FormatDate(startDate), common.FormatDate(endDate), common.GetWeeksByDate(startDate)),
 		"IsAdmin": isAdmin,
 	})
 }
@@ -114,7 +122,7 @@ func CustomerWeeklyReportSummaryList(c *gin.Context) {
 		enddate = common.ParseTime(d)
 	}
 
-	reportStartDate := enddate.AddDate(0, -2, 0).Truncate(24 * time.Hour) //去掉時分秒
+	reportStartDate := enddate.AddDate(0, -2, 0).Truncate(24 * time.Hour) //去掉時分秒，取兩個月內的資料
 	reportEndDate := time.Date(enddate.Year(), enddate.Month(), enddate.Day(), 23, 59, 59, 0, enddate.Location())
 
 	weeklyreport, err := services.GetCustomerReportCurrencySummaryList(c, customerid, reportStartDate, reportEndDate)
@@ -191,5 +199,68 @@ func CustomerMonthlyReportSummaryList(c *gin.Context) {
 	c.HTML(http.StatusOK, "monthlyreportsummary.html", gin.H{
 		"data": rtn,
 		"cid":  customerid,
+	})
+}
+
+func CustomerMonthlyReportList(c *gin.Context) {
+	session := sessions.Default(c)
+	cid := c.DefaultQuery("cid", "")
+
+	customerid := session.Get("id").(string)
+
+	//只有管理員可以看到其它人的記錄。
+	if cid != "" && session.Get("isadmin") != nil && session.Get("isadmin").(bool) {
+		customerid = cid
+	}
+
+	if customerid == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "No Customer Data."})
+		return
+	}
+
+	d := c.Query("d")
+	reportStartDate := time.Now().UTC()
+
+	if d != "" {
+		reportStartDate = common.ParseTime(d)
+	}
+	//////
+
+	startDate, endDate := common.GetMonthStartEndDate(reportStartDate)
+
+	//將日期區間寫入DB
+	common.SetReportStartEndDate(session, startDate, endDate)
+
+	montylyreport, err := services.GetCustomerMonthlyReportCurrencyList(c, customerid, startDate, endDate)
+	if err != nil {
+		return
+	}
+
+	//找出每月1號的清單
+	monthday := common.GetMonthlyDay1(3)
+
+	firstDayByMonth := []string{}
+	for _, day := range monthday {
+		firstDayByMonth = append(firstDayByMonth, common.FormatDate(day))
+	}
+
+	if session.Get("isadmin") == nil || !session.Get("isadmin").(bool) { //不是管理員cid要清掉不給看
+		customerid = ""
+	}
+
+	isAdmin := customerid != "" && session.Get("isadmin") != nil && session.Get("isadmin").(bool)
+
+	// 排序切片
+	sort.Slice(montylyreport, func(i, j int) bool {
+		return montylyreport[i].Symbol > montylyreport[j].Symbol // 降冪排序
+	})
+
+	c.HTML(http.StatusOK, "monthlyreport.html", gin.H{
+		"data":    montylyreport,
+		"mondays": firstDayByMonth,
+		"days":    common.FormatDate(startDate),
+		"cid":     customerid,
+		"month":   common.GetMonthsInRange(startDate)[0],
+		"IsAdmin": isAdmin,
 	})
 }

@@ -1,60 +1,10 @@
 package common
 
 import (
-	"fmt"
 	"time"
 )
 
 const DateTimeLayout = "2006-01-02 15:04:05"
-
-// GetWeeksByDate 傳入一個日期回傳該年份的第幾週
-func GetWeeksByDate(date time.Time) string {
-	weeks := GetWeeksInDateRange(date, date)
-	if len(weeks) > 0 {
-		return weeks[0]
-	} else {
-		return ""
-	}
-}
-
-func GetWeeksStartEndDateByDate(date time.Time) (time.Time, time.Time) {
-	week := GetWeeksByDate(date)
-	sd, ed, _ := WeekToDateRange(week)
-	return sd, ed
-}
-
-// WeekToDateRange 根據給定的 YYYY-WW 格式計算起始和結束日期
-func WeekToDateRange(weekStr string) (time.Time, time.Time, error) {
-	var year, week int
-	_, err := fmt.Sscanf(weekStr, "%d-%d", &year, &week)
-	if year < 0 || week < 1 {
-		return time.Now().UTC(), time.Now().UTC(), fmt.Errorf("invalid week number: %d", week)
-	}
-	if err != nil {
-		return time.Now().UTC(), time.Now().UTC(), err
-	}
-
-	if week < 1 || week > 53 {
-		return time.Now().UTC(), time.Now().UTC(), fmt.Errorf("invalid week number: %d", week)
-	}
-
-	// 找到該年的第一天
-	startOfYear := time.Date(year, time.January, 1, 0, 0, 0, 0, time.UTC)
-
-	// 找到該年的第一個週一
-	for startOfYear.Weekday() != time.Monday {
-		startOfYear = startOfYear.AddDate(0, 0, -1)
-	}
-
-	// 計算該週的起始日期（週一）
-	startDate := startOfYear.AddDate(0, 0, (week-1)*7).Truncate(24 * time.Hour) //去時分秒
-
-	// 計算該週的結束日期（週日）加上時分秒
-	endDate := startDate.AddDate(0, 0, 6)
-	endDate = time.Date(endDate.Year(), endDate.Month(), endDate.Day(), 23, 59, 59, 0, endDate.Location())
-
-	return startDate, endDate, nil
-}
 
 func GetUtcTimeNow() string {
 	return time.Now().UTC().Format(DateTimeLayout)
@@ -66,36 +16,6 @@ func FormatTime(t time.Time) string {
 
 func FormatDate(t time.Time) string {
 	return t.Format("2006-01-02")
-}
-
-// 回傳日期區間的週數
-func GetWeeksInDateRange(startDate, endDate time.Time) []string {
-	if endDate.Sub(startDate) > 365*24*time.Hour {
-		return nil
-	}
-
-	var weeks []string
-	current := startDate
-
-	for (current.After(startDate) || current.Equal(startDate)) && (current.Before(endDate) || current.Equal(endDate)) {
-		year, week := current.ISOWeek()
-		weekStr := fmt.Sprintf("%d-%02d", year, week)
-
-		// 檢查當前週數是否是同一日期區間的末尾週數
-		if len(weeks) > 0 {
-			lastWeekYear, lastWeekNum := current.AddDate(0, 0, +7).ISOWeek()
-			if year == lastWeekYear && week == lastWeekNum+1 {
-				// 如果當前週數是下一週的上週，則跳過
-				current = current.AddDate(0, 0, 7)
-				continue
-			}
-		}
-
-		weeks = append(weeks, weekStr)
-		current = current.AddDate(0, 0, 7)
-	}
-
-	return weeks
 }
 
 // ParseTime 將字串轉換為 time.Time，支持日期和日期時間格式
@@ -120,53 +40,4 @@ func ParseTime(timeStr string) time.Time {
 
 func TimeMax() time.Time {
 	return time.Time{}.AddDate(9999, 12, 31)
-}
-
-// GetPreviousMondays 根據傳入的日期，返回前 N 個星期一的日期
-func GetPreviousMondays(date time.Time, n int) ([]time.Time, error) {
-	date = date.Truncate(24 * time.Hour) //去掉時分秒
-	var mondays []time.Time
-
-	// 找到最近的星期一
-	offset := int(date.Weekday())                 // 0=Sunday, 1=Monday, ..., 6=Saturday
-	offset = offset - 1                           //如果是星期一，就減掉0天，如果是星期二就要減掉一天
-	previousMonday := date.AddDate(0, 0, -offset) // 計算最近的星期一
-
-	// 加入前 N 個星期一
-	for i := 0; i < n; i++ {
-		mondays = append(mondays, previousMonday)
-		previousMonday = previousMonday.AddDate(0, 0, -7) // 向前推算 7 天
-	}
-
-	return mondays, nil
-}
-
-// 依日期，回傳該月份起迄日期
-func GetMonthStartEndDate(date time.Time) (time.Time, time.Time) {
-	// 取得該日期的年份和月份
-	year, month, _ := date.Date()
-	// 取得該月份的第一天
-	start := time.Date(year, month, 1, 0, 0, 0, 0, date.Location())
-	// 取得該月份的最後一天
-	end := start.AddDate(0, 1, 0).Add(-time.Nanosecond) // 加一個月再減去一個納秒
-	return start, end
-}
-
-// GetMonthsInRange 接收起始和結束時間，返回中間所有月份的資料陣列，格式為 YYYY-MM
-func GetMonthsInRange(start, end time.Time) []string {
-	var months []string
-	// 取得起始月份
-	current := time.Date(start.Year(), start.Month(), 1, 0, 0, 0, 0, start.Location())
-	for current.Before(end) || current.Equal(end) {
-		months = append(months, current.Format("2006-01"))
-		// 移動到下一個月份
-		current = current.AddDate(0, 1, 0)
-	}
-	return months
-}
-
-func FormateStartEndTimeFor0024(start, end time.Time) (time.Time, time.Time) {
-	start = start.Truncate(24 * time.Hour)
-	end = time.Date(end.Year(), end.Month(), end.Day(), 23, 59, 59, 0, end.Location())
-	return start, end
 }
