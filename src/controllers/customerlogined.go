@@ -328,25 +328,3 @@ func GetPlaceOrderHistoryBySymbol(c *gin.Context) {
 		"symbol":     symbol,
 	})
 }
-
-func GetTGBot(c *gin.Context) {
-	session := sessions.Default(c)
-	customerid := session.Get("id").(string)
-	customer, err := services.GetCustomer(c, customerid)
-	if customer.TgIdentifyKey == "" {
-		//如果沒有TgIdentifyKey，就生一個
-		customer.TgIdentifyKey, err = services.SetTGIdentifyKey(c, customerid)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
-	}
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	c.HTML(http.StatusOK, "tgbot.html", gin.H{
-		"tgidentifykey": customer.TgIdentifyKey,
-	})
-}
