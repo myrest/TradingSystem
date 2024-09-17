@@ -146,7 +146,9 @@ func GetCustomerWeeklyReportCurrencyList(ctx context.Context, customerID string,
 	//依日期，取出週數
 	weeks := common.GetWeeksInDateRange(startDate, endDate)
 	if len(weeks) == 0 || weeks == nil {
-		return nil, errors.New("日期區間錯誤。")
+		//如果日期區間的endDate在第一筆下單之前，會導致startDate > endDate，此時，直接回傳空值就好。
+		//return nil, errors.New("日期區間錯誤。")
+		return nil, nil
 	}
 
 	client := getFirestoreClient()
@@ -215,7 +217,9 @@ func GetCustomerMonthlyReportCurrencyList(ctx context.Context, customerID string
 	months := common.GetMonthsInRange(startDate, endDate)
 
 	if len(months) == 0 || months == nil {
-		return nil, errors.New("日期區間錯誤。")
+		//如果日期區間的endDate在第一筆下單之前，會導致startDate > endDate，此時，直接回傳空值就好。
+		//return nil, errors.New("日期區間錯誤。")
+		return nil, nil
 	}
 
 	missingMonths := make(map[string]struct{}, len(months))

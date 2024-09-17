@@ -26,11 +26,18 @@ func ErrorHandlingMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		defer func() {
 			if err := recover(); err != nil {
-				// 在此处定义统一的错误响应
 				c.JSON(http.StatusInternalServerError, gin.H{"error": err.(error).Error()})
 				c.Abort()
 			}
 		}()
-		c.Next()
+
+		c.Next() // 繼續執行其他中間件和處理器
+
+		// 檢查上下文中的錯誤
+		if len(c.Errors) > 0 {
+			// 返回第一個錯誤
+			c.JSON(http.StatusInternalServerError, gin.H{"error": c.Errors[0].Error()})
+			c.Abort()
+		}
 	}
 }

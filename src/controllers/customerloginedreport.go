@@ -4,35 +4,15 @@ import (
 	"TradingSystem/src/common"
 	"TradingSystem/src/models"
 	"TradingSystem/src/services"
+	"errors"
 	"fmt"
 	"net/http"
 	"sort"
-	"strconv"
 	"time"
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 )
-
-func CustomerReportList(c *gin.Context) {
-	d := c.Query("d")
-	days, _ := strconv.Atoi(d)
-	if days == 0 {
-		days = 7
-	} else if days > 30 {
-		days = 30
-	}
-
-	systemSymboList, err := services.GetDemoCurrencyList(c, days, true)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-	c.HTML(http.StatusOK, "demosymbolist.html", gin.H{
-		"data": systemSymboList,
-		"days": days,
-	})
-}
 
 func CustomerWeeklyReportList(c *gin.Context) {
 	session := sessions.Default(c)
@@ -46,7 +26,7 @@ func CustomerWeeklyReportList(c *gin.Context) {
 	}
 
 	if customerid == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "No Customer Data."})
+		c.Error(errors.New("no Customer Data")) // 將錯誤添加到上下文中
 		return
 	}
 
@@ -64,12 +44,14 @@ func CustomerWeeklyReportList(c *gin.Context) {
 
 	weeklyreport, err := services.GetCustomerWeeklyReportCurrencyList(c, customerid, startDate, endDate)
 	if err != nil {
+		c.Error(err) // 將錯誤添加到上下文中
 		return
 	}
 
 	//找出星期一清單
 	mondays, err := common.GetPreviousMondays(time.Now().UTC(), 12)
 	if err != nil {
+		c.Error(err) // 將錯誤添加到上下文中
 		return
 	}
 
@@ -233,6 +215,7 @@ func CustomerMonthlyReportList(c *gin.Context) {
 
 	montylyreport, err := services.GetCustomerMonthlyReportCurrencyList(c, customerid, startDate, endDate)
 	if err != nil {
+		c.Error(err) // 將錯誤添加到上下文中
 		return
 	}
 
