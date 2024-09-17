@@ -58,49 +58,53 @@ func handleUpdate(c *gin.Context, update tgbotapi.Update) {
 	if username == "" {
 		username = fmt.Sprintf("%s %s", update.Message.From.FirstName, update.Message.From.LastName)
 	}
+
 	chatid := update.Message.Chat.ID
-	if chatid != 0 {
-		customer, err := services.GetCustomerByTGChatID(c, chatid)
-		if err != nil {
-			resp := tgbotapi.NewMessage(chatid, fmt.Sprintf("無法取得您的資料。[%s]", err.Error()))
+	if chatid == 0 { //沒有找到ChatID，直接忽略
+		return
+	}
+
+	customer, err := services.GetCustomerByTGChatID(c, chatid)
+	if err != nil {
+		resp := tgbotapi.NewMessage(chatid, fmt.Sprintf("無法取得您的資料。[%s]", err.Error()))
+		tgbot.Send(resp)
+		return
+	}
+
+	if customer != nil {
+		//有啟用過
+		if int64InMap(checkedChatID, chatid) {
+			resp := tgbotapi.NewMessage(chatid, getRandomEmoticon())
 			tgbot.Send(resp)
 		} else {
-			if customer != nil {
-				//有啟用過
-				if int64InMap(checkedChatID, chatid) {
-					resp := tgbotapi.NewMessage(chatid, getRandomEmoticon())
-					tgbot.Send(resp)
-				} else {
-					checkedChatID[chatid] = struct{}{}
-					resp := tgbotapi.NewMessage(chatid, fmt.Sprintf("[%s]您好。您的設定己完成，請耐心等待訊息的通知。", username))
-					tgbot.Send(resp)
-				}
+			checkedChatID[chatid] = struct{}{}
+			resp := tgbotapi.NewMessage(chatid, fmt.Sprintf("[%s]您好。您的設定己完成，請耐心等待訊息的通知。", username))
+			tgbot.Send(resp)
+		}
+	} else {
+		prefix := "/set id "
+		if strings.HasPrefix(strings.ToLower(update.Message.Text), prefix) {
+			tgidentifykey := strings.TrimPrefix(update.Message.Text, update.Message.Text[:len(prefix)])
+			customer, err := services.GetCustomerByTgIdentifyKey(c, tgidentifykey)
+			if err != nil || customer == nil {
+				resp := tgbotapi.NewMessage(chatid, "無法取得您的資料。")
+				tgbot.Send(resp)
 			} else {
-				prefix := "/set id "
-				if strings.HasPrefix(strings.ToLower(update.Message.Text), prefix) {
-					tgidentifykey := strings.TrimPrefix(update.Message.Text, update.Message.Text[:len(prefix)])
-					customer, err := services.GetCustomerByTgIdentifyKey(c, tgidentifykey)
-					if err != nil || customer == nil {
-						resp := tgbotapi.NewMessage(chatid, "無法取得您的資料。")
-						tgbot.Send(resp)
-					} else {
-						//有找到客戶資料，需要更新chatid
-						customer.TgChatID = chatid
-						err := services.UpdateCustomer(c, customer)
-						if err != nil {
-							resp := tgbotapi.NewMessage(chatid, fmt.Sprintf("無法更新您的資料。[%s]", err.Error()))
-							tgbot.Send(resp)
-						} else {
-							resp := tgbotapi.NewMessage(chatid, fmt.Sprintf("您的資料已與帳號：[%s](%s)綁定完成。", customer.Email, customer.Name))
-							tgbot.Send(resp)
-						}
-					}
+				//有找到客戶資料，需要更新chatid
+				customer.TgChatID = chatid
+				err := services.UpdateCustomer(c, customer)
+				if err != nil {
+					resp := tgbotapi.NewMessage(chatid, fmt.Sprintf("無法更新您的資料。[%s]", err.Error()))
+					tgbot.Send(resp)
 				} else {
-					//未啟用
-					resp := tgbotapi.NewMessage(chatid, fmt.Sprintf("[%s]您好。請使用\n/set ID [您所註冊的Email信箱]\n來啟用您的訊息通知。", username))
+					resp := tgbotapi.NewMessage(chatid, fmt.Sprintf("您的資料已與帳號：[%s](%s)綁定完成。", customer.Email, customer.Name))
 					tgbot.Send(resp)
 				}
 			}
+		} else {
+			//未啟用
+			resp := tgbotapi.NewMessage(chatid, fmt.Sprintf("[%s]您好。請使用\n/set ID [您所註冊的Email信箱]\n來啟用您的訊息通知。", username))
+			tgbot.Send(resp)
 		}
 	}
 }
