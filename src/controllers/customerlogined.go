@@ -63,7 +63,7 @@ func ShowDashboardPage(c *gin.Context) {
 			"Email":               email,
 			"ApiKey":              customer.APIKey,
 			"SecretKey":           customer.SecretKey,
-			"IsAdmin":             customer.IsAdmin,
+			"IsAdmin":             c.GetBool("IsAdmin"),
 			"AutoSubscribeStatus": customer.IsAutoSubscribe,
 			"AutoSubscribeType":   customer.AutoSubscribReal,
 			"AutoSubscribeAmount": customer.AutoSubscribAmount,

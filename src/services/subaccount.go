@@ -196,6 +196,7 @@ func SwitchToSubAccount(c *gin.Context, SubAccountREFID string) error {
 
 	session.Set("id", subaccount.SubCustomerID)
 	session.Set("name", subaccount.AccountName)
+	session.Set("isadmin", false)
 	if err := session.Save(); err != nil {
 		return errors.New("failed to save session")
 	}
@@ -220,6 +221,7 @@ func SwitchToMainAccount(c *gin.Context) error {
 
 	session.Set("id", account.ID)
 	session.Set("name", account.Name)
+	session.Set("isadmin", account.IsAdmin)
 	if err := session.Save(); err != nil {
 		return errors.New("failed to save session")
 	}

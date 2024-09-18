@@ -64,8 +64,6 @@ func CustomerWeeklyReportList(c *gin.Context) {
 		customerid = ""
 	}
 
-	isAdmin := customerid != "" && session.Get("isadmin") != nil && session.Get("isadmin").(bool)
-
 	// 排序切片
 	sort.Slice(weeklyreport, func(i, j int) bool {
 		return weeklyreport[i].Symbol > weeklyreport[j].Symbol // 降冪排序
@@ -77,7 +75,7 @@ func CustomerWeeklyReportList(c *gin.Context) {
 		"days":    common.FormatDate(startDate),
 		"cid":     customerid,
 		"week":    fmt.Sprintf("%s ~ %s (%s)", common.FormatDate(startDate), common.FormatDate(endDate), common.GetWeeksByDate(startDate)),
-		"IsAdmin": isAdmin,
+		"IsAdmin": c.GetBool("IsAdmin"),
 	})
 }
 
@@ -231,8 +229,6 @@ func CustomerMonthlyReportList(c *gin.Context) {
 		customerid = ""
 	}
 
-	isAdmin := customerid != "" && session.Get("isadmin") != nil && session.Get("isadmin").(bool)
-
 	// 排序切片
 	sort.Slice(montylyreport, func(i, j int) bool {
 		return montylyreport[i].Symbol > montylyreport[j].Symbol // 降冪排序
@@ -244,6 +240,5 @@ func CustomerMonthlyReportList(c *gin.Context) {
 		"days":    common.FormatDate(startDate),
 		"cid":     customerid,
 		"month":   common.GetMonthsInRange(startDate)[0],
-		"IsAdmin": isAdmin,
 	})
 }
