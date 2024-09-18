@@ -13,7 +13,6 @@ func RegisterCustomerRoutes(r *gin.Engine) {
 	{
 		customerRoutes.GET("/availableamount", controllers.GetCustomerBalance)
 		customerRoutes.GET("/placeorderhistory", controllers.PlaceOrderHistory) //下單記錄細項, Symbol, Cid,
-		customerRoutes.GET("/getplaceorderhistory", controllers.GetPlaceOrderHistoryBySymbol)
 		customerRoutes.GET("/dashboard", controllers.ShowDashboardPage)
 		customerRoutes.GET("/symbol", controllers.GetAllCustomerSymbol)
 		customerRoutes.POST("", controllers.CreateCustomer)
