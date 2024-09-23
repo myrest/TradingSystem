@@ -18,6 +18,7 @@ func SubaccountList(c *gin.Context) {
 		"isMainAccount": isMainAccount,
 		"youare":        youare,
 		"yourname":      name,
+		"IsAdmin":       c.GetBool("IsAdmin"),
 	})
 }
 

@@ -91,8 +91,8 @@ function renderCryptoTable() {
                 <td><span class="status-toggle ${!item.simulation ? '' : 'disabled'} ${sysdisabled}" onclick="updateCustomerCurrency('${item.symbol}', 'Simulation')">${item.simulation ? '模擬' : '實盤'}</span></td>
                 <td>
                     <span class="${displayamount}" >
-                        <input type="text" style="width:30%" name="amount-${item.symbol}" value="${item.amount || 0}" ${item.SystemStatus} onchange="updateCustomerCurrency('${item.symbol}', 'Amount')">
-                        X <input type="text" style="width:50px" name="leverage-${item.symbol}" value="${item.leverage || 0}" ${item.SystemStatus} onchange="updateCustomerCurrency('${item.symbol}', 'Amount')">
+                        <input type="text" style="width:30%" name="amount-${item.symbol}" value="${item.amount || 0}" ${item.SystemStatus} onchange="displaySaveCurrenyBTN('${item.symbol}', 'Amount', this)">
+                        X <input type="text" style="width:50px" name="leverage-${item.symbol}" value="${item.leverage || 0}" ${item.SystemStatus} onchange="displaySaveCurrenyBTN('${item.symbol}', 'Amount', this)">
                     </span>
                 </td>
                 <td><a href="/customers/placeorderhistory?symbol=${item.symbol}">記錄</a></td>
@@ -114,7 +114,7 @@ function getAvailableAmount(obj) {
         } else {
             response.json().then(x => {
                 obj.innerText = x.amount
-                if (x.error != ""){
+                if (x.error != "") {
                     alert(x.error)
                 }
             })
@@ -144,10 +144,25 @@ function _updateCustomerSymbol(data) {
         console.error('Error:', error);
     });
 }
+var TEST
+function displaySaveCurrenyBTN(Symbol, updatetype, obj) {
+    TEST = obj
+    parentContainer = obj.parentNode
+    const hasButton = parentContainer.querySelector('button') !== null;
+    if (!hasButton) {
+        //<button onclick="saveCrypto()">保存</button>
+        a = document.createElement("button");
+        a.onclick = function () { updateCustomerCurrency(Symbol, updatetype); this.innerHTML = "儲存中" }
+        a.innerHTML = "保存"
+        a.classList.add("small-wide-btn");
+        parentContainer.appendChild(a);
+    }
+}
 
 // 更新投資金額
 function updateCustomerCurrency(Symbol, updatetype) {
     const crypto = coinData.find(item => item.symbol === Symbol);
+    updateleverage = "0"
     if (crypto) {
         if (crypto.SystemStatus != "Enabled") {
             alert('該幣種目前停止用。');
@@ -159,15 +174,16 @@ function updateCustomerCurrency(Symbol, updatetype) {
                 const leverage = document.getElementsByName('leverage-' + Symbol)[0].value < 1 ? 1 : document.getElementsByName('leverage-' + Symbol)[0].value;
                 crypto.amount = amount
                 crypto.leverage = leverage
+                updateleverage = "1"
                 break;
             case "Status":
                 crypto.status = crypto.status ? false : true;
+                if (crypto.status) {
+                    updateleverage = "1"
+                }
                 break;
             default:
                 crypto.simulation = crypto.simulation ? false : true;
-        }
-        if (crypto.simulation){
-            crypto.leverage = 10
         }
         const customersymbol = {
             'symbol': Symbol,
@@ -175,6 +191,7 @@ function updateCustomerCurrency(Symbol, updatetype) {
             'amount': crypto.amount.toString(),
             'leverage': crypto.leverage.toString(),
             'simulation': crypto.simulation.toString(),
+            'updateleverage': updateleverage,
         };
         _updateCustomerSymbol(customersymbol)
     }

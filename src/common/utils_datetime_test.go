@@ -99,56 +99,56 @@ func TestWeekToDateRange(t *testing.T) {
 		{
 			name:    "Valid Case - Week 1 of 2025",
 			args:    args{weekStr: "2025-01"},
-			want:    "2024-12-30", // 2025年第1週的起始日 (週一)
-			want1:   "2025-01-05", // 2025年第1週的結束日 (週日)
+			want:    "2024-12-30 00:00:00", // 2025年第1週的起始日 (週一)
+			want1:   "2025-01-05 23:59:59", // 2025年第1週的結束日 (週日)
 			wantErr: false,
 		},
 		{
 			name:    "Valid Case - Week 1 of 2025",
 			args:    args{weekStr: "2025-02"},
-			want:    "2025-01-06", // 2025年第1週的起始日 (週一)
-			want1:   "2025-01-12", // 2025年第1週的結束日 (週日)
+			want:    "2025-01-06 00:00:00", // 2025年第1週的起始日 (週一)
+			want1:   "2025-01-12 23:59:59", // 2025年第1週的結束日 (週日)
 			wantErr: false,
 		},
 		{
 			name:    "Valid Case - Week 52 of 2025",
 			args:    args{weekStr: "2024-52"},
-			want:    "2024-12-23", // 2025年第52週的起始日 (週一)
-			want1:   "2024-12-29", // 2025年第52週的結束日 (週日)
+			want:    "2024-12-23 00:00:00", // 2025年第52週的起始日 (週一)
+			want1:   "2024-12-29 23:59:59", // 2025年第52週的結束日 (週日)
 			wantErr: false,
 		},
 		{
 			name:    "Valid Case - Week 53 of 2025",
 			args:    args{weekStr: "2024-53"},
-			want:    "2024-12-30", // 2025年第53週的起始日 (週一)
-			want1:   "2025-01-05", // 2025年第53週的結束日 (週日)
+			want:    "2024-12-30 00:00:00", // 2025年第53週的起始日 (週一)
+			want1:   "2025-01-05 23:59:59", // 2025年第53週的結束日 (週日)
 			wantErr: false,
 		},
 		{
 			name:    "Valid Case - Week 1 of 2024",
 			args:    args{weekStr: "2024-01"},
-			want:    "2024-01-01", // 2024年第1週的起始日 (週一)
-			want1:   "2024-01-07", // 2024年第1週的結束日 (週日)
+			want:    "2024-01-01 00:00:00", // 2024年第1週的起始日 (週一)
+			want1:   "2024-01-07 23:59:59", // 2024年第1週的結束日 (週日)
 			wantErr: false,
 		},
 		{
 			name:    "Invalid Case - Invalid Format",
 			args:    args{weekStr: "2024-99"},
-			want:    "", // 期待的結果不應該有
+			want:    "", //不驗
 			want1:   "",
 			wantErr: true,
 		},
 		{
 			name:    "Invalid Case - Negative Year",
 			args:    args{weekStr: "-2024-01"},
-			want:    "", // 期待的結果不應該有
+			want:    "", //不驗
 			want1:   "",
 			wantErr: true,
 		},
 		{
 			name:    "Invalid Case - Week 0",
 			args:    args{weekStr: "2024-00"},
-			want:    "", // 期待的結果不應該有
+			want:    "", //不驗
 			want1:   "",
 			wantErr: true,
 		},
@@ -161,10 +161,10 @@ func TestWeekToDateRange(t *testing.T) {
 				t.Errorf("WeekToDateRange() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if got != tt.want {
+			if !tt.wantErr && got != ParseTime(tt.want) {
 				t.Errorf("WeekToDateRange() got = %v, want %v", got, tt.want)
 			}
-			if got1 != tt.want1 {
+			if !tt.wantErr && got1 != ParseTime(tt.want1) {
 				t.Errorf("WeekToDateRange() got1 = %v, want %v", got1, tt.want1)
 			}
 		})
@@ -231,12 +231,35 @@ func TestParseTime(t *testing.T) {
 	type args struct {
 		timeStr string
 	}
+	ansa, _ := time.Parse("2006-01-02 15:04:05", "2024-02-02 01:01:00")
+	ansb, _ := time.Parse("2006-01-02", "2024-02-02")
+	ansc, _ := time.Parse("2006-01", "2024-02")
 	tests := []struct {
 		name string
 		args args
 		want time.Time
 	}{
-		// TODO: Add test cases.
+		{
+			name: "日期時間",
+			args: args{
+				timeStr: "2024-02-02 01:01:00",
+			},
+			want: ansa,
+		},
+		{
+			name: "日期",
+			args: args{
+				timeStr: "2024-02-02",
+			},
+			want: ansb,
+		},
+		{
+			name: "月份",
+			args: args{
+				timeStr: "2024-02",
+			},
+			want: ansc,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -340,7 +363,7 @@ func TestGetPreviousMondays(t *testing.T) {
 				return
 			}
 			for i := range got {
-				if got[i] != tt.want[i] {
+				if got[i] != ParseTime(tt.want[i]) {
 					t.Errorf("GetPreviousMondays() got[%d] = %v, want %v", i, got[i], tt.want[i])
 				}
 			}

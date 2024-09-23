@@ -9,17 +9,19 @@ import (
 	"net/http"
 	"sort"
 	"strconv"
+	"time"
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 )
 
 type updateCustomerSymboRequest struct {
-	Symbol     string `json:"symbol"`
-	Status     string `json:"status"`
-	Amount     string `json:"amount"`
-	Leverage   string `json:"leverage"`
-	Simulation string `json:"simulation"`
+	Symbol         string `json:"symbol"`
+	Status         string `json:"status"`
+	Amount         string `json:"amount"`
+	Leverage       string `json:"leverage"`
+	Simulation     string `json:"simulation"`
+	UpdateLeverage string `json:"updateleverage"`
 }
 
 func ShowDashboardPage(c *gin.Context) {
@@ -63,7 +65,7 @@ func ShowDashboardPage(c *gin.Context) {
 			"Email":               email,
 			"ApiKey":              customer.APIKey,
 			"SecretKey":           customer.SecretKey,
-			"IsAdmin":             customer.IsAdmin,
+			"IsAdmin":             c.GetBool("IsAdmin"),
 			"AutoSubscribeStatus": customer.IsAutoSubscribe,
 			"AutoSubscribeType":   customer.AutoSubscribReal,
 			"AutoSubscribeAmount": customer.AutoSubscribAmount,
@@ -135,7 +137,7 @@ func UpdateCustomerSymbol(c *gin.Context) {
 	session := sessions.Default(c)
 	input.CustomerID = session.Get("id").(string)
 
-	err := services.UpdateCustomerCurrency(context.Background(), &input)
+	err := services.UpdateCustomerCurrency(context.Background(), &input, req.UpdateLeverage == "1")
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Update customer Symbol failed. " + err.Error()})
 		return
@@ -255,8 +257,14 @@ func PlaceOrderHistory(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "No Customer Data."})
 		return
 	}
+	sdt, edt := common.GetReportStartEndDate(session)
+	if sdt == common.TimeMax() || edt == common.TimeMax() {
+		sdt = common.GetMonthlyDay1(1)[0]
+		edt = time.Now().UTC()
+		common.SetReportStartEndDate(session, sdt, edt)
+	}
 
-	list, totalPages, err := services.GetPlaceOrderHistory(c, symbol, customerid, page, pageSize)
+	list, totalPages, err := services.GetPlaceOrderHistory(c, symbol, customerid, sdt, edt, page, pageSize)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -285,66 +293,5 @@ func PlaceOrderHistory(c *gin.Context) {
 		"totalPages": totalPages,
 		"symbol":     symbol,
 		"cid":        c.Query("cid"),
-	})
-}
-
-func GetPlaceOrderHistoryBySymbol(c *gin.Context) {
-	symbol := c.Query("symbol")
-	cid := c.DefaultQuery("cid", "")
-	session := sessions.Default(c)
-	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
-	pageSize, _ := strconv.Atoi(c.DefaultQuery("pageSize", "10"))
-	symbol = common.FormatSymbol(symbol)
-
-	sessioncid := session.Get("id")
-	var customerid string
-	if sessioncid != nil {
-		customerid = sessioncid.(string)
-	}
-
-	//只有管理員可以看到其它人的記錄。
-	if customerid != "" && session.Get("isadmin") != nil && session.Get("isadmin").(bool) {
-		customerid = cid
-	}
-
-	if customerid == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "No Customer Data."})
-		return
-	}
-
-	list, totalPages, err := services.GetPlaceOrderHistory(c, symbol, customerid, page, pageSize)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"data":       list,
-		"page":       page,
-		"pageSize":   pageSize,
-		"totalPages": totalPages,
-		"symbol":     symbol,
-	})
-}
-
-func GetTGBot(c *gin.Context) {
-	session := sessions.Default(c)
-	customerid := session.Get("id").(string)
-	customer, err := services.GetCustomer(c, customerid)
-	if customer.TgIdentifyKey == "" {
-		//如果沒有TgIdentifyKey，就生一個
-		customer.TgIdentifyKey, err = services.SetTGIdentifyKey(c, customerid)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
-	}
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	c.HTML(http.StatusOK, "tgbot.html", gin.H{
-		"tgidentifykey": customer.TgIdentifyKey,
 	})
 }

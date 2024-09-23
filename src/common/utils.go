@@ -15,6 +15,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gin-contrib/sessions"
 	"github.com/joho/godotenv"
 )
 
@@ -193,4 +194,19 @@ func ListFilesInCertDir(flpath string) ([]string, error) {
 	}
 
 	return fileNames, nil
+}
+
+func GetReportStartEndDate(s sessions.Session) (time.Time, time.Time) {
+	sdt := s.Get("report_sdt")
+	edt := s.Get("report_edt")
+	if sdt != nil && edt != nil {
+		return ParseTime(sdt.(string)), ParseTime(edt.(string))
+	}
+	return TimeMax(), TimeMax()
+}
+
+func SetReportStartEndDate(s sessions.Session, sdt, edt time.Time) {
+	s.Set("report_sdt", FormatTime(sdt))
+	s.Set("report_edt", FormatTime(edt))
+	_ = s.Save() //不處理失敗
 }

@@ -63,7 +63,7 @@ h4 {
     transition: background-color 0.3s;
 }
 
-.btn-secondary{
+.btn-secondary {
     background-color: #65708f;
     color: white;
     border: none;
@@ -85,7 +85,8 @@ button.delete-btn {
     transition: background-color 0.3s;
 }
 
-.logout-btn:hover, button.delete-btn:hover{
+.logout-btn:hover,
+button.delete-btn:hover {
     background-color: #d32f2f;
 }
 
@@ -101,16 +102,21 @@ button.delete-btn {
     display: flex;
     align-items: center;
 }
+
 .api-keys-content {
     padding: 15px;
     display: none;
 }
+
 .api-keys-header::before {
-    content: '\002B'; /* Unicode character for "plus" sign (+) */
+    content: '\002B';
+    /* Unicode character for "plus" sign (+) */
     font-size: 20px;
 }
+
 .api-keys-header.active::before {
-    content: "\2212"; /* Unicode character for "minus" sign (-) */
+    content: "\2212";
+    /* Unicode character for "minus" sign (-) */
 }
 
 input[type="text"],
@@ -231,20 +237,20 @@ th {
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
-.setting-group, #SubscribeType{
+.setting-group,
+#SubscribeType {
     padding: 15px;
 }
 
-.displayNone{
+.displayNone {
     visibility: hidden;
 }
 
-.displayBlock{
-    
+.displayBlock {
     visibility: visible;
 }
 
-.high-message{
+.high-message {
     color: red;
 }
 
@@ -260,7 +266,7 @@ th {
     border: none;
     font-size: 24px;
     cursor: pointer;
-    transition: color 0.3s ease;    
+    transition: color 0.3s ease;
 }
 
 .menu-popup {
@@ -270,7 +276,7 @@ th {
     background-color: white;
     border: 1px solid #ddd;
     border-radius: 4px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
     display: none;
     z-index: 1000;
     float: right;
@@ -305,11 +311,17 @@ th {
     text-align: center;
 }
 
-.alignright{
+.alignright {
     float: right;
 }
 
 .demo-icon {
     color: #ff8157;
     cursor: pointer;
+}
+
+.small-wide-btn {
+    padding: 3px;
+    margin-top: 3px;
+    max-width: 200px;
 }

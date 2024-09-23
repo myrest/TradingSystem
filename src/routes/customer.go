@@ -12,8 +12,7 @@ func RegisterCustomerRoutes(r *gin.Engine) {
 	customerRoutes.Use(middleware.CustomerMiddleware())
 	{
 		customerRoutes.GET("/availableamount", controllers.GetCustomerBalance)
-		customerRoutes.GET("/placeorderhistory", controllers.PlaceOrderHistory)
-		customerRoutes.GET("/getplaceorderhistory", controllers.GetPlaceOrderHistoryBySymbol)
+		customerRoutes.GET("/placeorderhistory", controllers.PlaceOrderHistory) //下單記錄細項, Symbol, Cid,
 		customerRoutes.GET("/dashboard", controllers.ShowDashboardPage)
 		customerRoutes.GET("/symbol", controllers.GetAllCustomerSymbol)
 		customerRoutes.POST("", controllers.CreateCustomer)
@@ -21,6 +20,8 @@ func RegisterCustomerRoutes(r *gin.Engine) {
 		customerRoutes.PATCH("/symbol", controllers.UpdateCustomerSymbol)
 		customerRoutes.GET("/linktg", controllers.GetTGBot)
 		customerRoutes.GET("/weeklyreportlist", controllers.CustomerWeeklyReportList)
-		customerRoutes.GET("/weeklyreportlistsummary", controllers.CustomerWeeklyReportSummaryList)
+		customerRoutes.GET("/weeklyreportlistsummary", controllers.CustomerWeeklyReportSummaryList) //週報表, Cid
+		customerRoutes.GET("/monthlyreportlistsummary", controllers.CustomerMonthlyReportSummaryList)
+		customerRoutes.GET("/monthlyreportlist", controllers.CustomerMonthlyReportList)
 	}
 }
