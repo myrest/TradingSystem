@@ -22,7 +22,8 @@
                 "GIN_MODE": "debug",
                 "ENVIRONMENT" : "dev",
                 "DEMOCUSTOMERID" : "8LcgaKWUvn1LyUQQj3oP",
-                "TEMPCACHEFOLDER" : "/TmpCache"
+                "TEMPCACHEFOLDER" : "/TmpCache",
+                "TGTOKENDEV" : "7840725371:AAEj184LNrLSlXIUFl15lSovRHkNbGk5CNs",
             }
         },
         {
@@ -36,7 +37,8 @@
                 "GIN_MODE": "debug",
                 "ENVIRONMENT" : "prod",
                 "DEMOCUSTOMERID" : "JgvUcCIg95lyuXh61j4f",
-                "TEMPCACHEFOLDER" : "/TmpCache"
+                "TEMPCACHEFOLDER" : "/TmpCache",
+                "TGTOKENDEV" : "不應參考這個值",
             }
         }
     ]
