@@ -50,11 +50,15 @@ var tgBotCommandRoot = map[string]tgCommandType{
 	"/help": {
 		Function: commandStart,
 	},
+	"/list": {
+		Function: commandList,
+	},
 }
 
 func commandStart(c context.Context, chatID int64, param string) {
 	msg := "目前支援以下命令\n/set ID [您專屬的識別碼]	啟用您的訊息通知。"
 	msg += "\n/unset ID [您專屬的識別碼]	停用您的訊息通知。"
+	msg += "\n/list	列出己綁定帳號。"
 	msg += "\n/help or /start	列出目前支援的命令。"
 	resp := tgbotapi.NewMessage(chatID, msg)
 	tgbot.Send(resp)
@@ -66,6 +70,35 @@ func commandGroupSet(c context.Context, chatID int64, param string) { //第二�
 
 func commandGroupUnSet(c context.Context, chatID int64, param string) { //第二層的頭
 	runTGCommand(c, chatID, param, tgBotCommandUnSet)
+}
+
+// 列出己綁定帳號
+func commandList(c context.Context, chatID int64, param string) {
+	customers, err := services.GetCustomerByTgChatID(c, chatID)
+	if err != nil {
+		resp := tgbotapi.NewMessage(chatID, "無法取得您的資料，請稍候再試。")
+		tgbot.Send(resp)
+		return
+	}
+
+	var rtnarr []string
+	for _, customer := range *customers {
+		if common.IsEmail(customer.Email) {
+			rtnarr = append(rtnarr, fmt.Sprintf("%s\t識別碼：%s", customer.Email, customer.TgIdentifyKey))
+		} else {
+			rtnarr = append(rtnarr, fmt.Sprintf("%s\t識別碼：%s", customer.Name, customer.TgIdentifyKey))
+		}
+	}
+
+	if len(rtnarr) == 0 {
+		resp := tgbotapi.NewMessage(chatID, "您還沒有綁定任何帳號唷。")
+		tgbot.Send(resp)
+	}
+
+	rtn := "己綁定帳號如下：\n" + strings.Join(rtnarr[:], "\n") //轉成字串
+
+	resp := tgbotapi.NewMessage(chatID, rtn)
+	tgbot.Send(resp)
 }
 
 // 第二層 Set 命令
@@ -143,9 +176,9 @@ func commandUnSetID(c context.Context, chatID int64, param string) {
 	}
 
 	isEmail := common.IsEmail(customer.Email)
-	resp := tgbotapi.NewMessage(chatID, fmt.Sprintf("您的資料已與帳號：[%s](%s)解除綁定完成。", customer.Email, customer.Name))
+	resp := tgbotapi.NewMessage(chatID, fmt.Sprintf("您的資料已與帳號：[%s](%s)解除綁定。", customer.Email, customer.Name))
 	if !isEmail {
-		resp = tgbotapi.NewMessage(chatID, fmt.Sprintf("您的資料已與子帳號：%s 解除綁定完成。", customer.Name))
+		resp = tgbotapi.NewMessage(chatID, fmt.Sprintf("您的資料已與子帳號：%s 解除綁定。", customer.Name))
 	}
 	tgbot.Send(resp)
 }
