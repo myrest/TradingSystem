@@ -191,3 +191,16 @@ func SetReportStartEndDate(s sessions.Session, sdt, edt time.Time) {
 	s.Set("report_edt", FormatTime(edt))
 	_ = s.Save() //不處理失敗
 }
+
+func IsEmail(email string) bool {
+	// Regular expression pattern to validate email addresses
+	pattern := `^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`
+
+	// Using regexp package to match the email against the pattern
+	matched, err := regexp.MatchString(pattern, email)
+	if err != nil {
+		return false
+	}
+
+	return matched
+}
