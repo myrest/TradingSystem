@@ -69,22 +69,23 @@
     </nav>
     <div class="dashboard">
         <h1>Telegram設定</h1>
-        {{ if not .islinked }}
         <div class="img-container">
             <img src="/static/images/tgbot.png" alt="Telegram Bot" />
         </div>
         <p>此為您的識別碼：</p>
         <div class="identifier">{{.tgidentifykey}}</div>
-        <p>請在Telegram中輸入以下指令：</p>
+        {{ if not .islinked }}
+        <p>請在Telegram中輸入以下指令綁定：</p>
         <div class="command">
             <span id="commandText">/set id {{.tgidentifykey}}</span>
             <i class="fas fa-copy copy-icon" onclick="copyCommand()" title="複製指令"></i>
         </div>
         {{ else }}
-        <div class="img-container">
-            <img src="/static/images/tgbot.png" alt="Telegram Bot" />
+        <p>可以在Telegram中輸入以下指令<span class="high-message">解除綁定</span>：</p>
+        <div class="command">
+            <span id="commandText">/unset id {{.tgidentifykey}}</span>
+            <i class="fas fa-copy copy-icon" onclick="copyCommand()" title="複製指令"></i>
         </div>
-        <h3>您己完成綁定作業</h3>
         {{ end }}
     </div>
 </div>

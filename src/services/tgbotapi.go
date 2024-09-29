@@ -11,7 +11,8 @@ import (
 )
 
 func TGSendMessage(chatid int64, message string) error {
-	bot, err := tgbotapi.NewBotAPI("7271183700:AAGkiE2lsj_t251DAdnmZvgq7D-Q2SwUX9M")
+	settings := common.GetEnvironmentSetting()
+	bot, err := tgbotapi.NewBotAPI(settings.TgToken)
 	if err != nil {
 		log.Panic(err)
 	}

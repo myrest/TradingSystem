@@ -180,8 +180,14 @@ func processPlaceOrder(Customer models.CustomerCurrencySymboWithCustomer, tv mod
 		Do(c)
 
 	//無法取得下單的資料
-	if err != nil {
+	if (err != nil) || (placedOrder == nil) {
 		placeOrderLog.Result = placeOrderLog.Result + "\nGet placed order failed:" + err.Error()
+		services.SystemEventLog{
+			EventName:  services.PlaceOrder,
+			CustomerID: Customer.CustomerID,
+			Message:    fmt.Sprintf("Get placed order failed:%s\nsymbol:%s\norderId:%d", err.Error(), tv.TVData.Symbol, order.OrderId),
+		}.Send()
+		placedOrder = &bingx.GetOrderResponse{}
 	}
 
 	//profit := common.Decimal(placedOrder.Profit)

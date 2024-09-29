@@ -63,7 +63,7 @@ func DecodeGzip(data []byte) ([]byte, error) {
 }
 
 const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-const tgToken = "7271183700:AAGkiE2lsj_t251DAdnmZvgq7D-Q2SwUX9M"
+const tgToken_prod = "7271183700:AAGkiE2lsj_t251DAdnmZvgq7D-Q2SwUX9M"
 
 func GenerateRandomString(length int) string {
 	seededRand := rand.New(rand.NewSource(time.Now().UnixNano()))
@@ -113,23 +113,23 @@ func GetEnvironmentSetting() SystemSettings {
 
 	if env == "" || strings.ToLower(env) == "prod" {
 		rtn.Env = Prod
+		rtn.TgToken = tgToken_prod
 	} else {
 		rtn.Env = Dev
+		rtn.TgToken = os.Getenv("TGTOKENDEV")
 	}
-	rtn.TgToken = tgToken
+
 	rtn.OAuthKeyFullPath = filepath.Join(root, fmt.Sprintf("firebaseConfig_%s.json", rtn.Env))
 	rtn.FireBaseKeyFullPath = filepath.Join(root, fmt.Sprintf("serviceAccountKey_%s.json", rtn.Env))
 	rtn.DemoCustomerID = democustomerid
 	rtn.TempCacheFolder = filepath.Join(wd, tmpCacheFolder)
 	projectid, err := getProjectID(rtn.OAuthKeyFullPath)
+
 	if err != nil {
 		log.Fatalf("Error getting project id: %v", err)
 	}
 	rtn.ProjectID = projectid
 
-	//log.Printf("root:%s, env:%s, democustomerid:%s", root, env, democustomerid)
-
-	//listFilesInCertDir(root)
 	systemSettings = rtn
 	return rtn
 }
@@ -177,25 +177,6 @@ func Decimal(value interface{}, rounds ...int) float64 {
 	}
 }
 
-// 純Debug用
-func ListFilesInCertDir(flpath string) ([]string, error) {
-	dirPath := flpath
-	files, err := os.ReadDir(dirPath)
-	if err != nil {
-		return nil, err
-	}
-
-	var fileNames []string
-	for _, file := range files {
-		if !file.IsDir() { // 只列出文件，忽略目录
-			fileNames = append(fileNames, file.Name())
-			log.Printf("file:%s", file.Name())
-		}
-	}
-
-	return fileNames, nil
-}
-
 func GetReportStartEndDate(s sessions.Session) (time.Time, time.Time) {
 	sdt := s.Get("report_sdt")
 	edt := s.Get("report_edt")
@@ -209,4 +190,17 @@ func SetReportStartEndDate(s sessions.Session, sdt, edt time.Time) {
 	s.Set("report_sdt", FormatTime(sdt))
 	s.Set("report_edt", FormatTime(edt))
 	_ = s.Save() //不處理失敗
+}
+
+func IsEmail(email string) bool {
+	// Regular expression pattern to validate email addresses
+	pattern := `^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`
+
+	// Using regexp package to match the email against the pattern
+	matched, err := regexp.MatchString(pattern, email)
+	if err != nil {
+		return false
+	}
+
+	return matched
 }

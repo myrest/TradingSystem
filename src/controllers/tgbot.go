@@ -3,22 +3,224 @@ package controllers
 import (
 	"TradingSystem/src/common"
 	"TradingSystem/src/services"
+	"context"
 	"fmt"
 	"log"
-	"math/rand"
 	"net/http"
 	"strings"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
 var tgbot *tgbotapi.BotAPI
-var checkedChatID map[int64]struct{}
+
+type tgCommandType struct {
+	IsNeedExtraInfo bool
+	Function        func(context.Context, int64, string)
+}
+
+func runHelpCmd(c context.Context, chatID int64, cmdList map[string]tgCommandType) {
+	cmdFunc, isexist := cmdList["help"]
+	if isexist {
+		cmdFunc.Function(c, chatID, "")
+	} else {
+		//顯示預設的Help
+		commandStart(c, chatID, "")
+	}
+}
+
+// Commnad開始
+// 第一層命令
+var tgBotCommandRoot = map[string]tgCommandType{
+	"/set": {
+		IsNeedExtraInfo: true,
+		Function:        commandGroupSet,
+	},
+	"/unset": {
+		IsNeedExtraInfo: true,
+		Function:        commandGroupUnSet,
+	},
+	"/start": {
+		Function: commandStart,
+	},
+	"help": {
+		Function: commandStart,
+	},
+	"/help": {
+		Function: commandStart,
+	},
+	"/list": {
+		Function: commandList,
+	},
+}
+
+func commandStart(c context.Context, chatID int64, param string) {
+	msg := "目前支援以下命令\n/set ID [您專屬的識別碼]	啟用您的訊息通知。"
+	msg += "\n/unset ID [您專屬的識別碼]	停用您的訊息通知。"
+	msg += "\n/list	列出己綁定帳號。"
+	msg += "\n/help or /start	列出目前支援的命令。"
+	resp := tgbotapi.NewMessage(chatID, msg)
+	tgbot.Send(resp)
+}
+
+func commandGroupSet(c context.Context, chatID int64, param string) { //第二層的頭
+	runTGCommand(c, chatID, param, tgBotCommandSet)
+}
+
+func commandGroupUnSet(c context.Context, chatID int64, param string) { //第二層的頭
+	runTGCommand(c, chatID, param, tgBotCommandUnSet)
+}
+
+// 列出己綁定帳號
+func commandList(c context.Context, chatID int64, param string) {
+	customers, err := services.GetCustomerByTgChatID(c, chatID)
+	if err != nil {
+		resp := tgbotapi.NewMessage(chatID, "無法取得您的資料，請稍候再試。")
+		tgbot.Send(resp)
+		return
+	}
+
+	var rtnarr []string
+	for _, customer := range *customers {
+		if common.IsEmail(customer.Email) {
+			rtnarr = append(rtnarr, fmt.Sprintf("%s\t識別碼：%s", customer.Email, customer.TgIdentifyKey))
+		} else {
+			rtnarr = append(rtnarr, fmt.Sprintf("%s\t識別碼：%s", customer.Name, customer.TgIdentifyKey))
+		}
+	}
+
+	if len(rtnarr) == 0 {
+		resp := tgbotapi.NewMessage(chatID, "您還沒有綁定任何帳號唷。")
+		tgbot.Send(resp)
+	}
+
+	rtn := "己綁定帳號如下：\n" + strings.Join(rtnarr[:], "\n") //轉成字串
+
+	resp := tgbotapi.NewMessage(chatID, rtn)
+	tgbot.Send(resp)
+}
+
+// 第二層 Set 命令
+var tgBotCommandSet = map[string]tgCommandType{
+	"id": {
+		IsNeedExtraInfo: true,
+		Function:        commandSetID,
+	},
+	"help": {
+		IsNeedExtraInfo: true,
+		Function:        commandSetHelp,
+	},
+}
+
+func commandSetHelp(c context.Context, chatID int64, param string) {
+	resp := tgbotapi.NewMessage(chatID, "請使用\n/set ID [您專屬的識別碼]\n來啟用您的訊息通知。")
+	tgbot.Send(resp)
+
+}
+
+func commandSetID(c context.Context, chatID int64, param string) {
+	//先檢查有沒有傳入tg token
+	tgIdentifyKey := param
+	customer, err := services.GetCustomerByTgIdentifyKey(c, tgIdentifyKey)
+	if err != nil || customer == nil {
+		if param == "" {
+			resp := tgbotapi.NewMessage(chatID, "請輸入的您的專屬識別碼。")
+			tgbot.Send(resp)
+		} else {
+			resp := tgbotapi.NewMessage(chatID, "您輸入的專屬識別碼有誤。")
+			tgbot.Send(resp)
+		}
+		return
+	}
+
+	customer.TgChatID = chatID
+	err = services.UpdateCustomer(c, customer)
+	if err != nil {
+		resp := tgbotapi.NewMessage(chatID, fmt.Sprintf("無法更新您的資料。[%s]", err.Error()))
+		tgbot.Send(resp)
+		return
+	}
+
+	isEmail := common.IsEmail(customer.Email)
+	resp := tgbotapi.NewMessage(chatID, fmt.Sprintf("您的資料已與帳號：[%s](%s)綁定完成。", customer.Email, customer.Name))
+	if !isEmail {
+		resp = tgbotapi.NewMessage(chatID, fmt.Sprintf("您的資料已與子帳號：%s 綁定完成。", customer.Name))
+	}
+	tgbot.Send(resp)
+}
+
+// 第二層 UnSet 命令
+var tgBotCommandUnSet = map[string]tgCommandType{
+	"id": {
+		IsNeedExtraInfo: true,
+		Function:        commandUnSetID,
+	},
+}
+
+func commandUnSetID(c context.Context, chatID int64, param string) {
+	tgIdentifyKey := param
+	customer, err := services.GetCustomerByTgIdentifyKey(c, tgIdentifyKey)
+	if err != nil || customer == nil {
+		resp := tgbotapi.NewMessage(chatID, "您輸入的專屬識別碼有誤。")
+		tgbot.Send(resp)
+		return
+	}
+
+	customer.TgChatID = 0
+	err = services.UpdateCustomer(c, customer)
+	if err != nil {
+		resp := tgbotapi.NewMessage(chatID, fmt.Sprintf("無法更新您的資料。[%s]", err.Error()))
+		tgbot.Send(resp)
+		return
+	}
+
+	isEmail := common.IsEmail(customer.Email)
+	resp := tgbotapi.NewMessage(chatID, fmt.Sprintf("您的資料已與帳號：[%s](%s)解除綁定。", customer.Email, customer.Name))
+	if !isEmail {
+		resp = tgbotapi.NewMessage(chatID, fmt.Sprintf("您的資料已與子帳號：%s 解除綁定。", customer.Name))
+	}
+	tgbot.Send(resp)
+}
+
+//Commnad結束
+
+func runTGCommand(c context.Context, chatID int64, cmd string, cmdList map[string]tgCommandType) {
+	parts := strings.Fields(cmd) // 將輸入拆分
+	if len(parts) == 0 {
+		runHelpCmd(c, chatID, cmdList)
+		return
+	}
+
+	commandStr := strings.ToLower(parts[0]) // 取得命令並轉小寫
+	var parameter string
+	if len(parts) > 1 {
+		parameter = strings.Join(parts[1:], " ") //取得剩餘字串
+	}
+
+	//如果找不到命令
+	cmdFunc, isexist := cmdList[commandStr]
+	if !isexist {
+		runHelpCmd(c, chatID, cmdList)
+		return
+	}
+
+	//如果有額外訊息需要處理
+	if cmdFunc.IsNeedExtraInfo {
+		//執行該Function
+		cmdFunc.Function(c, chatID, parameter)
+		return
+	}
+
+	if parameter == "" {
+		cmdFunc.Function(c, chatID, "")
+		return
+	}
+
+	runHelpCmd(c, chatID, cmdList)
+}
 
 func init() {
-	checkedChatID = make(map[int64]struct{})
 	settings := common.GetEnvironmentSetting()
 	go func() {
 		bot, err := tgbotapi.NewBotAPI(settings.TgToken)
@@ -47,101 +249,18 @@ func TGbot(c *gin.Context) {
 	c.Status(http.StatusOK)
 }
 
-func int64InMap(set map[int64]struct{}, value int64) bool {
-	_, exists := set[value]
-	return exists
-}
-
 func handleUpdate(c *gin.Context, update tgbotapi.Update) {
-	username := update.Message.From.UserName
-	if username == "" {
-		username = fmt.Sprintf("%s %s", update.Message.From.FirstName, update.Message.From.LastName)
-	}
+	//username := update.Message.From.UserName
+	//if username == "" {
+	//	username = fmt.Sprintf("%s %s", update.Message.From.FirstName, update.Message.From.LastName)
+	//}
 
 	chatID := update.Message.Chat.ID
 	if chatID == 0 {
 		return //沒有找到ChatID，直接忽略
 	}
 
-	customer, err := services.GetCustomerByTGChatID(c, chatID)
-	if err != nil {
-		resp := tgbotapi.NewMessage(chatID, fmt.Sprintf("無法取得您的資料。[%s]", err.Error()))
-		tgbot.Send(resp)
-		return
-	}
-
-	if customer != nil {
-		//有啟用過
-		handleExistingCustomer(chatID, username)
-	} else {
-		//未啟用過
-		handleNewCustomer(update, c, chatID, username)
-	}
-}
-
-func handleNewCustomer(update tgbotapi.Update, c *gin.Context, chatID int64, username string) {
-	prefix := "/set id "
-	if strings.HasPrefix(strings.ToLower(update.Message.Text), prefix) {
-		tgIdentifyKey := strings.TrimPrefix(update.Message.Text, prefix)
-		customer, err := services.GetCustomerByTgIdentifyKey(c, tgIdentifyKey)
-		if err != nil || customer == nil {
-			resp := tgbotapi.NewMessage(chatID, "無法取得您的資料。")
-			tgbot.Send(resp)
-		} else {
-			customer.TgChatID = chatID
-			err := services.UpdateCustomer(c, customer)
-			if err != nil {
-				resp := tgbotapi.NewMessage(chatID, fmt.Sprintf("無法更新您的資料。[%s]", err.Error()))
-				tgbot.Send(resp)
-			} else {
-				resp := tgbotapi.NewMessage(chatID, fmt.Sprintf("您的資料已與帳號：[%s](%s)綁定完成。", customer.Email, customer.Name))
-				tgbot.Send(resp)
-			}
-		}
-	} else {
-		resp := tgbotapi.NewMessage(chatID, fmt.Sprintf("[%s]您好。請使用\n/set ID [您專屬的識別碼]\n來啟用您的訊息通知。", username))
-		tgbot.Send(resp)
-	}
-}
-
-func handleExistingCustomer(chatID int64, username string) {
-	if int64InMap(checkedChatID, chatID) {
-		resp := tgbotapi.NewMessage(chatID, getRandomEmoticon())
-		tgbot.Send(resp)
-	} else {
-		checkedChatID[chatID] = struct{}{}
-		resp := tgbotapi.NewMessage(chatID, fmt.Sprintf("[%s]您好。您的設定己完成，請耐心等待訊息的通知。", username))
-		tgbot.Send(resp)
-	}
-}
-
-func getRandomEmoticon() string {
-	emoticons := []string{
-		"請耐心等待相關事件發生，自統會自動傳送訊息給您。",
-		"請耐心等待相關事件發生，自統會自動傳送訊息給您。",
-		"請耐心等待相關事件發生，自統會自動傳送訊息給您。",
-		"請耐心等待相關事件發生，自統會自動傳送訊息給您。",
-		"請耐心等待相關事件發生，自統會自動傳送訊息給您。",
-		"請耐心等待相關事件發生，自統會自動傳送訊息給您。",
-		"請耐心等待相關事件發生，自統會自動傳送訊息給您。",
-		"̿̿ ̿̿ ̿̿ ̿'̿’\\̵͇̿̿\\з=( ͠° ͟ʖ ͡°)=ε/̵͇̿̿/‘̿̿ ̿ ̿ ̿ ̿ ̿",
-		"(′゜ω。‵)",
-		"₍₍ ◝('ω'◝) ⁾⁾ ₍₍ (◟'ω')◟ ⁾⁾",
-		"(｡･㉨･｡)",
-		"( ͡° ͜ʖ ͡°)",
-		"(๑´ڡ`๑)",
-		"(●´ω｀●)ゞ",
-		"♥(´∀` )人",
-		"(ﾉ◕ヮ◕)ﾉ*:･ﾟ✧",
-		"ヾ(●゜▽゜●)♡",
-		"(๑•̀ㅂ•́)و✧",
-		"✧◝(⁰▿⁰)◜✧",
-		"(♡˙︶˙♡)",
-	}
-
-	// 生成一个随机的索引值
-	seededRand := rand.New(rand.NewSource(time.Now().UnixNano()))
-	randomIndex := seededRand.Intn(len(emoticons))
-	// 返回随机的表情符号
-	return emoticons[randomIndex]
+	fmt.Println(update.Message.Text)
+	//從第一層執行起
+	runTGCommand(c, chatID, update.Message.Text, tgBotCommandRoot)
 }

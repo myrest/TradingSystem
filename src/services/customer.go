@@ -104,3 +104,28 @@ func GetCustomerByTgIdentifyKey(ctx context.Context, key string) (*models.Custom
 	customer.ID = doc.Ref.ID
 	return &customer, nil
 }
+
+func GetCustomerByTgChatID(ctx context.Context, key int64) (*[]models.Customer, error) {
+	client := getFirestoreClient()
+
+	iter := client.Collection("customers").Where("TgChatID", "==", key).Documents(ctx)
+	defer iter.Stop()
+
+	rtn := []models.Customer{}
+
+	for {
+		doc, err := iter.Next()
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			return nil, err
+		}
+
+		var data models.Customer
+		doc.DataTo(&data)
+		rtn = append(rtn, data)
+	}
+
+	return &rtn, nil
+}
