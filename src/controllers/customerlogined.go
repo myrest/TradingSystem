@@ -70,6 +70,7 @@ func ShowDashboardPage(c *gin.Context) {
 			"AutoSubscribeType":   customer.AutoSubscribReal,
 			"AutoSubscribeAmount": customer.AutoSubscribAmount,
 			"AlertMessageType":    customer.AlertMessageType,
+			"StaticFileVersion":   common.GetEnvironmentSetting().StartTimestemp,
 		})
 	} else {
 		session := sessions.Default(c)

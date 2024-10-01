@@ -27,6 +27,7 @@ type SystemSettings struct {
 	TempCacheFolder     string
 	ProjectID           string
 	TgToken             string
+	StartTimestemp      string
 }
 
 type firebaseConfig struct {
@@ -129,6 +130,7 @@ func GetEnvironmentSetting() SystemSettings {
 		log.Fatalf("Error getting project id: %v", err)
 	}
 	rtn.ProjectID = projectid
+	rtn.StartTimestemp = strconv.FormatInt(time.Now().Unix(), 10)
 
 	systemSettings = rtn
 	return rtn
