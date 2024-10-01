@@ -107,7 +107,7 @@ func GetPlaceOrderHistory(ctx context.Context, Symbol, CustomerID string, sdt, e
 		Where("CustomerID", "==", CustomerID).
 		Where("Symbol", "==", Symbol).
 		Where("Time", ">=", common.FormatDate(sdt)).
-		Where("Time", "<", common.FormatDate(edt)).
+		Where("Time", "<", common.FormatTime(edt)).
 		OrderBy("Time", firestore.Desc).
 		Offset((page - 1) * pageSize).
 		Limit(pageSize)
@@ -144,7 +144,7 @@ func getTotalPages(ctx context.Context, Symbol, CustomerID string, sdt, edt time
 		Where("CustomerID", "==", CustomerID).
 		Where("Symbol", "==", Symbol).
 		Where("Time", ">=", common.FormatDate(sdt)).
-		Where("Time", "<", common.FormatDate(edt)).
+		Where("Time", "<", common.FormatTime(edt)).
 		OrderBy("Time", firestore.Desc)
 	countQuery := query.NewAggregationQuery().WithCount("all")
 	results, err := countQuery.Get(ctx)

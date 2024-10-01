@@ -78,8 +78,7 @@ func processPlaceOrder(Customer models.CustomerCurrencySymboWithCustomer, tv mod
 	client := bingx.NewClient(APIKey, SecertKey, Customer.Simulation)
 	// client.Debug = true
 	// 定义日期字符串的格式
-	needSendToTG := false
-
+	AlertMessageModel := models.CustomerAlertDefault
 	placeOrderLog := models.Log_TvSiginalData{
 		PlaceOrderType: tv.PlaceOrderType,
 		CustomerID:     Customer.CustomerID,
@@ -93,7 +92,7 @@ func processPlaceOrder(Customer models.CustomerCurrencySymboWithCustomer, tv mod
 	positions, err := client.NewGetOpenPositionsService().Symbol(tv.TVData.Symbol).Do(c)
 	if err != nil {
 		placeOrderLog.Result = "Get open position failed." + err.Error()
-		asyncWriteTVsignalData(needSendToTG, Customer.Customer, placeOrderLog, c)
+		asyncWriteTVsignalData(AlertMessageModel, &Customer.Customer, placeOrderLog, c)
 		return
 	}
 
@@ -143,12 +142,11 @@ func processPlaceOrder(Customer models.CustomerCurrencySymboWithCustomer, tv mod
 	if tv.TVData.PositionSize == 0 {
 		//全部平倉
 		placeAmount = oepntrade.AvailableAmt
-		needSendToTG = true
 	}
 
 	if placeAmount == 0 {
 		placeOrderLog.Result = "Place amount is 0."
-		asyncWriteTVsignalData(needSendToTG, Customer.Customer, placeOrderLog, c)
+		asyncWriteTVsignalData(AlertMessageModel, &Customer.Customer, placeOrderLog, c)
 		return
 	}
 
@@ -164,7 +162,7 @@ func processPlaceOrder(Customer models.CustomerCurrencySymboWithCustomer, tv mod
 	//如果下單有問題，就記錄下來後return
 	if err != nil {
 		placeOrderLog.Result = "Place order failed:" + err.Error()
-		asyncWriteTVsignalData(true, Customer.Customer, placeOrderLog, c)
+		asyncWriteTVsignalData(AlertMessageModel, &Customer.Customer, placeOrderLog, c)
 		return
 	}
 	log.Printf("Customer:%s %v order created: %+v", Customer.CustomerID, bingx.MarketOrderType, order)
@@ -212,18 +210,34 @@ func processPlaceOrder(Customer models.CustomerCurrencySymboWithCustomer, tv mod
 		placeOrderLog.Profit = common.Decimal(placeOrderLog.Profit)
 		placeOrderLog.Fee = totalFee
 	}
+	if placeOrderLog.Profit < 0 {
+		//虧損
+		AlertMessageModel = models.CustomerAlertLoss
+	} else if (tv.PositionSideType == bingx.ShortPositionSideType && tv.Side == bingx.BuySideType) ||
+		(tv.PositionSideType == bingx.LongPositionSideType && tv.Side == bingx.SellSideType) {
+		//平倉
+		AlertMessageModel = models.CustomerAlertClose
+	} else {
+		//有下單
+		AlertMessageModel = models.CustomerAlertAll
+	}
 
-	asyncWriteTVsignalData(needSendToTG, Customer.Customer, placeOrderLog, c)
+	asyncWriteTVsignalData(AlertMessageModel, &Customer.Customer, placeOrderLog, c)
 }
 
 // 寫log
-func asyncWriteTVsignalData(needSendResult bool, customer models.Customer, tvdata models.Log_TvSiginalData, c *gin.Context) {
+func asyncWriteTVsignalData(alertType models.AlertMessageModel, customer *models.Customer, tvdata models.Log_TvSiginalData, c *gin.Context) {
 	go func(data models.Log_TvSiginalData) {
 		_, err := services.SaveCustomerPlaceOrderResultLog(c, data)
 		if err != nil {
 			log.Printf("Failed to save webhook data: %v", err)
 		}
-		if needSendResult && customer.TgChatID > 0 {
+
+		customerAlertLevel := customer.AlertMessageType.GetPriority()
+		systmeAlertLevel := alertType.GetPriority()
+		//判斷是否要發訊息，有綁定 及 (不為模拟交易 或 環境為dev)
+		needSendResult := customer.TgChatID > 0 && (!tvdata.Simulation || common.GetEnvironmentSetting().Env == common.Dev)
+		if needSendResult && customer.TgChatID > 0 && (customerAlertLevel >= systmeAlertLevel) {
 			positionside := "多"
 			side := "開"
 			if tvdata.PositionSideType == bingx.ShortPositionSideType {
@@ -236,6 +250,9 @@ func asyncWriteTVsignalData(needSendResult bool, customer models.Customer, tvdat
 			tgMessage := fmt.Sprintf("幣種：%s \n方向：%s%s\n結果/單號：%s", tvdata.Symbol, side, positionside, tvdata.Result)
 			if tvdata.Profit != 0 {
 				tgMessage = fmt.Sprintf("%s\n盈虧：%s", tgMessage, formatFloat64(6, tvdata.Profit))
+			}
+			if data.Simulation {
+				tgMessage = fmt.Sprintf("%s\n【***模擬交易單***】", tgMessage)
 			}
 			err := services.TGSendMessage(customer.TgChatID, tgMessage)
 			if err != nil {

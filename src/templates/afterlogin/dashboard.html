@@ -48,16 +48,12 @@
             <div class="alert-settings">
                 <h3>訊息通知設定</h3>
                 發送通知設定： <select id="AlertMessageType" name="AlertMessageType">
-                    <option value="Default" {{ if eq .AlertMessageType "Default" }}selected{{ end }}>預設</option>
-                    <option value="Loss" {{ if eq .AlertMessageType "Loss" }}selected{{ end }}>虧損</option>
-                    <option value="Close" {{ if eq .AlertMessageType "Close" }}selected{{ end }}>平倉</option>
-                    <option value="All" {{ if eq .AlertMessageType "All" }}selected{{ end }}>成交</option>
+                    <option value="Default" {{ if eq .AlertMessageType "Default" }}selected{{ end }}>預設：下單失敗、日結通知</option>
+                    <option value="Loss" {{ if eq .AlertMessageType "Loss" }}selected{{ end }}>虧損：平倉且虧損時通知</option>
+                    <option value="Close" {{ if eq .AlertMessageType "Close" }}selected{{ end }}>平倉：平倉時通知</option>
+                    <option value="All" {{ if eq .AlertMessageType "All" }}selected{{ end }}>成交：有成交就通知</option>
                 </select><br>
-                (愈往下，通知量將會愈多)<br>
-                預設：下單失敗、日結通知<br>
-                虧損：平倉且虧損時通知<br>
-                平倉：平倉時通知<br>
-                成交：有成交就通知<br>
+                (排序愈往下，通知量將會愈多)
             </div>
             <button onclick="saveKeys()">保存</button>
         </div>

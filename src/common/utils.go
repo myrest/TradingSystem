@@ -181,14 +181,16 @@ func GetReportStartEndDate(s sessions.Session) (time.Time, time.Time) {
 	sdt := s.Get("report_sdt")
 	edt := s.Get("report_edt")
 	if sdt != nil && edt != nil {
-		return ParseTime(sdt.(string)), ParseTime(edt.(string))
+		sddate := FormatDate(ParseTime(sdt.(string)))
+		eddate := fmt.Sprintf("%s 23:59:59", FormatDate(ParseTime(edt.(string))))
+		return ParseTime(sddate), ParseTime(eddate)
 	}
 	return TimeMax(), TimeMax()
 }
 
 func SetReportStartEndDate(s sessions.Session, sdt, edt time.Time) {
-	s.Set("report_sdt", FormatTime(sdt))
-	s.Set("report_edt", FormatTime(edt))
+	s.Set("report_sdt", FormatDate(sdt))
+	s.Set("report_edt", fmt.Sprintf("%s 23:59:59", FormatDate(edt)))
 	_ = s.Save() //不處理失敗
 }
 
