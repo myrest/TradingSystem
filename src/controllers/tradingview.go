@@ -88,11 +88,13 @@ func processPlaceOrder(Customer models.CustomerCurrencySymboWithCustomer, tv mod
 		Symbol:         tv.Symbol,
 	}
 
+	var isTowWayPositionOnHand = false //是否雙向持倉
+
 	//查出目前持倉情況
 	positions, err := client.NewGetOpenPositionsService().Symbol(tv.TVData.Symbol).Do(c)
 	if err != nil {
 		placeOrderLog.Result = "Get open position failed." + err.Error()
-		asyncWriteTVsignalData(AlertMessageModel, &Customer.Customer, placeOrderLog, c)
+		asyncWriteTVsignalData(AlertMessageModel, &Customer.Customer, placeOrderLog, c, isTowWayPositionOnHand)
 		return
 	}
 
@@ -101,21 +103,26 @@ func processPlaceOrder(Customer models.CustomerCurrencySymboWithCustomer, tv mod
 	var totalPrice float64     //總成本
 	var totalFee float64       //總雜支，包含資金費率、手續費
 
-	//這裏假設由系統來下單，只會持倉固定方向，所以全部累計
+	//這裏假設由系統來下單，應該只會持倉固定方向
 	for i, position := range *positions {
-		amount := common.Decimal(position.AvailableAmt)
-		price := common.Decimal(position.AvgPrice)
-		fee := common.Decimal(position.RealisedProfit)
+		if strings.ToUpper(position.PositionSide) == string(tv.PositionSideType) {
+			amount := common.Decimal(position.AvailableAmt)
+			price := common.Decimal(position.AvgPrice)
+			fee := common.Decimal(position.RealisedProfit)
 
-		totalAmount += amount
-		totalPrice += price * amount
-		totalFee += fee
-		if i == 0 {
-			if strings.ToLower(position.PositionSide) == "long" {
-				oepntrade.PositionSide = bingx.LongPositionSideType
-			} else {
-				oepntrade.PositionSide = bingx.ShortPositionSideType
+			totalAmount += amount
+			totalPrice += price * amount
+			totalFee += fee
+			if i == 0 {
+				if strings.ToLower(position.PositionSide) == "long" {
+					oepntrade.PositionSide = bingx.LongPositionSideType
+				} else {
+					oepntrade.PositionSide = bingx.ShortPositionSideType
+				}
 			}
+		} else {
+			//有雙向持倉的情形發生，要發警告
+			isTowWayPositionOnHand = true
 		}
 	}
 	oepntrade.AvailableAmt = totalAmount
@@ -127,8 +134,8 @@ func processPlaceOrder(Customer models.CustomerCurrencySymboWithCustomer, tv mod
 	}
 	placeAmount := tv.TVData.Contracts * Customer.Amount * Customer.Leverage / 1000
 	if Customer.Simulation {
-		//模擬盤固定使用10000U計算
-		placeAmount = tv.TVData.Contracts * 10000 / 100
+		//模擬盤固定使用1000U計算
+		placeAmount = tv.TVData.Contracts * 1000 / 100
 	}
 
 	if (tv.PlaceOrderType.Side == bingx.BuySideType && tv.PlaceOrderType.PositionSideType == bingx.ShortPositionSideType) ||
@@ -145,8 +152,8 @@ func processPlaceOrder(Customer models.CustomerCurrencySymboWithCustomer, tv mod
 	}
 
 	if placeAmount == 0 {
-		placeOrderLog.Result = "Place amount is 0."
-		asyncWriteTVsignalData(AlertMessageModel, &Customer.Customer, placeOrderLog, c)
+		placeOrderLog.Result = "下單數量為 0."
+		asyncWriteTVsignalData(AlertMessageModel, &Customer.Customer, placeOrderLog, c, isTowWayPositionOnHand)
 		return
 	}
 
@@ -162,7 +169,7 @@ func processPlaceOrder(Customer models.CustomerCurrencySymboWithCustomer, tv mod
 	//如果下單有問題，就記錄下來後return
 	if err != nil {
 		placeOrderLog.Result = "Place order failed:" + err.Error()
-		asyncWriteTVsignalData(AlertMessageModel, &Customer.Customer, placeOrderLog, c)
+		asyncWriteTVsignalData(AlertMessageModel, &Customer.Customer, placeOrderLog, c, isTowWayPositionOnHand)
 		return
 	}
 	log.Printf("Customer:%s %v order created: %+v", Customer.CustomerID, bingx.MarketOrderType, order)
@@ -222,11 +229,14 @@ func processPlaceOrder(Customer models.CustomerCurrencySymboWithCustomer, tv mod
 		AlertMessageModel = models.CustomerAlertAll
 	}
 
-	asyncWriteTVsignalData(AlertMessageModel, &Customer.Customer, placeOrderLog, c)
+	asyncWriteTVsignalData(AlertMessageModel, &Customer.Customer, placeOrderLog, c, isTowWayPositionOnHand)
 }
 
 // 寫log
-func asyncWriteTVsignalData(alertType models.AlertMessageModel, customer *models.Customer, tvdata models.Log_TvSiginalData, c *gin.Context) {
+func asyncWriteTVsignalData(alertType models.AlertMessageModel, customer *models.Customer, tvdata models.Log_TvSiginalData, c *gin.Context, isTwoWayPosition bool) {
+	if isTwoWayPosition {
+		tvdata.Result = tvdata.Result + "\n⚠️⚠️偵測到雙向持倉情況，請立即檢查倉位。"
+	}
 	go func(data models.Log_TvSiginalData) {
 		_, err := services.SaveCustomerPlaceOrderResultLog(c, data)
 		if err != nil {
@@ -235,9 +245,8 @@ func asyncWriteTVsignalData(alertType models.AlertMessageModel, customer *models
 
 		customerAlertLevel := customer.AlertMessageType.GetPriority()
 		systmeAlertLevel := alertType.GetPriority()
-		//判斷是否要發訊息，有綁定 及 (不為模拟交易 或 環境為dev)
-		needSendResult := customer.TgChatID > 0 && (!tvdata.Simulation || common.GetEnvironmentSetting().Env == common.Dev)
-		if needSendResult && customer.TgChatID > 0 && (customerAlertLevel >= systmeAlertLevel) {
+		//有綁定，且訊息等級要夠才發
+		if customer.TgChatID > 0 && (customerAlertLevel >= systmeAlertLevel) {
 			positionside := "多"
 			side := "開"
 			if tvdata.PositionSideType == bingx.ShortPositionSideType {
@@ -254,6 +263,7 @@ func asyncWriteTVsignalData(alertType models.AlertMessageModel, customer *models
 			if data.Simulation {
 				tgMessage = fmt.Sprintf("%s\n【***模擬交易單***】", tgMessage)
 			}
+			//發送TG訊號
 			err := services.TGSendMessage(customer.TgChatID, tgMessage)
 			if err != nil {
 				services.CustomerEventLog{

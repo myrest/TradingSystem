@@ -17,23 +17,23 @@ func (s *GetOpenPositionsService) Symbol(symbol string) *GetOpenPositionsService
 }
 
 type Position struct {
-	Symbol             string  `json:"symbol"`
-	PositionId         string  `json:"positionId"`
-	PositionSide       string  `json:"positionSide"`
-	Isolated           bool    `json:"isolated"`
-	PositionAmt        string  `json:"positionAmt"`
-	AvailableAmt       string  `json:"availableAmt"`
-	UnrealizedProfit   string  `json:"unrealizedProfit"`
-	RealisedProfit     string  `json:"realisedProfit"`
-	InitialMargin      string  `json:"initialMargin"`
-	AvgPrice           string  `json:"avgPrice"`
-	LiquidationPrice   float64 `json:"liquidationPrice"`
-	Leverage           int     `json:"leverage"`
-	PositionValue      string  `json:"positionValue"`
-	MarkPrice          string  `json:"markPrice"`
-	RiskRate           string  `json:"riskRate"`
-	MaxMarginReduction string  `json:"maxMarginReduction"`
-	PnlRatio           string  `json:"pnlRatio"`
+	Symbol             string  `json:"symbol"`             //交易對
+	PositionId         string  `json:"positionId"`         //倉位ID
+	PositionSide       string  `json:"positionSide"`       //倉位方向 LONG/SHORT 多/空
+	Isolated           bool    `json:"isolated"`           //是否是逐倉模式, true:逐倉模式 false:全倉
+	PositionAmt        string  `json:"positionAmt"`        //持倉數量
+	AvailableAmt       string  `json:"availableAmt"`       //可平倉數量
+	UnrealizedProfit   string  `json:"unrealizedProfit"`   //未實現盈虧
+	RealisedProfit     string  `json:"realisedProfit"`     //已實現盈虧
+	InitialMargin      string  `json:"initialMargin"`      //初始保證金
+	AvgPrice           string  `json:"avgPrice"`           //開倉均價
+	LiquidationPrice   float64 `json:"liquidationPrice"`   //強平價
+	Leverage           int     `json:"leverage"`           //槓桿
+	PositionValue      string  `json:"positionValue"`      //持有價值
+	MarkPrice          string  `json:"markPrice"`          //標記價格
+	RiskRate           string  `json:"riskRate"`           //風險率，風險率達到100%時會強制減倉或者平倉
+	MaxMarginReduction string  `json:"maxMarginReduction"` //最大可減少保證金
+	PnlRatio           string  `json:"pnlRatio"`           //未實現盈虧收益率
 }
 
 func (s *GetOpenPositionsService) Do(ctx context.Context, opts ...RequestOption) (res *[]Position, err error) {
