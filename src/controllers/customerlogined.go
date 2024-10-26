@@ -69,6 +69,8 @@ func ShowDashboardPage(c *gin.Context) {
 			"AutoSubscribeStatus": customer.IsAutoSubscribe,
 			"AutoSubscribeType":   customer.AutoSubscribReal,
 			"AutoSubscribeAmount": customer.AutoSubscribAmount,
+			"AlertMessageType":    customer.AlertMessageType,
+			"StaticFileVersion":   common.GetEnvironmentSetting().StartTimestemp,
 		})
 	} else {
 		session := sessions.Default(c)

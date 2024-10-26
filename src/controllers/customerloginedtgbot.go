@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"TradingSystem/src/common"
 	"TradingSystem/src/services"
 	"net/http"
 
@@ -33,7 +34,8 @@ func GetTGBot(c *gin.Context) {
 	}
 
 	c.HTML(http.StatusOK, "tgbot.html", gin.H{
-		"tgidentifykey": customer.TgIdentifyKey,
-		"islinked":      isLinked,
+		"tgidentifykey":     customer.TgIdentifyKey,
+		"islinked":          isLinked,
+		"StaticFileVersion": common.GetEnvironmentSetting().StartTimestemp,
 	})
 }

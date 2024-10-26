@@ -1,5 +1,5 @@
 {{ template "afterloginheader.html" . }}
-<link rel="stylesheet" href="/static/css/subaccount.css" />
+<link rel="stylesheet" href="/static/css/subaccount.css?{{.StaticFileVersion}}" />
 <div class="dashboard">
     <h1>子帳號管理</h1>
     {{ template "menu.html" . }}
@@ -41,4 +41,4 @@
     </div>
 
     {{ template "beforeloginfooter.html" . }}
-    <script src="/static/js/subaccount.js"></script>
+    <script src="/static/js/subaccount.js?{{.StaticFileVersion}}"></script>

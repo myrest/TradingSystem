@@ -74,5 +74,9 @@ func main() {
 	}
 
 	log.Printf("Server started at :%s", port)
-	log.Fatal(r.Run(":" + port))
+	if common.GetEnvironmentSetting().Env == common.Dev {
+		log.Fatal(r.Run("127.0.0.1:" + port))
+	} else {
+		log.Fatal(r.Run(":" + port))
+	}
 }

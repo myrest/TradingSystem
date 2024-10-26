@@ -12,7 +12,6 @@ function toggleCustomerSettings() {
         content.style.display = "block";
     }
 }
-var kk
 
 //切換實盤、模擬盤
 function toggleSubscribeType(obj) {
@@ -33,10 +32,12 @@ function toggleSubscribeStatus(obj) {
         obj.innerText = "啟用"
         obj.classList.remove("disabled");
         document.querySelector('#GroupSubscribeType').style.visibility = 'visible'
+        document.querySelector('#GroupSubscribeType').style.display = 'block'
     } else {
         obj.classList.add("disabled");
         obj.innerText = "停用"
         document.querySelector('#GroupSubscribeType').style.visibility = 'hidden'
+        document.querySelector('#GroupSubscribeType').style.display = 'none'
     }
 }
 
@@ -73,7 +74,7 @@ function renderCryptoTable() {
             sysdisabled = "SysDisabled"
         }
         if (item.simulation) {
-            displayamount = 'displayNone'
+            displayamount = 'visibilityHidden'
         } else {
             displayamount = 'displayBlock'
         }

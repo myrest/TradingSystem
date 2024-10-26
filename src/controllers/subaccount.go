@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"TradingSystem/src/common"
 	"TradingSystem/src/models"
 	"TradingSystem/src/services"
 	"net/http"
@@ -15,10 +16,11 @@ func SubaccountList(c *gin.Context) {
 	youare := session.Get("id").(string)
 	name := session.Get("name").(string)
 	c.HTML(http.StatusOK, "subaccountmanagememt.html", gin.H{
-		"isMainAccount": isMainAccount,
-		"youare":        youare,
-		"yourname":      name,
-		"IsAdmin":       c.GetBool("IsAdmin"),
+		"isMainAccount":     isMainAccount,
+		"youare":            youare,
+		"yourname":          name,
+		"IsAdmin":           c.GetBool("IsAdmin"),
+		"StaticFileVersion": common.GetEnvironmentSetting().StartTimestemp,
 	})
 }
 

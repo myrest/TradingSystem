@@ -20,13 +20,15 @@ function saveKeys() {
     const autosubscribe = document.getElementById('SubscribeStatus').innerText == "啟用";
     const subscribtype = document.getElementById('SubscribeType').innerText == "實盤";
     const amount = Number(document.getElementById('SubscribeAmount').value);
+    const alertmessagetype = document.getElementById('AlertMessageType').value;
 
     const data = {
         apiKey,
         secretKey,
         autosubscribe,
         subscribtype,
-        amount
+        amount,
+        alertmessagetype
     };
 
     fetch('/customers/update', {

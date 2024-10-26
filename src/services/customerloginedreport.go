@@ -26,7 +26,7 @@ func generateCustomerReport(ctx context.Context, customerID string, startDate, e
 	iter := client.Collection("placeOrderLog").
 		Where("CustomerID", "==", customerID).
 		Where("Simulation", "==", false).
-		Where("Time", ">=", common.FormatTime(startDate)).
+		Where("Time", ">=", common.FormatDate(startDate)).
 		Where("Time", "<", common.FormatTime(endDate)).
 		Documents(ctx)
 	defer iter.Stop()
@@ -288,7 +288,7 @@ func getMonthReport(ctx context.Context, month string, customerID string, mapDat
 	iter := client.Collection("placeOrderLog").
 		Where("CustomerID", "==", customerID).
 		Where("Simulation", "==", false).
-		Where("Time", ">=", common.FormatTime(sdt)).
+		Where("Time", ">=", common.FormatDate(sdt)).
 		Where("Time", "<", common.FormatTime(edt)).
 		Documents(ctx)
 	defer iter.Stop()

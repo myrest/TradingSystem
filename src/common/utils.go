@@ -27,6 +27,7 @@ type SystemSettings struct {
 	TempCacheFolder     string
 	ProjectID           string
 	TgToken             string
+	StartTimestemp      string
 }
 
 type firebaseConfig struct {
@@ -129,6 +130,7 @@ func GetEnvironmentSetting() SystemSettings {
 		log.Fatalf("Error getting project id: %v", err)
 	}
 	rtn.ProjectID = projectid
+	rtn.StartTimestemp = strconv.FormatInt(time.Now().Unix(), 10)
 
 	systemSettings = rtn
 	return rtn
@@ -181,14 +183,16 @@ func GetReportStartEndDate(s sessions.Session) (time.Time, time.Time) {
 	sdt := s.Get("report_sdt")
 	edt := s.Get("report_edt")
 	if sdt != nil && edt != nil {
-		return ParseTime(sdt.(string)), ParseTime(edt.(string))
+		sddate := FormatDate(ParseTime(sdt.(string)))
+		eddate := fmt.Sprintf("%s 23:59:59", FormatDate(ParseTime(edt.(string))))
+		return ParseTime(sddate), ParseTime(eddate)
 	}
 	return TimeMax(), TimeMax()
 }
 
 func SetReportStartEndDate(s sessions.Session, sdt, edt time.Time) {
-	s.Set("report_sdt", FormatTime(sdt))
-	s.Set("report_edt", FormatTime(edt))
+	s.Set("report_sdt", FormatDate(sdt))
+	s.Set("report_edt", fmt.Sprintf("%s 23:59:59", FormatDate(edt)))
 	_ = s.Save() //不處理失敗
 }
 
