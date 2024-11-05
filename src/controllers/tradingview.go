@@ -195,26 +195,16 @@ func processPlaceOrder(Customer models.CustomerCurrencySymboWithCustomer, tv mod
 		placedOrder = &bingx.GetOrderResponse{}
 	}
 
-	//profit := common.Decimal(placedOrder.Profit)
+	profit := common.Decimal(placedOrder.Profit)
 	placedPrice := common.Decimal(placedOrder.AveragePrice)
 	fee := common.Decimal(placedOrder.Fee)
 
-	//placeOrderLog.Profit = profit //取不到值，所以要自己算。
+	placeOrderLog.Profit = profit
 	placeOrderLog.Price = placedPrice
 
 	if tv.TVData.PositionSize == 0 {
 		//平倉，計算收益
 		totalFee = totalFee + fee
-		placeValue := placedPrice * placeAmount //成交額
-
-		if strings.ToLower(string(placedOrder.PositionSide)) == "long" {
-			//平多，place - 持倉
-			placeOrderLog.Profit = placeValue - totalPrice
-		} else {
-			//平空，持倉 - place
-			placeOrderLog.Profit = totalPrice - placeValue
-		}
-		placeOrderLog.Profit = common.Decimal(placeOrderLog.Profit)
 		placeOrderLog.Fee = totalFee
 	}
 	if placeOrderLog.Profit < 0 {
