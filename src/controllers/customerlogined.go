@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"TradingSystem/src/bingx"
 	"TradingSystem/src/common"
 	"TradingSystem/src/models"
 	"TradingSystem/src/services"
@@ -276,11 +275,11 @@ func PlaceOrderHistory(c *gin.Context) {
 	for i := 0; i < len(list); i++ {
 		positionside := "多"
 		side := "開"
-		if list[i].PositionSideType == bingx.ShortPositionSideType {
+		if list[i].PositionSideType == models.ShortPositionSideType {
 			positionside = "空"
 		}
-		if (list[i].PositionSideType == bingx.ShortPositionSideType && list[i].Side == bingx.BuySideType) ||
-			(list[i].PositionSideType == bingx.LongPositionSideType && list[i].Side == bingx.SellSideType) {
+		if (list[i].PositionSideType == models.ShortPositionSideType && list[i].Side == models.BuySideType) ||
+			(list[i].PositionSideType == models.LongPositionSideType && list[i].Side == models.SellSideType) {
 			side = "平"
 		}
 		rtn = append(rtn, Log_PlaceBetHistoryUI{

@@ -1,7 +1,6 @@
 package services
 
 import (
-	"TradingSystem/src/bingx"
 	"TradingSystem/src/common"
 	"TradingSystem/src/models"
 	"context"
@@ -58,8 +57,8 @@ func GetDemoCurrencyList(ctx context.Context, numberOfDays int, isFromCache bool
 		symbol, exists := symbollist[log.Symbol]
 		var CloseCount, OpenCount, WinCount, LossCount int32
 		Amount := log.Amount * log.Price
-		if (log.Side == bingx.SellSideType && log.PositionSideType == bingx.LongPositionSideType) ||
-			(log.Side == bingx.BuySideType && log.PositionSideType == bingx.ShortPositionSideType) {
+		if (log.Side == models.SellSideType && log.PositionSideType == models.LongPositionSideType) ||
+			(log.Side == models.BuySideType && log.PositionSideType == models.ShortPositionSideType) {
 			CloseCount = 1
 			if log.Profit < 0 {
 				LossCount = 1

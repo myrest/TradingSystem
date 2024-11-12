@@ -1,7 +1,6 @@
 package services
 
 import (
-	"TradingSystem/src/bingx"
 	"TradingSystem/src/common"
 	"TradingSystem/src/models"
 	"context"
@@ -53,8 +52,8 @@ func generateCustomerReport(ctx context.Context, customerID string, startDate, e
 		//計算Amount, CloseCount, OpenCount, WinCount, LossCoun，每輪都會歸零
 		var CloseCount, OpenCount, WinCount, LossCount int32
 		Amount := log.Amount * log.Price //float64
-		if (log.Side == bingx.SellSideType && log.PositionSideType == bingx.LongPositionSideType) ||
-			(log.Side == bingx.BuySideType && log.PositionSideType == bingx.ShortPositionSideType) {
+		if (log.Side == models.SellSideType && log.PositionSideType == models.LongPositionSideType) ||
+			(log.Side == models.BuySideType && log.PositionSideType == models.ShortPositionSideType) {
 			CloseCount = 1
 			if log.Profit < 0 {
 				LossCount = 1
@@ -315,8 +314,8 @@ func getMonthReport(ctx context.Context, month string, customerID string, mapDat
 		//計算Amount, CloseCount, OpenCount, WinCount, LossCoun，每輪都會歸零
 		var CloseCount, OpenCount, WinCount, LossCount int32
 		Amount := log.Amount * log.Price //float64
-		if (log.Side == bingx.SellSideType && log.PositionSideType == bingx.LongPositionSideType) ||
-			(log.Side == bingx.BuySideType && log.PositionSideType == bingx.ShortPositionSideType) {
+		if (log.Side == models.SellSideType && log.PositionSideType == models.LongPositionSideType) ||
+			(log.Side == models.BuySideType && log.PositionSideType == models.ShortPositionSideType) {
 			CloseCount = 1
 			if log.Profit < 0 {
 				LossCount = 1

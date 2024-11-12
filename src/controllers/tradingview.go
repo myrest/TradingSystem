@@ -10,7 +10,6 @@ import (
 	"log"
 	"net/http"
 	"strconv"
-	"strings"
 	"sync"
 
 	"github.com/gin-gonic/gin"
@@ -76,147 +75,15 @@ func preProcessPlaceOrder(c *gin.Context, WebhookData models.TvWebhookData) erro
 
 func processPlaceOrder(Customer models.CustomerCurrencySymboWithCustomer, tv models.TvSiginalData, TvWebHookLog, APIKey, SecertKey string, c *gin.Context) {
 	client := bingx.NewClient(APIKey, SecertKey, Customer.Simulation)
-	// client.Debug = true
-	// 定义日期字符串的格式
-	AlertMessageModel := models.CustomerAlertDefault
-	placeOrderLog := models.Log_TvSiginalData{
-		PlaceOrderType: tv.PlaceOrderType,
-		CustomerID:     Customer.CustomerID,
-		Time:           common.GetUtcTimeNow(),
-		Simulation:     Customer.Simulation,
-		WebHookRefID:   TvWebHookLog,
-		Symbol:         tv.Symbol,
-	}
-
-	var isTowWayPositionOnHand = false //是否雙向持倉
-
-	//查出目前持倉情況
-	positions, err := client.NewGetOpenPositionsService().Symbol(tv.TVData.Symbol).Do(c)
+	placeOrderLog, isTowWayPositionOnHand, AlertMessageModel, err := client.CreateOrder(c, tv, Customer)
+	placeOrderLog.WebHookRefID = TvWebHookLog
 	if err != nil {
-		placeOrderLog.Result = "Get open position failed." + err.Error()
-		asyncWriteTVsignalData(AlertMessageModel, &Customer.Customer, placeOrderLog, c, isTowWayPositionOnHand)
-		return
-	}
-
-	var oepntrade openPosition //目前持倉
-	var totalAmount float64    //總倉位
-	var totalPrice float64     //總成本
-	var totalFee float64       //總雜支，包含資金費率、手續費
-
-	//這裏假設由系統來下單，應該只會持倉固定方向
-	for i, position := range *positions {
-		if strings.ToUpper(position.PositionSide) == string(tv.PositionSideType) {
-			amount := common.Decimal(position.AvailableAmt)
-			price := common.Decimal(position.AvgPrice)
-			fee := common.Decimal(position.RealisedProfit)
-
-			totalAmount += amount
-			totalPrice += price * amount
-			totalFee += fee
-			if i == 0 {
-				if strings.ToLower(position.PositionSide) == "long" {
-					oepntrade.PositionSide = bingx.LongPositionSideType
-				} else {
-					oepntrade.PositionSide = bingx.ShortPositionSideType
-				}
-			}
-		} else {
-			//有雙向持倉的情形發生，要發警告
-			isTowWayPositionOnHand = true
-		}
-	}
-	oepntrade.AvailableAmt = totalAmount
-
-	//計算下單數量
-	Leverage := Customer.Leverage
-	if Leverage == 0 { //向下相容，為了舊客戶，沒有Leverage設定
-		Leverage = 10
-	}
-	placeAmount := tv.TVData.Contracts * Customer.Amount * Customer.Leverage / 1000
-	if Customer.Simulation {
-		//模擬盤固定使用1000U計算
-		placeAmount = tv.TVData.Contracts * 1000 / 100
-	}
-
-	if (tv.PlaceOrderType.Side == bingx.BuySideType && tv.PlaceOrderType.PositionSideType == bingx.ShortPositionSideType) ||
-		(tv.PlaceOrderType.Side == bingx.SellSideType && tv.PlaceOrderType.PositionSideType == bingx.LongPositionSideType) {
-		if oepntrade.AvailableAmt < placeAmount {
-			//要防止平太多，變反向持倉
-			placeAmount = oepntrade.AvailableAmt
-		}
-	}
-
-	if tv.TVData.PositionSize == 0 {
-		//全部平倉
-		placeAmount = oepntrade.AvailableAmt
-	}
-
-	if placeAmount == 0 {
-		placeOrderLog.Result = "下單數量為 0."
-		asyncWriteTVsignalData(AlertMessageModel, &Customer.Customer, placeOrderLog, c, isTowWayPositionOnHand)
-		return
-	}
-
-	//下單
-	order, err := client.NewCreateOrderService().
-		PositionSide(tv.PlaceOrderType.PositionSideType).
-		Symbol(tv.TVData.Symbol).
-		Quantity(placeAmount).
-		Type(bingx.MarketOrderType).
-		Side(tv.PlaceOrderType.Side).
-		Do(c)
-
-	//如果下單有問題，就記錄下來後return
-	if err != nil {
-		placeOrderLog.Result = "Place order failed:" + err.Error()
-		asyncWriteTVsignalData(AlertMessageModel, &Customer.Customer, placeOrderLog, c, isTowWayPositionOnHand)
-		return
-	}
-	log.Printf("Customer:%s %v order created: %+v", Customer.CustomerID, bingx.MarketOrderType, order)
-
-	//寫入訂單編號
-	placeOrderLog.Result = strconv.FormatInt((*order).OrderId, 10)
-	placeOrderLog.Amount = placeAmount
-
-	//依訂單編號，取出下單結果，用來記錄amount及price
-	placedOrder, err := client.NewGetOrderService().
-		Symbol(tv.TVData.Symbol).
-		OrderId(order.OrderId).
-		Do(c)
-
-	//無法取得下單的資料
-	if (err != nil) || (placedOrder == nil) {
-		placeOrderLog.Result = placeOrderLog.Result + "\nGet placed order failed:" + err.Error()
+		placeOrderLog.Result = placeOrderLog.Result + "\nPlace order get exception:" + err.Error()
 		services.SystemEventLog{
 			EventName:  services.PlaceOrder,
 			CustomerID: Customer.CustomerID,
-			Message:    fmt.Sprintf("Get placed order failed:%s\nsymbol:%s\norderId:%d", err.Error(), tv.TVData.Symbol, order.OrderId),
+			Message:    fmt.Sprintf("Place order failed:%s\nsymbol:%s\ncustomerId:%s", err.Error(), tv.TVData.Symbol, Customer.ID),
 		}.Send()
-		placedOrder = &bingx.GetOrderResponse{}
-	}
-
-	profit := common.Decimal(placedOrder.Profit)
-	placedPrice := common.Decimal(placedOrder.AveragePrice)
-	fee := common.Decimal(placedOrder.Fee)
-
-	placeOrderLog.Profit = profit
-	placeOrderLog.Price = placedPrice
-
-	if tv.TVData.PositionSize == 0 {
-		//平倉，計算收益
-		totalFee = totalFee + fee
-		placeOrderLog.Fee = totalFee
-	}
-	if placeOrderLog.Profit < 0 {
-		//虧損
-		AlertMessageModel = models.CustomerAlertLoss
-	} else if (tv.PositionSideType == bingx.ShortPositionSideType && tv.Side == bingx.BuySideType) ||
-		(tv.PositionSideType == bingx.LongPositionSideType && tv.Side == bingx.SellSideType) {
-		//平倉
-		AlertMessageModel = models.CustomerAlertClose
-	} else {
-		//有下單
-		AlertMessageModel = models.CustomerAlertAll
 	}
 
 	asyncWriteTVsignalData(AlertMessageModel, &Customer.Customer, placeOrderLog, c, isTowWayPositionOnHand)
@@ -239,11 +106,11 @@ func asyncWriteTVsignalData(alertType models.AlertMessageModel, customer *models
 		if customer.TgChatID > 0 && (customerAlertLevel >= systmeAlertLevel) {
 			positionside := "多"
 			side := "開"
-			if tvdata.PositionSideType == bingx.ShortPositionSideType {
+			if tvdata.PositionSideType == models.ShortPositionSideType {
 				positionside = "空"
 			}
-			if (tvdata.PositionSideType == bingx.ShortPositionSideType && tvdata.Side == bingx.BuySideType) ||
-				(tvdata.PositionSideType == bingx.LongPositionSideType && tvdata.Side == bingx.SellSideType) {
+			if (tvdata.PositionSideType == models.ShortPositionSideType && tvdata.Side == models.BuySideType) ||
+				(tvdata.PositionSideType == models.LongPositionSideType && tvdata.Side == models.SellSideType) {
 				side = "平"
 			}
 			tgMessage := fmt.Sprintf("幣種：%s \n方向：%s%s\n結果/單號：%s", tvdata.Symbol, side, positionside, tvdata.Result)
