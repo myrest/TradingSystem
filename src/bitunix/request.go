@@ -43,7 +43,7 @@ func (r *request) addParam(key string, value interface{}) *request {
 	return r
 }
 
-func (r *request) setFormParam(key string, value interface{}) *request {
+func (r *request) SetFormParam(key string, value interface{}) *request { //Not used
 	if r.form == nil {
 		r.form = url.Values{}
 	}
