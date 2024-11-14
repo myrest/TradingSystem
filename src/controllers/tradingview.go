@@ -5,6 +5,7 @@ import (
 	"TradingSystem/src/common"
 	"TradingSystem/src/models"
 	"TradingSystem/src/services"
+	"TradingSystem/src/strategyinterface"
 	"context"
 	"fmt"
 	"log"
@@ -61,7 +62,9 @@ func preProcessPlaceOrder(c *gin.Context, WebhookData models.TvWebhookData) erro
 		wg.Add(1)
 		go func(customer models.CustomerCurrencySymboWithCustomer) {
 			defer wg.Done()
-			processPlaceOrder(customer, tvData, TvWebHookLog, customer.APIKey, customer.SecretKey, c)
+			//todo:要依客戶的交易所來判斷
+			client := bingx.NewClient(customer.APIKey, customer.SecretKey, customer.Simulation)
+			processPlaceOrder(client, customer, tvData, TvWebHookLog, c)
 		}(customerList[i])
 	}
 	wg.Wait()
@@ -73,8 +76,7 @@ func preProcessPlaceOrder(c *gin.Context, WebhookData models.TvWebhookData) erro
 	return nil
 }
 
-func processPlaceOrder(Customer models.CustomerCurrencySymboWithCustomer, tv models.TvSiginalData, TvWebHookLog, APIKey, SecertKey string, c *gin.Context) {
-	client := bingx.NewClient(APIKey, SecertKey, Customer.Simulation)
+func processPlaceOrder(client strategyinterface.TradingClient, Customer models.CustomerCurrencySymboWithCustomer, tv models.TvSiginalData, TvWebHookLog string, c *gin.Context) {
 	placeOrderLog, isTowWayPositionOnHand, AlertMessageModel, err := client.CreateOrder(c, tv, Customer)
 	placeOrderLog.WebHookRefID = TvWebHookLog
 	if err != nil {
