@@ -70,12 +70,13 @@ func CustomerWeeklyReportList(c *gin.Context) {
 	})
 
 	c.HTML(http.StatusOK, "weeklyreport.html", gin.H{
-		"data":    weeklyreport,
-		"mondays": mondaysList,
-		"days":    common.FormatDate(startDate),
-		"cid":     customerid,
-		"week":    fmt.Sprintf("%s ~ %s (%s)", common.FormatDate(startDate), common.FormatDate(endDate), common.GetWeeksByDate(startDate)),
-		"IsAdmin": c.GetBool("IsAdmin"),
+		"data":              weeklyreport,
+		"mondays":           mondaysList,
+		"days":              common.FormatDate(startDate),
+		"cid":               customerid,
+		"week":              fmt.Sprintf("%s ~ %s (%s)", common.FormatDate(startDate), common.FormatDate(endDate), common.GetWeeksByDate(startDate)),
+		"IsAdmin":           c.GetBool("IsAdmin"),
+		"StaticFileVersion": common.GetEnvironmentSetting().StartTimestemp,
 	})
 }
 
@@ -125,8 +126,9 @@ func CustomerWeeklyReportSummaryList(c *gin.Context) {
 	}
 
 	c.HTML(http.StatusOK, "weeklyreportsummary.html", gin.H{
-		"data": rtn,
-		"cid":  customerid,
+		"data":              rtn,
+		"cid":               customerid,
+		"StaticFileVersion": common.GetEnvironmentSetting().StartTimestemp,
 	})
 }
 
@@ -177,8 +179,9 @@ func CustomerMonthlyReportSummaryList(c *gin.Context) {
 	}
 
 	c.HTML(http.StatusOK, "monthlyreportsummary.html", gin.H{
-		"data": rtn,
-		"cid":  customerid,
+		"data":              rtn,
+		"cid":               customerid,
+		"StaticFileVersion": common.GetEnvironmentSetting().StartTimestemp,
 	})
 }
 
@@ -235,10 +238,11 @@ func CustomerMonthlyReportList(c *gin.Context) {
 	})
 
 	c.HTML(http.StatusOK, "monthlyreport.html", gin.H{
-		"data":    montylyreport,
-		"mondays": firstDayByMonth,
-		"days":    common.FormatDate(startDate),
-		"cid":     customerid,
-		"month":   common.GetMonthsInRange(startDate)[0],
+		"data":              montylyreport,
+		"mondays":           firstDayByMonth,
+		"days":              common.FormatDate(startDate),
+		"cid":               customerid,
+		"month":             common.GetMonthsInRange(startDate)[0],
+		"StaticFileVersion": common.GetEnvironmentSetting().StartTimestemp,
 	})
 }

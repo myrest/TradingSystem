@@ -47,8 +47,9 @@ func ShowDashboardPage(c *gin.Context) {
 	if CustomerByEmail == nil || CustomerByEmail.ID == "" {
 		//帳號不存在，要建一個新的
 		c.HTML(http.StatusOK, "iscreatenew.html", gin.H{
-			"Name":  name,
-			"Email": email,
+			"Name":              name,
+			"Email":             email,
+			"StaticFileVersion": common.GetEnvironmentSetting().StartTimestemp,
 		})
 		return
 	}
@@ -289,11 +290,12 @@ func PlaceOrderHistory(c *gin.Context) {
 	}
 
 	c.HTML(http.StatusOK, "placeorderhistory.html", gin.H{
-		"data":       rtn,
-		"page":       page,
-		"pageSize":   pageSize,
-		"totalPages": totalPages,
-		"symbol":     symbol,
-		"cid":        c.Query("cid"),
+		"data":              rtn,
+		"page":              page,
+		"pageSize":          pageSize,
+		"totalPages":        totalPages,
+		"symbol":            symbol,
+		"cid":               c.Query("cid"),
+		"StaticFileVersion": common.GetEnvironmentSetting().StartTimestemp,
 	})
 }

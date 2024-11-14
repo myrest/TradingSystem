@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"TradingSystem/src/common"
 	"net/http"
 
 	"github.com/gin-contrib/sessions"
@@ -53,7 +54,10 @@ func handleError(c *gin.Context, err error, httpstatuscode ...int) {
 	acceptHeader := c.GetHeader("Accept")
 	if acceptHeader == "text/html" {
 		// 返回HTML格式
-		c.HTML(statusCode, "error.html", gin.H{"error": err.Error()})
+		c.HTML(statusCode, "error.html", gin.H{
+			"error":             err.Error(),
+			"StaticFileVersion": common.GetEnvironmentSetting().StartTimestemp,
+		})
 	} else {
 		// 返回JSON格式
 		c.JSON(statusCode, gin.H{"error": err.Error()})

@@ -20,14 +20,14 @@ import (
 )
 
 type SystemSettings struct {
-	FireBaseKeyFullPath string
-	OAuthKeyFullPath    string
-	Env                 EnviromentType
-	DemoCustomerID      string
-	TempCacheFolder     string
-	ProjectID           string
-	TgToken             string
-	StartTimestemp      string
+	FireBaseKeyFullPath string         //連Firebase的key
+	OAuthKeyFullPath    string         //連OAuth的key
+	Env                 EnviromentType //環境
+	DemoCustomerID      string         //測試用的CustomerID
+	TempCacheFolder     string         //緩存資料夾
+	ProjectID           string         //Firebase專案ID
+	TgToken             string         //Telegram Token
+	StartTimestemp      string         //開始時間，用來避免Static文件被瀏覽器快取
 }
 
 type firebaseConfig struct {

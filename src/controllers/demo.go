@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"TradingSystem/src/common"
 	"TradingSystem/src/models"
 	"TradingSystem/src/services"
 	"net/http"
@@ -24,8 +25,9 @@ func DemoList(c *gin.Context) {
 		return
 	}
 	c.HTML(http.StatusOK, "demosymbolist.html", gin.H{
-		"data": systemSymboList,
-		"days": days,
+		"data":              systemSymboList,
+		"days":              days,
+		"StaticFileVersion": common.GetEnvironmentSetting().StartTimestemp,
 	})
 }
 
@@ -69,8 +71,9 @@ func DemoHistory(c *gin.Context) {
 	}
 
 	c.HTML(http.StatusOK, "demohistory.html", gin.H{
-		"data":   rtn,
-		"symbol": symbol,
-		"days":   days,
+		"data":              rtn,
+		"symbol":            symbol,
+		"days":              days,
+		"StaticFileVersion": common.GetEnvironmentSetting().StartTimestemp,
 	})
 }
