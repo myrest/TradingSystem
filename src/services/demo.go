@@ -27,7 +27,7 @@ func GetDemoCurrencyList(ctx context.Context, numberOfDays int, isFromCache bool
 		}
 	}
 
-	client := getFirestoreClient()
+	client := common.GetFirestoreClient()
 	//先找出所有的History
 	iter := client.Collection("placeOrderLog").
 		Where("CustomerID", "==", systemSettings.DemoCustomerID).
@@ -122,7 +122,7 @@ func GetDemoHistory(ctx context.Context, numberOfDays int, Symbol string, isFrom
 		}
 	}
 
-	client := getFirestoreClient()
+	client := common.GetFirestoreClient()
 	// 先找出所有的History
 	iter := client.Collection("placeOrderLog").
 		Where("CustomerID", "==", systemSettings.DemoCustomerID).

@@ -1,13 +1,14 @@
 package services
 
 import (
+	"TradingSystem/src/common"
 	"TradingSystem/src/models"
 	"context"
 )
 
 func VerifyIDToken(idToken string) (string, error) {
 	ctx := context.Background()
-	authClient, err := app.Auth(ctx)
+	authClient, err := common.FirebaseAuth(ctx)
 	if err != nil {
 		return "", err
 	}
@@ -23,7 +24,7 @@ func VerifyIDToken(idToken string) (string, error) {
 func VerifyIDTokenAndGetDetails(idToken string) (models.GoogleTokenDetail, error) {
 	var rtn models.GoogleTokenDetail
 	ctx := context.Background()
-	authClient, err := app.Auth(ctx)
+	authClient, err := common.FirebaseAuth(ctx)
 	if err != nil {
 		return rtn, err
 	}

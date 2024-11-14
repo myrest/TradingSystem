@@ -93,16 +93,16 @@ func GetEnvironmentSetting() SystemSettings {
 		return systemSettings
 	}
 
-	var rtn SystemSettings
-	wd, _ := os.Getwd()
-	if err := godotenv.Load(filepath.Join(wd, ".env")); err != nil {
-		log.Printf("No .env file. Use system environment variable.")
-	}
 	root := os.Getenv("KEYROOT")
 	env := os.Getenv("ENVIRONMENT")
 	democustomerid := os.Getenv("DEMOCUSTOMERID")
 	tmpCacheFolder := os.Getenv("TEMPCACHEFOLDER")
 
+	var rtn SystemSettings
+	wd, _ := os.Getwd()
+	if err := godotenv.Load(filepath.Join(wd, ".env")); err != nil {
+		log.Printf("No .env file. Use system environment variable.")
+	}
 	//沒有設定Key的目錄
 	if root == "" {
 		wd, err := os.Getwd()

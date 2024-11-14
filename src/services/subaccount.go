@@ -1,6 +1,7 @@
 package services
 
 import (
+	"TradingSystem/src/common"
 	"TradingSystem/src/models"
 	"context"
 	"errors"
@@ -17,7 +18,7 @@ const (
 
 func GetSubaccountListByID(ctx context.Context, CustomerID string) ([]models.SubAccount, error) {
 	var rtn []models.SubAccount
-	client := getFirestoreClient()
+	client := common.GetFirestoreClient()
 	//找出所有的subaccount
 	iter := client.Collection(SubAccountColliectionName).
 		Where("CustomerID", "==", CustomerID).
@@ -45,7 +46,7 @@ func GetSubaccountListByID(ctx context.Context, CustomerID string) ([]models.Sub
 
 func getSubaccountByaccountname(ctx context.Context, CustomerID, SubAccountName string) (*models.SubAccount, error) {
 	var dbData models.SubAccountDB
-	client := getFirestoreClient()
+	client := common.GetFirestoreClient()
 	iter := client.Collection(SubAccountColliectionName).
 		Where("CustomerID", "==", CustomerID).
 		Where("AccountName", "==", SubAccountName).
@@ -66,7 +67,7 @@ func getSubaccountByaccountname(ctx context.Context, CustomerID, SubAccountName 
 
 func GetSubaccountByID(ctx context.Context, ID string) (*models.SubAccount, error) {
 	var dbData models.SubAccountDB
-	client := getFirestoreClient()
+	client := common.GetFirestoreClient()
 	iter := client.Collection(SubAccountColliectionName).Doc(ID).Snapshots(ctx)
 	defer iter.Stop()
 	doc, err := iter.Next()
@@ -86,7 +87,7 @@ func UpdateSubaccount(ctx context.Context, Data models.SubAccount) (models.SubAc
 	if Data.CustomerID == "" {
 		return rtn, errors.New("owner Customer ID is empty")
 	}
-	client := getFirestoreClient()
+	client := common.GetFirestoreClient()
 	if Data.DocumentRefID == "" {
 		//無Ref ID表示新增
 		//檢查有無重覆
@@ -151,7 +152,7 @@ func DeleteSubaccount(ctx context.Context, Data models.SubAccount) error {
 	if Data.CustomerID == "" {
 		return errors.New("owner Customer ID is empty")
 	}
-	client := getFirestoreClient()
+	client := common.GetFirestoreClient()
 
 	//有Ref ID表示修改，只確定資料是否存在
 	dbSubAccount, err := GetSubaccountByID(ctx, Data.DocumentRefID)

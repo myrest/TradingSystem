@@ -18,7 +18,7 @@ func UpdateCustomerCurrency(ctx context.Context, customercurrency *models.Custom
 		autoUpdateBingXLeverage = flag[0]
 	}
 
-	client := getFirestoreClient()
+	client := common.GetFirestoreClient()
 	customer, err := GetCustomer(ctx, customercurrency.CustomerID)
 	if err != nil || customer == nil || customer.Email == "" {
 		if err == nil {
@@ -107,7 +107,7 @@ func UpdateCustomerCurrency(ctx context.Context, customercurrency *models.Custom
 }
 
 func GetAllCustomerCurrency(ctx context.Context, customerID string) ([]models.CustomerCurrencySymbol, error) {
-	client := getFirestoreClient()
+	client := common.GetFirestoreClient()
 
 	iter := client.Collection("customerssymbol").Where("CustomerID", "==", customerID).Documents(ctx)
 	defer iter.Stop()
@@ -131,7 +131,7 @@ func GetAllCustomerCurrency(ctx context.Context, customerID string) ([]models.Cu
 }
 
 func GetCustomerCurrency(ctx context.Context, customerID, symbol string) (*models.CustomerCurrencySymbol, error) {
-	client := getFirestoreClient()
+	client := common.GetFirestoreClient()
 
 	iter := client.Collection("customerssymbol").Where("Symbol", "==", symbol).
 		Where("CustomerID", "==", customerID).
@@ -150,7 +150,7 @@ func GetCustomerCurrency(ctx context.Context, customerID, symbol string) (*model
 }
 
 func DeleteCustomerCurrency(ctx context.Context, CustomerID, Symbol string) error {
-	client := getFirestoreClient()
+	client := common.GetFirestoreClient()
 
 	iter := client.Collection("customerssymbol").Where("Symbol", "==", Symbol).
 		Where("CustomerID", "==", CustomerID).
@@ -176,7 +176,7 @@ func DeleteCustomerCurrency(ctx context.Context, CustomerID, Symbol string) erro
 }
 
 func GetCustomerByTGChatID(ctx context.Context, ChatID int64) (*models.Customer, error) {
-	client := getFirestoreClient()
+	client := common.GetFirestoreClient()
 
 	iter := client.Collection("customers").Where("TgChatID", "==", ChatID).Limit(1).Documents(ctx)
 	defer iter.Stop()

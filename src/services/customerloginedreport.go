@@ -20,7 +20,7 @@ func generateCustomerReport(ctx context.Context, customerID string, startDate, e
 		return nil, fmt.Errorf("一次只能產生一週的報表資料。%s ~ %s 跨週了。", startDate, endDate)
 	}
 	var rtn []models.CustomerProfitReport
-	client := getFirestoreClient()
+	client := common.GetFirestoreClient()
 	//先找出所有的History
 	iter := client.Collection("placeOrderLog").
 		Where("CustomerID", "==", customerID).
@@ -107,7 +107,7 @@ type reportMapkey struct {
 }
 
 func getCustomerFirstPlaceOrderDateTime(ctx context.Context, customerID string) time.Time {
-	client := getFirestoreClient()
+	client := common.GetFirestoreClient()
 
 	// 查詢所有的 placeOrderLog
 	iter := client.Collection("placeOrderLog").
@@ -150,7 +150,7 @@ func GetCustomerWeeklyReportCurrencyList(ctx context.Context, customerID string,
 		return nil, nil
 	}
 
-	client := getFirestoreClient()
+	client := common.GetFirestoreClient()
 
 	missingWeeks := make(map[string]struct{}, len(weeks))
 	for _, week := range weeks {
@@ -204,7 +204,7 @@ func GetCustomerWeeklyReportCurrencyList(ctx context.Context, customerID string,
 
 func GetCustomerMonthlyReportCurrencyList(ctx context.Context, customerID string, startDate, endDate time.Time) ([]models.CustomerProfitReport, error) {
 	var mapData = make(map[reportMapkey]models.CustomerProfitReport)
-	client := getFirestoreClient()
+	client := common.GetFirestoreClient()
 
 	//找出客戶的第一筆資料，如果起始日期早於它，則以第一筆資料為起始日期
 	firstPlaceOrderTime := getCustomerFirstPlaceOrderDateTime(ctx, customerID)
@@ -282,7 +282,7 @@ func getMonthReport(ctx context.Context, month string, customerID string, mapDat
 
 	sdt, edt := common.GetMonthStartEndDate(common.ParseTime(month))
 	//一次撈一週資料
-	client := getFirestoreClient()
+	client := common.GetFirestoreClient()
 	//先找出所有的History，
 	iter := client.Collection("placeOrderLog").
 		Where("CustomerID", "==", customerID).
@@ -418,7 +418,7 @@ func getWeekReport(ctx context.Context, currentWeek string, customerID string, m
 }
 
 func insertWeeklyReportIntoDB(ctx context.Context, reports []models.CustomerProfitReport) error {
-	client := getFirestoreClient()
+	client := common.GetFirestoreClient()
 	for _, data := range reports {
 		_, _, err := client.Collection(DBCustomerWeeklyReport).Add(ctx, data)
 		if err != nil {
