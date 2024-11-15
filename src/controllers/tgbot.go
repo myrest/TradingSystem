@@ -223,10 +223,19 @@ func runTGCommand(c context.Context, chatID int64, cmd string, cmdList map[strin
 
 func init() {
 	settings := common.GetEnvironmentSetting()
+	ApplyTgBotSetting(settings.TgToken)
+}
+
+func ApplyTgBotSetting(tgToken string) {
 	go func() {
-		bot, err := tgbotapi.NewBotAPI(settings.TgToken)
+		bot, err := tgbotapi.NewBotAPI(tgToken)
 		if err != nil {
-			log.Panic(err)
+			systemerror := fmt.Errorf("error creating Telegram bot: %v", err)
+			services.SystemEventLog{
+				EventName: services.EventNameSystemInit,
+				Message:   systemerror.Error(),
+			}.Send()
+			log.Println(systemerror.Error())
 		}
 		tgbot = bot
 	}()

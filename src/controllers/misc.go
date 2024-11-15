@@ -12,7 +12,7 @@ import (
 var OauthContent []byte
 
 func init() {
-	settings := common.GetEnvironmentSetting()
+	settings := common.GetFirebaseSetting()
 
 	fileContent, err := os.ReadFile(settings.OAuthKeyFullPath)
 	if err != nil {

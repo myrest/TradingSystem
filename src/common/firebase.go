@@ -50,7 +50,7 @@ func init() {
 	ctx := context.Background()
 	var err error
 
-	settings := GetEnvironmentSetting()
+	settings := GetFirebaseSetting()
 
 	var sa option.ClientOption
 	if IsFileExists(settings.FireBaseKeyFullPath) {

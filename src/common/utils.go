@@ -3,6 +3,7 @@ package common
 import (
 	"bytes"
 	"compress/gzip"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -19,16 +20,25 @@ import (
 	"github.com/joho/godotenv"
 )
 
-type SystemSettings struct {
-	FireBaseKeyFullPath string         //連Firebase的key
-	OAuthKeyFullPath    string         //連OAuth的key
-	Env                 EnviromentType //環境
-	DemoCustomerID      string         //測試用的CustomerID
-	TempCacheFolder     string         //緩存資料夾
-	ProjectID           string         //Firebase專案ID
-	TgToken             string         //Telegram Token
-	StartTimestemp      string         //開始時間，用來避免Static文件被瀏覽器快取
+type FirebaseSettings struct {
+	FireBaseKeyFullPath string `firestore:"-"` //連Firebase的key，不能放DB裏
+	OAuthKeyFullPath    string `firestore:"-"` //連OAuth的key
+	ProjectID           string `firestore:"-"` //Firebase專案ID
 }
+
+type SystemSettings struct {
+	Env             EnviromentType `firestore:"Env"`            //環境
+	DemoCustomerID  string         `firestore:"DemoCustomerID"` //測試用的CustomerID
+	TempCacheFolder string         `firestore:"-"`              //緩存資料夾
+	TgToken         string         `firestore:"TgToken"`        //Telegram Token
+	StartTimestemp  string         `firestore:"-"`              //開始時間，用來避免Static文件被瀏覽器快取
+	SectestWord     string         `firestore:"-"`              //後門路由
+}
+
+const (
+	Prod EnviromentType = "prod"
+	Dev  EnviromentType = "dev"
+)
 
 type firebaseConfig struct {
 	APIKey            string `json:"apiKey"`
@@ -41,12 +51,8 @@ type firebaseConfig struct {
 
 type EnviromentType string
 
-const (
-	Prod EnviromentType = "prod"
-	Dev  EnviromentType = "dev"
-)
-
 var systemSettings SystemSettings
+var firebaseSettings FirebaseSettings
 
 func DecodeGzip(data []byte) ([]byte, error) {
 	reader, err := gzip.NewReader(bytes.NewReader(data))
@@ -64,7 +70,6 @@ func DecodeGzip(data []byte) ([]byte, error) {
 }
 
 const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-const tgToken_prod = "7271183700:AAGkiE2lsj_t251DAdnmZvgq7D-Q2SwUX9M"
 
 func GenerateRandomString(length int) string {
 	seededRand := rand.New(rand.NewSource(time.Now().UnixNano()))
@@ -88,22 +93,22 @@ func IsFileExists(filePath string) bool {
 	return !info.IsDir()
 }
 
-func GetEnvironmentSetting() SystemSettings {
-	if systemSettings.Env != "" {
-		return systemSettings
+func GetFirebaseSetting() FirebaseSettings {
+	if firebaseSettings.FireBaseKeyFullPath != "" {
+		return firebaseSettings
+	}
+
+	//載入.env當作環境變數，如果有成功，要顯示訊息。
+	wd, _ := os.Getwd()
+	if err := godotenv.Load(filepath.Join(wd, ".env")); err == nil {
+		log.Printf("使用.env檔，作為環境變數")
 	}
 
 	root := os.Getenv("KEYROOT")
-	env := os.Getenv("ENVIRONMENT")
-	democustomerid := os.Getenv("DEMOCUSTOMERID")
-	tmpCacheFolder := os.Getenv("TEMPCACHEFOLDER")
+	env := os.Getenv("ENVIRONMENT") //用來取得Prod or Dev的檔案資料
+	var rtn FirebaseSettings
 
-	var rtn SystemSettings
-	wd, _ := os.Getwd()
-	if err := godotenv.Load(filepath.Join(wd, ".env")); err != nil {
-		log.Printf("No .env file. Use system environment variable.")
-	}
-	//沒有設定Key的目錄
+	//沒有設定Key的目錄，就以當前執行目錄為設定檔目錄
 	if root == "" {
 		wd, err := os.Getwd()
 		if err != nil {
@@ -112,28 +117,60 @@ func GetEnvironmentSetting() SystemSettings {
 		root = filepath.Dir(wd)
 	}
 
-	if env == "" || strings.ToLower(env) == "prod" {
-		rtn.Env = Prod
-		rtn.TgToken = tgToken_prod
-	} else {
-		rtn.Env = Dev
-		rtn.TgToken = os.Getenv("TGTOKENDEV")
+	//預設為Prod
+	Environment := Prod
+	//嚴格限制只有Prod才是真的Production環境
+	if strings.ToLower(env) != "prod" {
+		Environment = Dev
 	}
 
-	rtn.OAuthKeyFullPath = filepath.Join(root, fmt.Sprintf("firebaseConfig_%s.json", rtn.Env))
-	rtn.FireBaseKeyFullPath = filepath.Join(root, fmt.Sprintf("serviceAccountKey_%s.json", rtn.Env))
-	rtn.DemoCustomerID = democustomerid
-	rtn.TempCacheFolder = filepath.Join(wd, tmpCacheFolder)
+	rtn.OAuthKeyFullPath = filepath.Join(root, fmt.Sprintf("firebaseConfig_%s.json", Environment))
+	rtn.FireBaseKeyFullPath = filepath.Join(root, fmt.Sprintf("serviceAccountKey_%s.json", Environment))
 	projectid, err := getProjectID(rtn.OAuthKeyFullPath)
 
 	if err != nil {
 		log.Fatalf("Error getting project id: %v", err)
 	}
 	rtn.ProjectID = projectid
-	rtn.StartTimestemp = strconv.FormatInt(time.Now().Unix(), 10)
 
-	systemSettings = rtn
+	firebaseSettings = rtn
 	return rtn
+}
+
+func GetEnvironmentSetting() SystemSettings {
+	if systemSettings.Env != "" {
+		return systemSettings
+	}
+
+	var rtn SystemSettings
+
+	//載入.env當作環境變數
+	wd, _ := os.Getwd()
+	if err := godotenv.Load(filepath.Join(wd, ".env")); err == nil {
+		log.Printf("使用.env檔，作為環境變數")
+	}
+
+	env := os.Getenv("ENVIRONMENT")
+	tmpCacheFolder := os.Getenv("TEMPCACHEFOLDER")
+
+	if env == "" || strings.ToLower(env) == "prod" {
+		rtn.Env = Prod
+	} else {
+		rtn.Env = Dev
+	}
+
+	rtn.TempCacheFolder = filepath.Join(wd, tmpCacheFolder)
+	rtn.StartTimestemp = strconv.FormatInt(time.Now().Unix(), 10)
+	rtn.SectestWord = GenerateRandomString(8)
+	dbSystemSetting, _ := GetDBSystemSettings(context.Background())
+	systemSettings = rtn //先把值寫入，再ApplyDB的資料
+	ApplySystemSettings(dbSystemSetting)
+	return rtn
+}
+
+func ApplySystemSettings(settings SystemSettings) {
+	systemSettings.DemoCustomerID = settings.DemoCustomerID
+	systemSettings.TgToken = settings.TgToken
 }
 
 // GetProjectID reads the firebaseConfig_dev.json file and returns the projectId value

@@ -24,9 +24,10 @@ const (
 	customerEvent AduitLogType = "CustomerEvent"
 	systemEvent   AduitLogType = "SystemEvent"
 
-	EventNameLogin EventNameType = "LoginEvent"
-	PlaceOrder     EventNameType = "PlaceOrder"
-	WeeklyReport   EventNameType = "WeeklyReport"
+	EventNameLogin      EventNameType = "LoginEvent"
+	EventNameSystemInit EventNameType = "SystemInit"
+	PlaceOrder          EventNameType = "PlaceOrder"
+	WeeklyReport        EventNameType = "WeeklyReport"
 )
 
 type CustomerEventLog struct {
@@ -57,7 +58,7 @@ type systemEventLogDB struct {
 }
 
 func init() {
-	settings := common.GetEnvironmentSetting()
+	settings := common.GetFirebaseSetting()
 	var sa option.ClientOption
 	ctx := context.Background()
 	if common.IsFileExists(settings.FireBaseKeyFullPath) {
