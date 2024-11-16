@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/binance/binance-connector-go/handlers"
@@ -83,6 +84,14 @@ func NewClient(apiKey string, secretKey string, baseURL ...string) *Client {
 }
 
 func (c *Client) parseRequest(r *request, opts ...RequestOption) (err error) {
+
+	//如果不是api系列的request，要依request換掉endpoint
+	if !strings.HasPrefix(r.endpoint, "/api/") {
+		if strings.HasPrefix(r.endpoint, "/fapi/") {
+			c.BaseURL = "https://fapi.binance.com"
+		}
+	}
+
 	// set request options from user
 	for _, opt := range opts {
 		opt(r)
@@ -147,6 +156,7 @@ func (c *Client) callAPI(ctx context.Context, r *request, opts ...RequestOption)
 			return []byte{}, err
 		}
 	}
+
 	req, err := http.NewRequest(r.method, r.fullURL, r.body)
 	if err != nil {
 		return []byte{}, err
