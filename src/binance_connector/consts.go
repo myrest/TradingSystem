@@ -1,5 +1,5 @@
 package binance_connector
 
-const Name = "binance-connector-go"
+const Name = "binance-connector-go-rest"
 
-const Version = "0.7.0"
+const Version = "0.0.1"

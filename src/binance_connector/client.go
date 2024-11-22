@@ -89,6 +89,8 @@ func (c *Client) parseRequest(r *request, opts ...RequestOption) (err error) {
 	if !strings.HasPrefix(r.endpoint, "/api/") {
 		if strings.HasPrefix(r.endpoint, "/fapi/") {
 			c.BaseURL = "https://fapi.binance.com"
+		} else if strings.HasPrefix(r.endpoint, "/papi/") {
+			c.BaseURL = "https://papi.binance.com"
 		}
 	}
 
@@ -487,284 +489,6 @@ func (c *Client) NewMarginSmallLiabilityExchangeHistoryService() *MarginSmallLia
 	return &MarginSmallLiabilityExchangeHistoryService{c: c}
 }
 
-// Sub-Account Endpoints:
-func (c *Client) NewCreateSubAccountService() *CreateSubAccountService {
-	return &CreateSubAccountService{c: c}
-}
-
-func (c *Client) NewQuerySubAccountListService() *QuerySubAccountListService {
-	return &QuerySubAccountListService{c: c}
-}
-
-func (c *Client) NewQuerySubAccountSpotAssetTransferHistoryService() *QuerySubAccountSpotAssetTransferHistoryService {
-	return &QuerySubAccountSpotAssetTransferHistoryService{c: c}
-}
-
-func (c *Client) NewQuerySubAccountFuturesAssetTransferHistoryService() *QuerySubAccountFuturesAssetTransferHistoryService {
-	return &QuerySubAccountFuturesAssetTransferHistoryService{c: c}
-}
-
-func (c *Client) NewSubAccountFuturesAssetTransferService() *SubAccountFuturesAssetTransferService {
-	return &SubAccountFuturesAssetTransferService{c: c}
-}
-
-func (c *Client) NewQuerySubAccountAssetsService() *QuerySubAccountAssetsService {
-	return &QuerySubAccountAssetsService{c: c}
-}
-
-func (c *Client) NewQuerySubAccountSpotAssetsSummaryService() *QuerySubAccountSpotAssetsSummaryService {
-	return &QuerySubAccountSpotAssetsSummaryService{c: c}
-}
-
-func (c *Client) NewGetSubAccountDepositAddressService() *GetSubAccountDepositAddressService {
-	return &GetSubAccountDepositAddressService{c: c}
-}
-
-func (c *Client) NewGetSubAccountDepositHistoryService() *GetSubAccountDepositHistoryService {
-	return &GetSubAccountDepositHistoryService{c: c}
-}
-
-func (c *Client) NewGetSubAccountStatusService() *GetSubAccountStatusService {
-	return &GetSubAccountStatusService{c: c}
-}
-
-func (c *Client) NewEnableMarginForSubAccountService() *EnableMarginForSubAccountService {
-	return &EnableMarginForSubAccountService{c: c}
-}
-
-func (c *Client) NewGetDetailOnSubAccountMarginAccountService() *GetDetailOnSubAccountMarginAccountService {
-	return &GetDetailOnSubAccountMarginAccountService{c: c}
-}
-
-func (c *Client) NewGetSummaryOfSubAccountMarginAccountService() *GetSummaryOfSubAccountMarginAccountService {
-	return &GetSummaryOfSubAccountMarginAccountService{c: c}
-}
-
-func (c *Client) NewEnableFuturesForSubAccountService() *EnableFuturesForSubAccountService {
-	return &EnableFuturesForSubAccountService{c: c}
-}
-
-func (c *Client) NewGetDetailOnSubAccountFuturesAccountService() *GetDetailOnSubAccountFuturesAccountService {
-	return &GetDetailOnSubAccountFuturesAccountService{c: c}
-}
-
-func (c *Client) NewGetSummaryOfSubAccountFuturesAccountService() *GetSummaryOfSubAccountFuturesAccountService {
-	return &GetSummaryOfSubAccountFuturesAccountService{c: c}
-}
-
-func (c *Client) NewGetFuturesPositionRiskOfSubAccountService() *GetFuturesPositionRiskOfSubAccountService {
-	return &GetFuturesPositionRiskOfSubAccountService{c: c}
-}
-
-func (c *Client) NewFuturesTransferForSubAccountService() *FuturesTransferForSubAccountService {
-	return &FuturesTransferForSubAccountService{c: c}
-}
-
-func (c *Client) NewMarginTransferForSubAccountService() *MarginTransferForSubAccountService {
-	return &MarginTransferForSubAccountService{c: c}
-}
-
-func (c *Client) NewTransferToSubAccountOfSameMasterService() *TransferToSubAccountOfSameMasterService {
-	return &TransferToSubAccountOfSameMasterService{c: c}
-}
-
-func (c *Client) NewTransferToMasterService() *TransferToMasterService {
-	return &TransferToMasterService{c: c}
-}
-
-func (c *Client) NewSubAccountTransferHistoryService() *SubAccountTransferHistoryService {
-	return &SubAccountTransferHistoryService{c: c}
-}
-
-func (c *Client) NewUniversalTransferService() *UniversalTransferService {
-	return &UniversalTransferService{c: c}
-}
-
-func (c *Client) NewQueryUniversalTransferHistoryService() *QueryUniversalTransferHistoryService {
-	return &QueryUniversalTransferHistoryService{c: c}
-}
-
-func (c *Client) NewGetDetailOnSubAccountFuturesAccountV2Service() *GetDetailOnSubAccountFuturesAccountV2Service {
-	return &GetDetailOnSubAccountFuturesAccountV2Service{c: c}
-}
-
-func (c *Client) NewGetSummaryOfSubAccountFuturesAccountV2Service() *GetSummaryOfSubAccountFuturesAccountV2Service {
-	return &GetSummaryOfSubAccountFuturesAccountV2Service{c: c}
-}
-
-func (c *Client) NewGetFuturesPositionRiskOfSubAccountV2Service() *GetFuturesPositionRiskOfSubAccountV2Service {
-	return &GetFuturesPositionRiskOfSubAccountV2Service{c: c}
-}
-
-func (c *Client) NewEnableLeverageTokenForSubAccountService() *EnableLeverageTokenForSubAccountService {
-	return &EnableLeverageTokenForSubAccountService{c: c}
-}
-
-func (c *Client) NewGetIPRestrictionForSubAccountAPIKeyService() *GetIPRestrictionForSubAccountAPIKeyService {
-	return &GetIPRestrictionForSubAccountAPIKeyService{c: c}
-}
-
-func (c *Client) NewDeleteIPListForSubAccountAPIKeyService() *DeleteIPListForSubAccountAPIKeyService {
-	return &DeleteIPListForSubAccountAPIKeyService{c: c}
-}
-
-func (c *Client) NewUpdateIPRestrictionForSubAccountAPIKeyService() *UpdateIPRestrictionForSubAccountAPIKeyService {
-	return &UpdateIPRestrictionForSubAccountAPIKeyService{c: c}
-}
-
-func (c *Client) NewDepositAssetsIntoManagedSubAccountService() *DepositAssetsIntoTheManagedSubAccountService {
-	return &DepositAssetsIntoTheManagedSubAccountService{c: c}
-}
-
-func (c *Client) NewQueryManagedSubAccountAssetDetailsService() *QueryManagedSubAccountAssetDetailsService {
-	return &QueryManagedSubAccountAssetDetailsService{c: c}
-}
-
-func (c *Client) NewWithdrawAssetsFromTheManagedSubAccountService() *WithdrawAssetsFromTheManagedSubAccountService {
-	return &WithdrawAssetsFromTheManagedSubAccountService{c: c}
-}
-
-func (c *Client) NewQueryManagedSubAccountSnapshotService() *QueryManagedSubAccountSnapshotService {
-	return &QueryManagedSubAccountSnapshotService{c: c}
-}
-
-func (c *Client) NewQueryManagedSubAccountTransferLogService() *QueryManagedSubAccountTransferLogService {
-	return &QueryManagedSubAccountTransferLogService{c: c}
-}
-
-func (c *Client) NewQueryManagedSubAccountFuturesAssetDetailsService() *QueryManagedSubAccountFuturesAssetDetailsService {
-	return &QueryManagedSubAccountFuturesAssetDetailsService{c: c}
-}
-
-func (c *Client) NewQueryManagedSubAccountMarginAssetDetailsService() *QueryManagedSubAccountMarginAssetDetailsService {
-	return &QueryManagedSubAccountMarginAssetDetailsService{c: c}
-}
-
-func (c *Client) NewQueryManagedSubAccountTransferLogForTradingTeamService() *QueryManagedSubAccountTransferLogForTradingTeamService {
-	return &QueryManagedSubAccountTransferLogForTradingTeamService{c: c}
-}
-
-func (c *Client) NewQuerySubAccountAssetsForMasterAccountService() *QuerySubAccountAssetsForMasterAccountService {
-	return &QuerySubAccountAssetsForMasterAccountService{c: c}
-}
-
-func (c *Client) NewQueryManagedSubAccountList() *QueryManagedSubAccountList {
-	return &QueryManagedSubAccountList{c: c}
-}
-
-func (c *Client) NewQuerySubAccountTransactionTatistics() *QuerySubAccountTransactionTatistics {
-	return &QuerySubAccountTransactionTatistics{c: c}
-}
-
-func (c *Client) NewGetManagedSubAccountDepositAddressService() *GetManagedSubAccountDepositAddressService {
-	return &GetManagedSubAccountDepositAddressService{c: c}
-}
-
-// Wallet Endpoints:
-func (c *Client) NewGetSystemStatusService() *GetSystemStatusService {
-	return &GetSystemStatusService{c: c}
-}
-
-func (c *Client) NewGetAllCoinsInfoService() *GetAllCoinsInfoService {
-	return &GetAllCoinsInfoService{c: c}
-}
-
-func (c *Client) NewGetAccountSnapshotService() *GetAccountSnapshotService {
-	return &GetAccountSnapshotService{c: c}
-}
-
-func (c *Client) NewDisableFastWithdrawSwitchService() *DisableFastWithdrawSwitchService {
-	return &DisableFastWithdrawSwitchService{c: c}
-}
-
-func (c *Client) NewEnableFastWithdrawSwitchService() *EnableFastWithdrawSwitchService {
-	return &EnableFastWithdrawSwitchService{c: c}
-}
-
-func (c *Client) NewWithdrawService() *WithdrawService {
-	return &WithdrawService{c: c}
-}
-
-func (c *Client) NewDepositHistoryService() *DepositHistoryService {
-	return &DepositHistoryService{c: c}
-}
-
-func (c *Client) NewWithdrawHistoryService() *WithdrawHistoryService {
-	return &WithdrawHistoryService{c: c}
-}
-
-func (c *Client) NewDepositAddressService() *DepositAddressService {
-	return &DepositAddressService{c: c}
-}
-
-func (c *Client) NewAccountStatusService() *AccountStatusService {
-	return &AccountStatusService{c: c}
-}
-
-func (c *Client) NewAccountApiTradingStatusService() *AccountApiTradingStatusService {
-	return &AccountApiTradingStatusService{c: c}
-}
-
-func (c *Client) NewDustLogService() *DustLogService {
-	return &DustLogService{c: c}
-}
-
-func (c *Client) NewAssetDetailService() *AssetDetailService {
-	return &AssetDetailService{c: c}
-}
-
-func (c *Client) NewDustTransferService() *DustTransferService {
-	return &DustTransferService{c: c}
-}
-
-func (c *Client) NewAssetDividendRecordService() *AssetDividendRecordService {
-	return &AssetDividendRecordService{c: c}
-}
-
-func (c *Client) NewAssetDetailV2Service() *AssetDetailV2Service {
-	return &AssetDetailV2Service{c: c}
-}
-
-func (c *Client) NewTradeFeeService() *TradeFeeService {
-	return &TradeFeeService{c: c}
-}
-
-func (c *Client) NewUserUniversalTransferService() *UserUniversalTransferService {
-	return &UserUniversalTransferService{c: c}
-}
-
-func (c *Client) NewUserUniversalTransferHistoryService() *UserUniversalTransferHistoryService {
-	return &UserUniversalTransferHistoryService{c: c}
-}
-
-func (c *Client) NewFundingWalletService() *FundingWalletService {
-	return &FundingWalletService{c: c}
-}
-
-func (c *Client) NewUserAssetService() *UserAssetService {
-	return &UserAssetService{c: c}
-}
-
-func (c *Client) NewBUSDConvertService() *BUSDConvertService {
-	return &BUSDConvertService{c: c}
-}
-
-func (c *Client) NewBUSDConvertHistoryService() *BUSDConvertHistoryService {
-	return &BUSDConvertHistoryService{c: c}
-}
-
-func (c *Client) NewCloudMiningPaymentHistoryService() *CloudMiningPaymentHistoryService {
-	return &CloudMiningPaymentHistoryService{c: c}
-}
-
-func (c *Client) NewAPIKeyPermissionService() *APIKeyPermissionService {
-	return &APIKeyPermissionService{c: c}
-}
-
-func (c *Client) NewAutoConvertStableCoinService() *AutoConvertStableCoinService {
-	return &AutoConvertStableCoinService{c: c}
-}
-
 // User Data Streams:
 func (c *Client) NewCreateListenKeyService() *CreateListenKey {
 	return &CreateListenKey{c: c}
@@ -778,10 +502,22 @@ func (c *Client) NewCloseUserStream() *CloseUserStream {
 	return &CloseUserStream{c: c}
 }
 
-func (c *Client) NewGetFiatDepositWithdrawHistoryService() *GetFiatDepositWithdrawHistoryService {
-	return &GetFiatDepositWithdrawHistoryService{c: c}
+// 新增功能
+func (c *Client) NewGetCurrentOpenOrderService() *GetCurrentOpenOrderService {
+	return &GetCurrentOpenOrderService{c: c}
 }
 
-func (c *Client) NewGetFiatPaymentHistoryService() *GetFiatPaymentHistoryService {
-	return &GetFiatPaymentHistoryService{c: c}
+func (c *Client) NewGetAllOpenOrderService() *GetAllOpenOrderService {
+	return &GetAllOpenOrderService{c: c}
+}
+
+// 新增統一帳戶功能
+func (c *Client) GetUMPositionService() *GetUMPositionService {
+	return &GetUMPositionService{c: c}
+}
+func (c *Client) GetUMAccountAssetService() *GetUMAccountAssetService {
+	return &GetUMAccountAssetService{c: c}
+}
+func (c *Client) GetUMAccountBalanceService() *GetUMAccountBalanceService {
+	return &GetUMAccountBalanceService{c: c}
 }

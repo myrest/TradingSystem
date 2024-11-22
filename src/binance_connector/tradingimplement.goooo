@@ -25,7 +25,7 @@ func (client *Client) CreateOrder(c context.Context, tv models.TvSiginalData, Cu
 	var isTowWayPositionOnHand = false //是否雙向持倉
 
 	//查出目前持倉情況
-	positions, err := client.NewGetOpenPositionsService().Symbol(tv.TVData.Symbol).Do(c)
+	positions, err := client.NewGetAllOpenOrderService().Symbol(tv.TVData.Symbol).Do(c)
 	if err != nil {
 		return placeOrderLog, isTowWayPositionOnHand, AlertMessageModel, err
 	}
@@ -36,11 +36,12 @@ func (client *Client) CreateOrder(c context.Context, tv models.TvSiginalData, Cu
 	var totalFee float64              //總雜支，包含資金費率、手續費
 
 	//這裏假設由系統來下單，應該只會持倉固定方向
-	for i, position := range *positions {
+	for i, position := range positions {
 		if strings.ToUpper(position.PositionSide) == string(tv.PositionSideType) {
-			amount := common.Decimal(position.AvailableAmt)
+			amount := common.Decimal(position.ExecutedQty)
 			price := common.Decimal(position.AvgPrice)
-			fee := common.Decimal(position.RealisedProfit)
+			//fee := common.Decimal(position.RealisedProfit)
+			fee := common.Decimal(0) //要查出來手續費是多少
 
 			totalAmount += amount
 			totalPrice += price * amount
@@ -67,7 +68,7 @@ func (client *Client) CreateOrder(c context.Context, tv models.TvSiginalData, Cu
 	placeAmount := tv.TVData.Contracts * Customer.Amount * Customer.Leverage / 1000
 	if Customer.Simulation {
 		//模擬盤固定使用1000U計算
-		placeAmount = tv.TVData.Contracts * 1000 / 100
+		placeAmount = tv.TVData.Contracts * 100 / 100
 	}
 
 	if (tv.PlaceOrderType.Side == models.BuySideType && tv.PlaceOrderType.PositionSideType == models.ShortPositionSideType) ||
