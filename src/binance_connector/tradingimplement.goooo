@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"math"
 	"strconv"
 	"strings"
 )
@@ -25,7 +26,7 @@ func (client *Client) CreateOrder(c context.Context, tv models.TvSiginalData, Cu
 	var isTowWayPositionOnHand = false //是否雙向持倉
 
 	//查出目前持倉情況
-	positions, err := client.NewGetAllOpenOrderService().Symbol(tv.TVData.Symbol).Do(c)
+	positions, err := client.GetUMPositionRiskService().Symbol(tv.TVData.Symbol).Do(c)
 	if err != nil {
 		return placeOrderLog, isTowWayPositionOnHand, AlertMessageModel, err
 	}
@@ -38,10 +39,9 @@ func (client *Client) CreateOrder(c context.Context, tv models.TvSiginalData, Cu
 	//這裏假設由系統來下單，應該只會持倉固定方向
 	for i, position := range positions {
 		if strings.ToUpper(position.PositionSide) == string(tv.PositionSideType) {
-			amount := common.Decimal(position.ExecutedQty)
-			price := common.Decimal(position.AvgPrice)
-			//fee := common.Decimal(position.RealisedProfit)
-			fee := common.Decimal(0) //要查出來手續費是多少
+			amount := math.Abs(common.Decimal(position.PositionAmt))
+			price := common.Decimal(position.EntryPrice)
+			fee := common.Decimal(0) //todo: 要查出來手續費是多少，可以先查出手續費，再依成交額算手續費
 
 			totalAmount += amount
 			totalPrice += price * amount
@@ -88,28 +88,28 @@ func (client *Client) CreateOrder(c context.Context, tv models.TvSiginalData, Cu
 		return placeOrderLog, isTowWayPositionOnHand, AlertMessageModel, fmt.Errorf("下單數量為 0。")
 	}
 
-	//下單
+	//下市價單
 	//PositionSideType及SideType要轉型，大小寫必需相同
-	order, err := client.NewCreateOrderService().
-		PositionSide(PositionSideType(tv.PlaceOrderType.PositionSideType)).
+	order, err := client.GetUMNewOrderService().
+		PositionSide(PositionSide(tv.PlaceOrderType.PositionSideType)).
 		Symbol(tv.TVData.Symbol).
 		Quantity(placeAmount).
-		Type(MarketOrderType).
-		Side(SideType(tv.PlaceOrderType.Side)).
+		Type(MarketOrder).
+		Side(OrderSide(tv.PlaceOrderType.Side)).
 		Do(c)
 
 	//如果下單有問題，就return
 	if err != nil {
 		return placeOrderLog, isTowWayPositionOnHand, AlertMessageModel, err
 	}
-	log.Printf("Customer:%s %v order created: %+v", Customer.CustomerID, MarketOrderType, order)
+	log.Printf("Customer:%s %v order created: %+v", Customer.CustomerID, MarketOrder, order)
 
 	//寫入訂單編號
 	placeOrderLog.Result = strconv.FormatInt((*order).OrderId, 10)
 	placeOrderLog.Amount = placeAmount
 
 	//依訂單編號，取出下單結果，用來記錄amount及price
-	placedOrder, err := client.NewGetOrderService().
+	placedOrder, err := client.GetUMOrderService().
 		Symbol(tv.TVData.Symbol).
 		OrderId(order.OrderId).
 		Do(c)
@@ -117,7 +117,7 @@ func (client *Client) CreateOrder(c context.Context, tv models.TvSiginalData, Cu
 	//無法取得下單的資料
 	if (err != nil) || (placedOrder == nil) {
 		placeOrderLog.Result = placeOrderLog.Result + "\nGet placed order failed:" + err.Error()
-		placedOrder = &GetOrderResponse{}
+		placedOrder = &UMOrderResponse{}
 	}
 
 	profit := common.Decimal(placedOrder.Profit)

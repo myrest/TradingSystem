@@ -256,7 +256,7 @@ type GetUMNewOrderService struct {
 	timeInForce      TimeInForce
 }
 
-type NewUMOrderResponse struct {
+type UMNewOrderResponse struct {
 	ClientOrderId           string `json:"clientOrderId"`
 	CumQty                  string `json:"cumQty"`
 	CumQuote                string `json:"cumQuote"`
@@ -321,7 +321,7 @@ func (s *GetUMNewOrderService) TimeInForce(timeInForce TimeInForce) *GetUMNewOrd
 	return s
 }
 
-func (s *GetUMNewOrderService) Do(ctx context.Context, opts ...RequestOption) (res []*NewUMOrderResponse, err error) {
+func (s *GetUMNewOrderService) Do(ctx context.Context, opts ...RequestOption) (res *UMNewOrderResponse, err error) {
 	s.c.Debug = true
 	r := &request{
 		method:   http.MethodPost,
@@ -359,7 +359,174 @@ func (s *GetUMNewOrderService) Do(ctx context.Context, opts ...RequestOption) (r
 	if err != nil {
 		return nil, err
 	}
-	res = make([]*NewUMOrderResponse, 0)
+	res = &UMNewOrderResponse{}
+	err = json.Unmarshal(data, &res)
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
+// endregion
+
+// region 依訂單編號取得訂單資料
+// https://developers.binance.com/docs/derivatives/portfolio-margin/trade/Query-UM-Order
+type GetUMOrderService struct {
+	c       *Client
+	symbol  *string
+	orderid *int64
+}
+
+type UMOrderResponse struct {
+	AvgPrice                string `json:"avgPrice"`
+	ClientOrderId           string `json:"clientOrderId"`
+	CumQuote                string `json:"cumQuote"`
+	ExecutedQty             string `json:"executedQty"`
+	OrderId                 int64  `json:"orderId"`
+	OrigQty                 string `json:"origQty"`
+	OrigType                string `json:"origType"`
+	Price                   string `json:"price"`
+	ReduceOnly              bool   `json:"reduceOnly"`
+	Side                    string `json:"side"`
+	PositionSide            string `json:"positionSide"`
+	Status                  string `json:"status"`
+	Symbol                  string `json:"symbol"`
+	Time                    int64  `json:"time"`
+	TimeInForce             string `json:"timeInForce"`
+	Type                    string `json:"type"`
+	UpdateTime              int64  `json:"updateTime"`
+	SelfTradePreventionMode string `json:"selfTradePreventionMode"`
+	GoodTillDate            int64  `json:"goodTillDate"`
+	PriceMatch              string `json:"priceMatch"`
+}
+
+func (s *GetUMOrderService) Symbol(symbol string) *GetUMOrderService {
+	s.symbol = &symbol
+	return s
+}
+
+func (s *GetUMOrderService) OrderId(orderid int64) *GetUMOrderService {
+	s.orderid = &orderid
+	return s
+}
+
+func (s *GetUMOrderService) Do(ctx context.Context, opts ...RequestOption) (res *UMOrderResponse, err error) {
+	s.c.Debug = true
+	r := &request{
+		method:   http.MethodGet,
+		endpoint: "/papi/v1/um/order",
+		secType:  secTypeSigned,
+	}
+	if s.symbol != nil {
+		r.setParam("symbol", *s.symbol)
+	}
+	if s.orderid != nil {
+		r.setParam("orderId", *s.orderid)
+	}
+	data, err := s.c.callAPI(ctx, r, opts...)
+	if err != nil {
+		return nil, err
+	}
+	res = &UMOrderResponse{}
+	err = json.Unmarshal(data, &res)
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
+// endregion
+
+// region 調整槓桿
+type GetUMLeverageService struct {
+	c        *Client
+	symbol   *string
+	leverage *int64 //target initial leverage: int from 1 to 125
+}
+
+type UMLeverageResponse struct {
+	Leverage         int64  `json:"leverage"`
+	MaxNotionalValue string `json:"maxNotionalValue"`
+	Symbol           string `json:"symbol"`
+}
+
+func (s *GetUMLeverageService) Symbol(symbol string) *GetUMLeverageService {
+	s.symbol = &symbol
+	return s
+}
+
+func (s *GetUMLeverageService) Leverage(leverage int64) *GetUMLeverageService {
+	s.leverage = &leverage
+	return s
+}
+
+func (s *GetUMLeverageService) Do(ctx context.Context, opts ...RequestOption) (res *UMLeverageResponse, err error) {
+	s.c.Debug = true
+	r := &request{
+		method:   http.MethodPost,
+		endpoint: "/papi/v1/um/leverage",
+		secType:  secTypeSigned,
+	}
+	if s.symbol != nil {
+		r.setParam("symbol", *s.symbol)
+	}
+	if s.leverage != nil {
+		r.setParam("leverage", *s.leverage)
+	}
+	data, err := s.c.callAPI(ctx, r, opts...)
+	if err != nil {
+		return nil, err
+	}
+	res = &UMLeverageResponse{}
+	err = json.Unmarshal(data, &res)
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
+// endregion
+
+// region 取得目前持倉風險，用來判斷是否雙向持仓
+type GetUMPositionRiskService struct {
+	c      *Client
+	symbol string
+}
+
+type UMPositionRiskResponse struct {
+	EntryPrice       string `json:"entryPrice"`       // 开仓均价
+	Leverage         string `json:"leverage"`         // 当前杠杆倍数
+	MarkPrice        string `json:"markPrice"`        // 当前标记价格
+	MaxNotionalValue string `json:"maxNotionalValue"` // 当前杠杆倍数允许的名义价值上限
+	PositionAmt      string `json:"positionAmt"`      // 头寸数量，符号代表多空方向
+	Notional         string `json:"notional"`         // 名义价值
+	Symbol           string `json:"symbol"`           // 交易对
+	UnRealizedProfit string `json:"unRealizedProfit"` // 持仓未实现盈亏
+	LiquidationPrice string `json:"liquidationPrice"` // 清算价格
+	PositionSide     string `json:"positionSide"`     // 持仓方向
+	UpdateTime       int64  `json:"updateTime"`       // 更新时间
+}
+
+func (s *GetUMPositionRiskService) Symbol(symbol string) *GetUMPositionRiskService {
+	s.symbol = symbol
+	return s
+}
+
+func (s *GetUMPositionRiskService) Do(ctx context.Context, opts ...RequestOption) (res []*UMPositionRiskResponse, err error) {
+	s.c.Debug = true
+	r := &request{
+		method:   http.MethodGet,
+		endpoint: "/papi/v1/um/positionRisk",
+		secType:  secTypeSigned,
+	}
+	if s.symbol != "" {
+		r.setParam("symbol", s.symbol)
+	}
+	data, err := s.c.callAPI(ctx, r, opts...)
+	if err != nil {
+		return nil, err
+	}
+	res = make([]*UMPositionRiskResponse, 0)
 	err = json.Unmarshal(data, &res)
 	if err != nil {
 		return nil, err

@@ -502,15 +502,6 @@ func (c *Client) NewCloseUserStream() *CloseUserStream {
 	return &CloseUserStream{c: c}
 }
 
-// 新增功能
-func (c *Client) NewGetCurrentOpenOrderService() *GetCurrentOpenOrderService {
-	return &GetCurrentOpenOrderService{c: c}
-}
-
-func (c *Client) NewGetAllOpenOrderService() *GetAllOpenOrderService {
-	return &GetAllOpenOrderService{c: c}
-}
-
 // 新增統一帳戶功能
 func (c *Client) GetUMPositionService() *GetUMPositionService {
 	return &GetUMPositionService{c: c}
@@ -520,4 +511,16 @@ func (c *Client) GetUMAccountAssetService() *GetUMAccountAssetService {
 }
 func (c *Client) GetUMAccountBalanceService() *GetUMAccountBalanceService {
 	return &GetUMAccountBalanceService{c: c}
+}
+
+func (c *Client) GetUMPositionRiskService() *GetUMPositionRiskService {
+	return &GetUMPositionRiskService{c: c}
+}
+
+func (c *Client) GetUMNewOrderService() *GetUMNewOrderService {
+	return &GetUMNewOrderService{c: c}
+}
+
+func (c *Client) GetUMOrderService() *GetUMOrderService {
+	return &GetUMOrderService{c: c}
 }
