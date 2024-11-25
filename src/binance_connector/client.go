@@ -524,3 +524,7 @@ func (c *Client) GetUMNewOrderService() *GetUMNewOrderService {
 func (c *Client) GetUMOrderService() *GetUMOrderService {
 	return &GetUMOrderService{c: c}
 }
+
+func (c *Client) GetUMUserTradeService() *GetUMUserTradeService {
+	return &GetUMUserTradeService{c: c}
+}

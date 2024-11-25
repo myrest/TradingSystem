@@ -535,3 +535,91 @@ func (s *GetUMPositionRiskService) Do(ctx context.Context, opts ...RequestOption
 }
 
 // endregion
+
+// region 取得目前訂單成交盈虧資料
+type GetUMUserTradeService struct {
+	c         *Client
+	symbol    string
+	fromId    int64
+	startTime int64
+	endTime   int64
+	limit     int64
+}
+
+type UMUserTradeResponse struct {
+	Symbol          string `json:"symbol"`
+	ID              int64  `json:"id"`
+	OrderID         int64  `json:"orderId"`
+	Side            string `json:"side"`
+	Price           string `json:"price"`
+	Qty             string `json:"qty"`
+	RealizedPnl     string `json:"realizedPnl"`
+	QuoteQty        string `json:"quoteQty"`
+	Commission      string `json:"commission"`
+	CommissionAsset string `json:"commissionAsset"`
+	Time            int64  `json:"time"`
+	Buyer           bool   `json:"buyer"`
+	Maker           bool   `json:"maker"`
+	PositionSide    string `json:"positionSide"`
+}
+
+func (s *GetUMUserTradeService) Symbol(symbol string) *GetUMUserTradeService {
+	s.symbol = symbol
+	return s
+}
+
+func (s *GetUMUserTradeService) FromId(fromId int64) *GetUMUserTradeService {
+	s.fromId = fromId
+	return s
+}
+
+func (s *GetUMUserTradeService) StartTime(startTime int64) *GetUMUserTradeService {
+	s.startTime = startTime
+	return s
+}
+
+func (s *GetUMUserTradeService) EndTime(endTime int64) *GetUMUserTradeService {
+	s.endTime = endTime
+	return s
+}
+
+func (s *GetUMUserTradeService) Limit(limit int64) *GetUMUserTradeService {
+	s.limit = limit
+	return s
+}
+
+func (s *GetUMUserTradeService) Do(ctx context.Context, opts ...RequestOption) (res []*UMUserTradeResponse, err error) {
+	s.c.Debug = true
+	r := &request{
+		method:   http.MethodGet,
+		endpoint: "/papi/v1/um/userTrades",
+		secType:  secTypeSigned,
+	}
+	if s.symbol != "" {
+		r.setParam("symbol", s.symbol)
+	}
+	if s.fromId != 0 {
+		r.setParam("fromId", s.fromId)
+	}
+	if s.startTime != 0 {
+		r.setParam("startTime", s.startTime)
+	}
+	if s.endTime != 0 {
+		r.setParam("endTime", s.endTime)
+	}
+	if s.limit != 0 {
+		r.setParam("limit", s.limit)
+	}
+	data, err := s.c.callAPI(ctx, r, opts...)
+	if err != nil {
+		return nil, err
+	}
+	res = make([]*UMUserTradeResponse, 0)
+	err = json.Unmarshal(data, &res)
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
+// endregion

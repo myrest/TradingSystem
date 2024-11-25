@@ -6,3 +6,4 @@ src/firebaseConfig*
 firebaseConfig_dev.json
 src/TmpCache/*
 src/note.txt
+.env
