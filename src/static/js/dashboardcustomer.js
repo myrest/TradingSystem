@@ -15,6 +15,26 @@ function toggleCustomerSettings() {
 
 //切換實盤、模擬盤
 function toggleSubscribeType(obj) {
+    //確認交易所
+    const ExchangRadios = document.getElementsByName('ExchangeSystemName');
+    let exchangesystem = '';
+    for (const radio of ExchangRadios) {
+        if (radio.checked) {
+            exchangesystem = radio.value;
+            break;
+        }
+    }
+
+    if (exchangesystem.startsWith("Binance")) {
+        obj.classList.remove("disabled");
+        obj.innerText = "實盤"
+        document.querySelector('#amountSetting').style.visibility = 'visible'
+        var elem = document.getElementById("SubscribeType");
+        elem.classList.add("SysDisabled");
+        elem.removeAttribute("onclick");
+        return
+    }
+
     if (obj.innerText == "實盤") {
         obj.innerText = "模擬"
         obj.classList.add("disabled");

@@ -63,6 +63,13 @@ func ShowDashboardPage(c *gin.Context) {
 	if customer.ExchangeSystemName == "" {
 		customer.ExchangeSystemName = models.ExchangeBingx
 	}
+
+	//Binance只有實盤
+	if customer.ExchangeSystemName == models.ExchangeBinance_N ||
+		customer.ExchangeSystemName == models.ExchangeBinance_P {
+		customer.AutoSubscribReal = true
+	}
+
 	if err == nil {
 		c.HTML(http.StatusOK, "dashboard.html", gin.H{
 			"Name":                name,
@@ -105,6 +112,7 @@ func getcustomerbalance(c *gin.Context, customerid string) {
 		freeamount, err = services.GetAccountBalance(c, dbCustomer.APIKey, dbCustomer.SecretKey, dbCustomer.ExchangeSystemName)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
 		}
 	}
 	errmsg := ""
