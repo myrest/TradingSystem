@@ -81,3 +81,8 @@
             <p id="dataModalContent"></p>
         </div>
     </div>
+
+    <script>
+        var isRealonly = '{{ if eq .ExchangeSystemName "Binance_Normal" }}1{{ end }}{{ if eq .ExchangeSystemName "Binance_Portfolio" }}1{{ end }}';
+    </script>
+    

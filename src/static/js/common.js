@@ -54,6 +54,12 @@ function saveKeys() {
                 alert('Error updating customer:', error);
             });
         }
+        //如果有換交易所，要reload page.
+        isBinalance = isRealonly == '1';
+        if ((isBinalance && !exchangesystem.startsWith("Binance")) ||
+            (!isBinalance && exchangesystem.startsWith("Binance"))) {
+            window.location.reload();
+        }
     }).catch(error => {
         alert('Error:', error);
     });
