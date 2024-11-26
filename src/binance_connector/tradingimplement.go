@@ -139,3 +139,16 @@ func (client *Client) CreateOrder(c context.Context, tv models.TvSiginalData, Cu
 
 	return placeOrderLog, isTowWayPositionOnHand, AlertMessageModel, nil
 }
+
+func (Client *Client) GetBalance(ctx context.Context) (float64, error) {
+	result, err := Client.GetUMAccountBalanceService().Asset("USDT").DoSingle(ctx)
+	if err != nil {
+		return 0, err
+	}
+
+	if (result == nil) || (result.UMWalletBalance == "") {
+		return 0, fmt.Errorf("帳戶無USDT餘額。")
+	}
+
+	return strconv.ParseFloat(result.UMWalletBalance, 64)
+}

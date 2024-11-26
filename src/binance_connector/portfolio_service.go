@@ -218,8 +218,7 @@ func (s *GetUMAccountBalanceService) Do(ctx context.Context, opts ...RequestOpti
 	r := &request{
 		method:   http.MethodGet,
 		endpoint: "/papi/v1/balance",
-		//endpoint: "/api/v3/account",
-		secType: secTypeSigned,
+		secType:  secTypeSigned,
 	}
 
 	if s.asset != "" {
@@ -231,6 +230,30 @@ func (s *GetUMAccountBalanceService) Do(ctx context.Context, opts ...RequestOpti
 		return nil, err
 	}
 	res = make([]*UMAccountBalanceResponse, 0)
+	err = json.Unmarshal(data, &res)
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
+func (s *GetUMAccountBalanceService) DoSingle(ctx context.Context, opts ...RequestOption) (res *UMAccountBalanceResponse, err error) {
+	s.c.Debug = true
+	r := &request{
+		method:   http.MethodGet,
+		endpoint: "/papi/v1/balance",
+		secType:  secTypeSigned,
+	}
+
+	if s.asset != "" {
+		r.setParam("asset", s.asset)
+	}
+
+	data, err := s.c.callAPI(ctx, r, opts...)
+	if err != nil {
+		return nil, err
+	}
+	res = &UMAccountBalanceResponse{}
 	err = json.Unmarshal(data, &res)
 	if err != nil {
 		return nil, err

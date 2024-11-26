@@ -1,16 +1,15 @@
 package services
 
 import (
-	"TradingSystem/src/bingx"
+	"TradingSystem/src/models"
 	"context"
-	"strconv"
 )
 
-func GetAccountBalance(APIkey, SecretKey string) (float64, error) {
-	client := bingx.NewClient(APIkey, SecretKey, false)
-	res, err := client.NewGetBalanceService().Do(context.Background())
+func GetAccountBalance(c context.Context, APIkey, SecretKey string, ExchangeName models.ExchangeSystem) (float64, error) {
+	client := GetTradingClient(APIkey, SecretKey, false, ExchangeName)
+	res, err := client.GetBalance(c)
 	if err != nil {
 		return 0, err
 	}
-	return strconv.ParseFloat((*res).Equity, 64)
+	return res, nil
 }

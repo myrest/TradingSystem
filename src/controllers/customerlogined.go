@@ -59,6 +59,10 @@ func ShowDashboardPage(c *gin.Context) {
 	//情境2,3
 
 	customer, err := services.GetCustomer(c, SubCustomerID)
+	//為了向下相容
+	if customer.ExchangeSystemName == "" {
+		customer.ExchangeSystemName = models.ExchangeBingx
+	}
 	if err == nil {
 		c.HTML(http.StatusOK, "dashboard.html", gin.H{
 			"Name":                name,
@@ -98,7 +102,7 @@ func getcustomerbalance(c *gin.Context, customerid string) {
 	}
 	//有key，啟用時要檢查餘額
 	if dbCustomer.APIKey != "" && dbCustomer.SecretKey != "" {
-		freeamount, err = services.GetAccountBalance(dbCustomer.APIKey, dbCustomer.SecretKey)
+		freeamount, err = services.GetAccountBalance(c, dbCustomer.APIKey, dbCustomer.SecretKey, dbCustomer.ExchangeSystemName)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		}

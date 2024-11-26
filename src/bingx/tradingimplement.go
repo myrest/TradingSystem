@@ -145,3 +145,11 @@ func (client *Client) CreateOrder(c context.Context, tv models.TvSiginalData, Cu
 
 	return placeOrderLog, isTowWayPositionOnHand, AlertMessageModel, nil
 }
+
+func (Client *Client) GetBalance(ctx context.Context) (float64, error) {
+	result, err := Client.NewGetBalanceService().Do(ctx)
+	if err != nil {
+		return 0, err
+	}
+	return strconv.ParseFloat(result.Equity, 64)
+}
