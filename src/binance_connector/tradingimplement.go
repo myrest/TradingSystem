@@ -152,3 +152,31 @@ func (Client *Client) GetBalance(ctx context.Context) (float64, error) {
 
 	return strconv.ParseFloat(result.UMWalletBalance, 64)
 }
+
+// 要改槓桿及改成雙向持倉
+func (Client *Client) UpdateLeverage(ctx context.Context, symbol string, leverage int64) error {
+	//改多空槓桿
+	_, err := Client.GetUMLeverageService().
+		Symbol(common.FormatSymbol(symbol, false)).
+		Leverage(leverage).
+		Do(ctx)
+	if err != nil {
+		return err
+	}
+
+	//修改成雙向持倉
+	positionsetting, err := Client.GetUMPositionService().Do(ctx)
+
+	if (err != nil) || (positionsetting == nil) {
+		return err
+	}
+
+	if positionsetting.DualSidePosition {
+		//己是雙向持倉，不用改
+		return nil
+	}
+
+	_, err = Client.GetUMPositionService().DualSidePosition("true").
+		DoUpdate(ctx)
+	return err
+}

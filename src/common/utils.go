@@ -81,8 +81,16 @@ func GenerateRandomString(length int) string {
 }
 
 // Convert "USDT.P" to "-USDT"
-func FormatSymbol(symbol string) string {
-	return regexp.MustCompile(`USDT\.P`).ReplaceAllString(symbol, "-USDT")
+func FormatSymbol(symbol string, DashFlag ...bool) string {
+	addDash := true
+	if len(DashFlag) > 0 {
+		addDash = DashFlag[0]
+	}
+	if addDash {
+		return regexp.MustCompile(`USDT\.P`).ReplaceAllString(symbol, "-USDT")
+	} else {
+		return regexp.MustCompile(`USDT\.P`).ReplaceAllString(symbol, "USDT")
+	}
 }
 
 func IsFileExists(filePath string) bool {

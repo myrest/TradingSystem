@@ -153,3 +153,33 @@ func (Client *Client) GetBalance(ctx context.Context) (float64, error) {
 	}
 	return strconv.ParseFloat(result.Equity, 64)
 }
+
+// 要改槓桿及改成雙向持倉
+func (Client *Client) UpdateLeverage(ctx context.Context, symbol string, leverage int64) error {
+	//改多單槓桿
+	_, err := Client.NewSetTradService().
+		Symbol(common.FormatSymbol(symbol)).
+		PositionSide(LongPositionSideType).
+		Leverage(leverage).
+		Do(ctx)
+	if err != nil {
+		return err
+	}
+
+	_, err = Client.NewSetTradService().
+		Symbol(common.FormatSymbol(symbol)).
+		PositionSide(ShortPositionSideType).
+		Leverage(leverage).
+		Do(ctx)
+	if err != nil {
+		return err
+	}
+	_, err = Client.NewSetMarginTypeService().
+		Symbol(common.FormatSymbol(symbol)).
+		Margin(MarginCrossed).
+		Do(ctx)
+	if err != nil {
+		return err
+	}
+	return nil
+}

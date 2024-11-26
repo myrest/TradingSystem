@@ -13,3 +13,8 @@ func GetAccountBalance(c context.Context, APIkey, SecretKey string, ExchangeName
 	}
 	return res, nil
 }
+
+func UpdateLeverage(c context.Context, APIkey, SecretKey string, ExchangeName models.ExchangeSystem, Symbol string, Leverage int64) error {
+	client := GetTradingClient(APIkey, SecretKey, false, ExchangeName)
+	return client.UpdateLeverage(c, Symbol, Leverage)
+}
