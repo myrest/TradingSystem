@@ -63,7 +63,7 @@ func preProcessPlaceOrder(c *gin.Context, WebhookData models.TvWebhookData) erro
 		go func(customer models.CustomerCurrencySymboWithCustomer) {
 			defer wg.Done()
 			//todo:要依客戶的交易所來判斷
-			client := bingx.NewClient(customer.APIKey, customer.SecretKey, customer.Simulation)
+			client := services.GetTradingClient(customer.APIKey, customer.SecretKey, customer.Simulation, customer.ExchangeSystemName)
 			processPlaceOrder(client, customer, tvData, TvWebHookLog, c)
 		}(customerList[i])
 	}
@@ -79,6 +79,7 @@ func preProcessPlaceOrder(c *gin.Context, WebhookData models.TvWebhookData) erro
 func processPlaceOrder(client strategyinterface.TradingClient, Customer models.CustomerCurrencySymboWithCustomer, tv models.TvSiginalData, TvWebHookLog string, c *gin.Context) {
 	placeOrderLog, isTowWayPositionOnHand, AlertMessageModel, err := client.CreateOrder(c, tv, Customer)
 	placeOrderLog.WebHookRefID = TvWebHookLog
+	placeOrderLog.Symbol = tv.Symbol //這裏要改回來成有"-"，報表才找得到
 	if err != nil {
 		placeOrderLog.Result = placeOrderLog.Result + "\nPlace order get exception:" + err.Error()
 		services.SystemEventLog{

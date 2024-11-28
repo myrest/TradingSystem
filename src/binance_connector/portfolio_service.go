@@ -96,7 +96,7 @@ type AccountAssetResponse struct {
 }
 
 func (s *GetUMAccountAssetService) Do(ctx context.Context, opts ...RequestOption) (res *AccountAssetResponse, err error) {
-	s.c.Debug = true
+	//s.c.Debug = true
 	r := &request{
 		method:   http.MethodGet,
 		endpoint: "/papi/v1/um/account",
@@ -131,7 +131,7 @@ type UMPositionResponse struct {
 }
 
 func (s *GetUMPositionService) Do(ctx context.Context, opts ...RequestOption) (res *UMPositionResponse, err error) {
-	s.c.Debug = true
+	//s.c.Debug = true
 	r := &request{
 		method:   http.MethodGet,
 		endpoint: "/papi/v1/um/positionSide/dual",
@@ -161,7 +161,7 @@ func (s *GetUMPositionService) DualSidePosition(dualSidePosition string) *GetUMP
 }
 
 func (s *GetUMPositionService) DoUpdate(ctx context.Context, opts ...RequestOption) (res *UMStandardResponse, err error) {
-	s.c.Debug = true
+	//s.c.Debug = true
 	r := &request{
 		method:   http.MethodPost,
 		endpoint: "/papi/v1/um/positionSide/dual",
@@ -214,7 +214,7 @@ func (s *GetUMAccountBalanceService) Asset(asset string) *GetUMAccountBalanceSer
 }
 
 func (s *GetUMAccountBalanceService) Do(ctx context.Context, opts ...RequestOption) (res []*UMAccountBalanceResponse, err error) {
-	s.c.Debug = true
+	//s.c.Debug = true
 	r := &request{
 		method:   http.MethodGet,
 		endpoint: "/papi/v1/balance",
@@ -238,7 +238,7 @@ func (s *GetUMAccountBalanceService) Do(ctx context.Context, opts ...RequestOpti
 }
 
 func (s *GetUMAccountBalanceService) DoSingle(ctx context.Context, opts ...RequestOption) (res *UMAccountBalanceResponse, err error) {
-	s.c.Debug = true
+	//s.c.Debug = true
 	r := &request{
 		method:   http.MethodGet,
 		endpoint: "/papi/v1/balance",
@@ -345,7 +345,7 @@ func (s *GetUMNewOrderService) TimeInForce(timeInForce TimeInForce) *GetUMNewOrd
 }
 
 func (s *GetUMNewOrderService) Do(ctx context.Context, opts ...RequestOption) (res *UMNewOrderResponse, err error) {
-	s.c.Debug = true
+	//s.c.Debug = true
 	r := &request{
 		method:   http.MethodPost,
 		endpoint: "/papi/v1/um/order",
@@ -434,7 +434,7 @@ func (s *GetUMOrderService) OrderId(orderid int64) *GetUMOrderService {
 }
 
 func (s *GetUMOrderService) Do(ctx context.Context, opts ...RequestOption) (res *UMOrderResponse, err error) {
-	s.c.Debug = true
+	//s.c.Debug = true
 	r := &request{
 		method:   http.MethodGet,
 		endpoint: "/papi/v1/um/order",
@@ -484,7 +484,7 @@ func (s *GetUMLeverageService) Leverage(leverage int64) *GetUMLeverageService {
 }
 
 func (s *GetUMLeverageService) Do(ctx context.Context, opts ...RequestOption) (res *UMLeverageResponse, err error) {
-	s.c.Debug = true
+	//s.c.Debug = true
 	r := &request{
 		method:   http.MethodPost,
 		endpoint: "/papi/v1/um/leverage",
@@ -536,7 +536,7 @@ func (s *GetUMPositionRiskService) Symbol(symbol string) *GetUMPositionRiskServi
 }
 
 func (s *GetUMPositionRiskService) Do(ctx context.Context, opts ...RequestOption) (res []*UMPositionRiskResponse, err error) {
-	s.c.Debug = true
+	//s.c.Debug = true
 	r := &request{
 		method:   http.MethodGet,
 		endpoint: "/papi/v1/um/positionRisk",
@@ -612,7 +612,7 @@ func (s *GetUMUserTradeService) Limit(limit int64) *GetUMUserTradeService {
 }
 
 func (s *GetUMUserTradeService) Do(ctx context.Context, opts ...RequestOption) (res []*UMUserTradeResponse, err error) {
-	s.c.Debug = true
+	//s.c.Debug = true
 	r := &request{
 		method:   http.MethodGet,
 		endpoint: "/papi/v1/um/userTrades",

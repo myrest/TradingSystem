@@ -7,9 +7,12 @@ import (
 	"fmt"
 	"log"
 	"strconv"
+	"strings"
 )
 
 func (client *Client) CreateOrder(c context.Context, tv models.TvSiginalData, Customer models.CustomerCurrencySymboWithCustomer) (models.Log_TvSiginalData, bool, models.AlertMessageModel, error) {
+	//取出Symbol，並改為沒有"-"
+	Symbol := strings.Replace(tv.Symbol, "-", "", 1)
 	client.Debug = true
 	AlertMessageModel := models.CustomerAlertDefault
 	placeOrderLog := models.Log_TvSiginalData{
@@ -17,7 +20,7 @@ func (client *Client) CreateOrder(c context.Context, tv models.TvSiginalData, Cu
 		CustomerID:     Customer.CustomerID,
 		Time:           common.GetUtcTimeNow(),
 		Simulation:     Customer.Simulation,
-		Symbol:         tv.Symbol,
+		Symbol:         Symbol,
 	}
 
 	var isTowWayPositionOnHand = false //是否雙向持倉
@@ -30,7 +33,7 @@ func (client *Client) CreateOrder(c context.Context, tv models.TvSiginalData, Cu
 	}
 
 	//查出目前持倉情況
-	positions, err := client.GetUMPositionRiskService().Symbol(tv.TVData.Symbol).Do(c)
+	positions, err := client.GetUMPositionRiskService().Symbol(Symbol).Do(c)
 	if err != nil {
 		return placeOrderLog, isTowWayPositionOnHand, AlertMessageModel, err
 	}
@@ -88,7 +91,7 @@ func (client *Client) CreateOrder(c context.Context, tv models.TvSiginalData, Cu
 	//PositionSideType及SideType要轉型，大小寫必需相同
 	order, err := client.GetUMNewOrderService().
 		PositionSide(PositionSide(tv.PlaceOrderType.PositionSideType)).
-		Symbol(tv.TVData.Symbol).
+		Symbol(Symbol).
 		Quantity(placeAmount).
 		Type(MarketOrder).
 		Side(OrderSide(tv.PlaceOrderType.Side)).
@@ -101,7 +104,7 @@ func (client *Client) CreateOrder(c context.Context, tv models.TvSiginalData, Cu
 	log.Printf("Customer:%s %v order created: %+v", Customer.CustomerID, MarketOrder, order)
 
 	//取出下單結果，用來記錄amount及price，只能取出歷史記錄來判斷
-	history, err := client.GetUMUserTradeService().Symbol(tv.TVData.Symbol).Limit(1).Do(c)
+	history, err := client.GetUMUserTradeService().Symbol(Symbol).Limit(1).Do(c)
 	placedOrder := &UMUserTradeResponse{}
 
 	//無法取得下單的資料

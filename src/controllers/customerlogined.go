@@ -272,12 +272,11 @@ func PlaceOrderHistory(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "No Customer Data."})
 		return
 	}
-	sdt, edt := common.GetReportStartEndDate(session)
-	if sdt == common.TimeMax() || edt == common.TimeMax() {
-		sdt = common.GetMonthlyDay1(1)[0]
-		edt = time.Now().UTC()
-		common.SetReportStartEndDate(session, sdt, edt)
-	}
+
+	date := time.Now().UTC()
+	sdt, edt := common.GetMonthStartEndDate(date)
+	sdt = sdt.AddDate(0, -3, 0) //一次三個月內的資料
+	common.SetReportStartEndDate(session, sdt, edt)
 
 	list, totalPages, err := services.GetPlaceOrderHistory(c, symbol, customerid, sdt, edt, page, pageSize)
 	if err != nil {
