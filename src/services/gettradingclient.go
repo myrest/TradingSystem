@@ -12,7 +12,7 @@ func GetTradingClient(apiKey, secretKey string, isTEST bool, ExchangeName models
 	case models.ExchangeBingx:
 		client = bingx.NewClient(apiKey, secretKey, isTEST)
 	case models.ExchangeBinance_P:
-		client = binance_connector.NewClient(apiKey, secretKey)
+		client = binance_connector.NewPortfolioClient(apiKey, secretKey)
 	}
 	return
 }

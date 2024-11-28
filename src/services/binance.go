@@ -9,7 +9,7 @@ import (
 
 func BinPositionSiteIsDual(c context.Context, customer *models.Customer) (bool, error) {
 	//查出目前持倉設定
-	client := binance_connector.NewClient(customer.APIKey, customer.SecretKey)
+	client := binance_connector.NewPortfolioClient(customer.APIKey, customer.SecretKey)
 	position, err := client.GetUMPositionService().Do(c)
 	if err != nil {
 		return false, err
@@ -37,7 +37,7 @@ func BinUpdatePosition(c context.Context, customer *models.Customer, isbodual ..
 		return fmt.Errorf("持倉設定相同，不用再改")
 	}
 
-	client := binance_connector.NewClient(customer.APIKey, customer.SecretKey)
+	client := binance_connector.NewPortfolioClient(customer.APIKey, customer.SecretKey)
 	_, err = client.GetUMPositionService().DualSidePosition(dual).DoUpdate(c)
 	if err != nil {
 		return err
