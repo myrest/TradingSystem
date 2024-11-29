@@ -1,11 +1,9 @@
 package controllers
 
 import (
-	"TradingSystem/src/bingx"
 	"TradingSystem/src/common"
 	"TradingSystem/src/models"
 	"TradingSystem/src/services"
-	"TradingSystem/src/strategyinterface"
 	"context"
 	"fmt"
 	"log"
@@ -15,11 +13,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 )
-
-type openPosition struct {
-	AvailableAmt float64
-	PositionSide bingx.PositionSideType
-}
 
 func TradingViewWebhook(c *gin.Context) {
 	var WebhookData models.TvWebhookData
@@ -64,7 +57,21 @@ func preProcessPlaceOrder(c *gin.Context, WebhookData models.TvWebhookData) erro
 			defer wg.Done()
 			//todo:要依客戶的交易所來判斷
 			client := services.GetTradingClient(customer.APIKey, customer.SecretKey, customer.Simulation, customer.ExchangeSystemName)
-			processPlaceOrder(client, customer, tvData, TvWebHookLog, c)
+			//processPlaceOrder(client, customer, tvData, TvWebHookLog, c)
+			placeOrderLog, isTowWayPositionOnHand, AlertMessageModel, err := client.CreateOrder(c, tvData, customer)
+			placeOrderLog.WebHookRefID = TvWebHookLog
+			placeOrderLog.Symbol = tvData.Symbol //這裏要改回來成有"-"，報表才找得到
+			if err != nil {
+				placeOrderLog.Result = placeOrderLog.Result + "\nPlace order get exception:" + err.Error()
+				services.SystemEventLog{
+					EventName:  services.PlaceOrder,
+					CustomerID: customer.CustomerID,
+					Message:    fmt.Sprintf("Place order failed:%s\nsymbol:%s\ncustomerId:%s", err.Error(), tvData.Symbol, customer.ID),
+				}.Send()
+			}
+
+			asyncWriteTVsignalData(AlertMessageModel, &customer.Customer, placeOrderLog, c, isTowWayPositionOnHand)
+
 		}(customerList[i])
 	}
 	wg.Wait()
@@ -74,22 +81,6 @@ func preProcessPlaceOrder(c *gin.Context, WebhookData models.TvWebhookData) erro
 		services.RemoveLog_TVExpiredCacheFiles()
 	}()
 	return nil
-}
-
-func processPlaceOrder(client strategyinterface.TradingClient, Customer models.CustomerCurrencySymboWithCustomer, tv models.TvSiginalData, TvWebHookLog string, c *gin.Context) {
-	placeOrderLog, isTowWayPositionOnHand, AlertMessageModel, err := client.CreateOrder(c, tv, Customer)
-	placeOrderLog.WebHookRefID = TvWebHookLog
-	placeOrderLog.Symbol = tv.Symbol //這裏要改回來成有"-"，報表才找得到
-	if err != nil {
-		placeOrderLog.Result = placeOrderLog.Result + "\nPlace order get exception:" + err.Error()
-		services.SystemEventLog{
-			EventName:  services.PlaceOrder,
-			CustomerID: Customer.CustomerID,
-			Message:    fmt.Sprintf("Place order failed:%s\nsymbol:%s\ncustomerId:%s", err.Error(), tv.TVData.Symbol, Customer.ID),
-		}.Send()
-	}
-
-	asyncWriteTVsignalData(AlertMessageModel, &Customer.Customer, placeOrderLog, c, isTowWayPositionOnHand)
 }
 
 // 寫log

@@ -280,63 +280,6 @@ func (c *Client) NewGetQueryPreventedMatchesService() *GetQueryPreventedMatchesS
 	return &GetQueryPreventedMatchesService{c: c}
 }
 
-// Market Endpoints:
-func (c *Client) NewPingService() *Ping {
-	return &Ping{c: c}
-}
-
-func (c *Client) NewServerTimeService() *ServerTime {
-	return &ServerTime{c: c}
-}
-
-func (c *Client) NewExchangeInfoService() *ExchangeInfo {
-	return &ExchangeInfo{c: c}
-}
-
-func (c *Client) NewOrderBookService() *OrderBook {
-	return &OrderBook{c: c}
-}
-
-func (c *Client) NewRecentTradesListService() *RecentTradesList {
-	return &RecentTradesList{c: c}
-}
-
-func (c *Client) NewHistoricalTradeLookupService() *HistoricalTradeLookup {
-	return &HistoricalTradeLookup{c: c}
-}
-
-func (c *Client) NewAggTradesListService() *AggTradesList {
-	return &AggTradesList{c: c}
-}
-
-func (c *Client) NewKlinesService() *Klines {
-	return &Klines{c: c}
-}
-
-func (c *Client) NewUIKlinesService() *UiKlines {
-	return &UiKlines{c: c}
-}
-
-func (c *Client) NewAvgPriceService() *AvgPrice {
-	return &AvgPrice{c: c}
-}
-
-func (c *Client) NewTicker24hrService() *Ticker24hr {
-	return &Ticker24hr{c: c}
-}
-
-func (c *Client) NewTickerPriceService() *TickerPrice {
-	return &TickerPrice{c: c}
-}
-
-func (c *Client) NewTickerBookTickerService() *TickerBookTicker {
-	return &TickerBookTicker{c: c}
-}
-
-func (c *Client) NewTickerService() *Ticker {
-	return &Ticker{c: c}
-}
-
 func (c *Client) NewGetAllMarginAssetsService() *GetAllMarginAssetsService {
 	return &GetAllMarginAssetsService{c: c}
 }
@@ -500,35 +443,4 @@ func (c *Client) NewPingUserStream() *PingUserStream {
 
 func (c *Client) NewCloseUserStream() *CloseUserStream {
 	return &CloseUserStream{c: c}
-}
-
-// 新增統一帳戶功能
-func (c *Client) GetUMPositionService() *GetUMPositionService {
-	return &GetUMPositionService{c: c}
-}
-func (c *Client) GetUMAccountAssetService() *GetUMAccountAssetService {
-	return &GetUMAccountAssetService{c: c}
-}
-func (c *Client) GetUMAccountBalanceService() *GetUMAccountBalanceService {
-	return &GetUMAccountBalanceService{c: c}
-}
-
-func (c *Client) GetUMPositionRiskService() *GetUMPositionRiskService {
-	return &GetUMPositionRiskService{c: c}
-}
-
-func (c *Client) GetUMNewOrderService() *GetUMNewOrderService {
-	return &GetUMNewOrderService{c: c}
-}
-
-func (c *Client) GetUMOrderService() *GetUMOrderService {
-	return &GetUMOrderService{c: c}
-}
-
-func (c *Client) GetUMUserTradeService() *GetUMUserTradeService {
-	return &GetUMUserTradeService{c: c}
-}
-
-func (c *Client) GetUMLeverageService() *GetUMLeverageService {
-	return &GetUMLeverageService{c: c}
 }

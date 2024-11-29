@@ -1,4 +1,4 @@
-package binance_connector
+package binance_connector_portfolio
 
 import (
 	"context"
