@@ -12,7 +12,6 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/binance/binance-connector-go/handlers"
@@ -67,7 +66,7 @@ func (c *Client) debug(format string, v ...interface{}) {
 }
 
 // Create client function for initialising new Binance client
-func NewPortfolioClient(apiKey string, secretKey string, baseURL ...string) *Client {
+func NewClient(apiKey string, secretKey string, baseURL ...string) *Client {
 	url := "https://api.binance.com"
 
 	if len(baseURL) > 0 {
@@ -84,16 +83,6 @@ func NewPortfolioClient(apiKey string, secretKey string, baseURL ...string) *Cli
 }
 
 func (c *Client) parseRequest(r *request, opts ...RequestOption) (err error) {
-
-	//如果不是api系列的request，要依request換掉endpoint
-	if !strings.HasPrefix(r.endpoint, "/api/") {
-		if strings.HasPrefix(r.endpoint, "/fapi/") {
-			c.BaseURL = "https://fapi.binance.com"
-		} else if strings.HasPrefix(r.endpoint, "/papi/") {
-			c.BaseURL = "https://papi.binance.com"
-		}
-	}
-
 	// set request options from user
 	for _, opt := range opts {
 		opt(r)
@@ -158,7 +147,6 @@ func (c *Client) callAPI(ctx context.Context, r *request, opts ...RequestOption)
 			return []byte{}, err
 		}
 	}
-
 	req, err := http.NewRequest(r.method, r.fullURL, r.body)
 	if err != nil {
 		return []byte{}, err
@@ -280,6 +268,63 @@ func (c *Client) NewGetQueryPreventedMatchesService() *GetQueryPreventedMatchesS
 	return &GetQueryPreventedMatchesService{c: c}
 }
 
+// Market Endpoints:
+func (c *Client) NewPingService() *Ping {
+	return &Ping{c: c}
+}
+
+func (c *Client) NewServerTimeService() *ServerTime {
+	return &ServerTime{c: c}
+}
+
+func (c *Client) NewExchangeInfoService() *ExchangeInfo {
+	return &ExchangeInfo{c: c}
+}
+
+func (c *Client) NewOrderBookService() *OrderBook {
+	return &OrderBook{c: c}
+}
+
+func (c *Client) NewRecentTradesListService() *RecentTradesList {
+	return &RecentTradesList{c: c}
+}
+
+func (c *Client) NewHistoricalTradeLookupService() *HistoricalTradeLookup {
+	return &HistoricalTradeLookup{c: c}
+}
+
+func (c *Client) NewAggTradesListService() *AggTradesList {
+	return &AggTradesList{c: c}
+}
+
+func (c *Client) NewKlinesService() *Klines {
+	return &Klines{c: c}
+}
+
+func (c *Client) NewUIKlinesService() *UiKlines {
+	return &UiKlines{c: c}
+}
+
+func (c *Client) NewAvgPriceService() *AvgPrice {
+	return &AvgPrice{c: c}
+}
+
+func (c *Client) NewTicker24hrService() *Ticker24hr {
+	return &Ticker24hr{c: c}
+}
+
+func (c *Client) NewTickerPriceService() *TickerPrice {
+	return &TickerPrice{c: c}
+}
+
+func (c *Client) NewTickerBookTickerService() *TickerBookTicker {
+	return &TickerBookTicker{c: c}
+}
+
+func (c *Client) NewTickerService() *Ticker {
+	return &Ticker{c: c}
+}
+
 func (c *Client) NewGetAllMarginAssetsService() *GetAllMarginAssetsService {
 	return &GetAllMarginAssetsService{c: c}
 }
@@ -290,6 +335,14 @@ func (c *Client) NewGetAllMarginPairsService() *GetAllMarginPairsService {
 
 func (c *Client) NewQueryMarginPriceIndexService() *QueryMarginPriceIndexService {
 	return &QueryMarginPriceIndexService{c: c}
+}
+
+func (c *Client) NewQueryMarginAvailableInventoryService() *QueryMarginAvailableInventoryService {
+	return &QueryMarginAvailableInventoryService{c: c}
+}
+
+func (c *Client) NewQueryLiabilityCoinLeverageBracketService() *QueryLiabilityCoinLeverageBracketService {
+	return &QueryLiabilityCoinLeverageBracketService{c: c}
 }
 
 func (c *Client) NewMarginAccountNewOrderService() *MarginAccountNewOrderService {
@@ -364,6 +417,10 @@ func (c *Client) NewMarginAccountQueryMaxTransferOutAmountService() *MarginAccou
 	return &MarginAccountQueryMaxTransferOutAmountService{c: c}
 }
 
+func (c *Client) NewMarginAccountAdjustCrossMaxLeverageService() *MarginAccountAdjustCrossMaxLeverageService {
+	return &MarginAccountAdjustCrossMaxLeverageService{c: c}
+}
+
 func (c *Client) NewMarginAccountSummaryService() *MarginAccountSummaryService {
 	return &MarginAccountSummaryService{c: c}
 }
@@ -390,6 +447,10 @@ func (c *Client) NewAllIsolatedMarginSymbolService() *AllIsolatedMarginSymbolSer
 
 func (c *Client) NewMarginToggleBnbBurnService() *MarginToggleBnbBurnService {
 	return &MarginToggleBnbBurnService{c: c}
+}
+
+func (c *Client) NewMarginIsolatedCapitalFlowService() *MarginIsolatedCapitalFlowService {
+	return &MarginIsolatedCapitalFlowService{c: c}
 }
 
 func (c *Client) NewMarginBnbBurnStatusService() *MarginBnbBurnStatusService {
@@ -424,12 +485,141 @@ func (c *Client) NewMarginSmallLiabilityExchangeCoinListService() *MarginSmallLi
 	return &MarginSmallLiabilityExchangeCoinListService{c: c}
 }
 
+func (c *Client) NewMarginManualLiquidationService() *MarginManualLiquidationService {
+	return &MarginManualLiquidationService{c: c}
+}
+
+func (c *Client) NewMarginAccountNewOTOService() *MarginAccountNewOTOService {
+	return &MarginAccountNewOTOService{c: c}
+}
+
+func (c *Client) NewMarginAccountNewOTOCOService() *MarginAccountNewOTOCOService {
+	return &MarginAccountNewOTOCOService{c: c}
+}
+
 func (c *Client) NewMarginSmallLiabilityExchangeService() *MarginSmallLiabilityExchangeService {
 	return &MarginSmallLiabilityExchangeService{c: c}
 }
 
 func (c *Client) NewMarginSmallLiabilityExchangeHistoryService() *MarginSmallLiabilityExchangeHistoryService {
 	return &MarginSmallLiabilityExchangeHistoryService{c: c}
+}
+
+// Wallet Endpoints:
+func (c *Client) NewGetSystemStatusService() *GetSystemStatusService {
+	return &GetSystemStatusService{c: c}
+}
+
+func (c *Client) NewGetSymbolsDelistScheduleService() *GetSymbolsDelistScheduleService {
+	return &GetSymbolsDelistScheduleService{c: c}
+}
+
+func (c *Client) NewGetAllCoinsInfoService() *GetAllCoinsInfoService {
+	return &GetAllCoinsInfoService{c: c}
+}
+
+func (c *Client) NewGetAccountSnapshotService() *GetAccountSnapshotService {
+	return &GetAccountSnapshotService{c: c}
+}
+
+func (c *Client) NewDisableFastWithdrawSwitchService() *DisableFastWithdrawSwitchService {
+	return &DisableFastWithdrawSwitchService{c: c}
+}
+
+func (c *Client) NewEnableFastWithdrawSwitchService() *EnableFastWithdrawSwitchService {
+	return &EnableFastWithdrawSwitchService{c: c}
+}
+
+func (c *Client) NewWithdrawService() *WithdrawService {
+	return &WithdrawService{c: c}
+}
+
+func (c *Client) NewDepositHistoryService() *DepositHistoryService {
+	return &DepositHistoryService{c: c}
+}
+
+func (c *Client) NewWithdrawHistoryService() *WithdrawHistoryService {
+	return &WithdrawHistoryService{c: c}
+}
+
+func (c *Client) NewDepositAddressService() *DepositAddressService {
+	return &DepositAddressService{c: c}
+}
+
+func (c *Client) NewDepositAddressListService() *DepositAddressListService {
+	return &DepositAddressListService{c: c}
+}
+
+func (c *Client) NewAccountStatusService() *AccountStatusService {
+	return &AccountStatusService{c: c}
+}
+
+func (c *Client) NewAccountApiTradingStatusService() *AccountApiTradingStatusService {
+	return &AccountApiTradingStatusService{c: c}
+}
+
+func (c *Client) NewDustLogService() *DustLogService {
+	return &DustLogService{c: c}
+}
+
+func (c *Client) NewAssetDetailService() *AssetDetailService {
+	return &AssetDetailService{c: c}
+}
+
+func (c *Client) NewDustTransferService() *DustTransferService {
+	return &DustTransferService{c: c}
+}
+
+func (c *Client) NewAssetDividendRecordService() *AssetDividendRecordService {
+	return &AssetDividendRecordService{c: c}
+}
+
+func (c *Client) NewAssetDetailV2Service() *AssetDetailV2Service {
+	return &AssetDetailV2Service{c: c}
+}
+
+func (c *Client) NewWalletBalanceService() *WalletBalanceService {
+	return &WalletBalanceService{c: c}
+}
+
+func (c *Client) NewTradeFeeService() *TradeFeeService {
+	return &TradeFeeService{c: c}
+}
+
+func (c *Client) NewUserUniversalTransferService() *UserUniversalTransferService {
+	return &UserUniversalTransferService{c: c}
+}
+
+func (c *Client) NewUserUniversalTransferHistoryService() *UserUniversalTransferHistoryService {
+	return &UserUniversalTransferHistoryService{c: c}
+}
+
+func (c *Client) NewFundingWalletService() *FundingWalletService {
+	return &FundingWalletService{c: c}
+}
+
+func (c *Client) NewUserAssetService() *UserAssetService {
+	return &UserAssetService{c: c}
+}
+
+func (c *Client) NewBUSDConvertHistoryService() *BUSDConvertHistoryService {
+	return &BUSDConvertHistoryService{c: c}
+}
+
+func (c *Client) NewCloudMiningPaymentHistoryService() *CloudMiningPaymentHistoryService {
+	return &CloudMiningPaymentHistoryService{c: c}
+}
+
+func (c *Client) NewUserDelegationHistoryService() *UserDelegationHistoryService {
+	return &UserDelegationHistoryService{c: c}
+}
+
+func (c *Client) NewAccountInfoService() *AccountInfoService {
+	return &AccountInfoService{c: c}
+}
+
+func (c *Client) NewAPIKeyPermissionService() *APIKeyPermissionService {
+	return &APIKeyPermissionService{c: c}
 }
 
 // User Data Streams:
