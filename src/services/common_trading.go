@@ -11,12 +11,12 @@ import (
 
 func GetTradingClient(apiKey, secretKey string, isTEST bool, ExchangeName models.ExchangeSystem) (client strategyinterface.TradingClient) {
 	switch ExchangeName {
-	case models.ExchangeBingx:
-		client = bingx.NewClient(apiKey, secretKey, isTEST)
 	case models.ExchangeBinance_P:
 		client = binance_connector_portfolio.NewPortfolioClient(apiKey, secretKey)
 	case models.ExchangeBinance_N:
 		client = binance_connector.NewClient(apiKey, secretKey)
+	default:
+		client = bingx.NewClient(apiKey, secretKey, isTEST)
 	}
 	return
 }
