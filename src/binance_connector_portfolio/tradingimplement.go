@@ -8,7 +8,11 @@ import (
 	"log"
 	"strconv"
 	"strings"
+	"time"
 )
+
+const maxRetries = 3
+const waitTime = 500 * time.Millisecond
 
 func (client *Client) CreateOrder(c context.Context, tv models.TvSiginalData, Customer models.CustomerCurrencySymboWithCustomer) (models.Log_TvSiginalData, bool, models.AlertMessageModel, error) {
 	//取出Symbol，並改為沒有"-"
@@ -103,15 +107,25 @@ func (client *Client) CreateOrder(c context.Context, tv models.TvSiginalData, Cu
 	}
 	log.Printf("Customer:%s %v order created: %+v", Customer.CustomerID, MarketOrder, order)
 
-	//取出下單結果，用來記錄amount及price，只能取出歷史記錄來判斷
-	history, err := client.GetUMUserTradeService().Symbol(Symbol).OrderId(order.OrderId).Do(c)
+	placedOrder := &UMUserTradeResponse{Commission: "0", RealizedPnl: "0"}
+	if isCloseOrder { //平倉才需要取得下單結果
+		//取出下單結果要先暫停0.5秒，等待下單結果完成
+		for i := 0; i < maxRetries; i++ {
+			fmt.Println("waiting for 0.5 seconds... --> ", i)
+			time.Sleep(waitTime)
 
-	//無法取得下單的資料
-	if (err != nil) || (history == nil) || len(history) == 0 {
-		placeOrderLog.Result = placeOrderLog.Result + "\nGet placed order failed:" + err.Error()
-
+			// 嘗試獲取資料
+			history, err := client.GetUMUserTradeService().Symbol(Symbol).OrderId(order.OrderId).Do(c)
+			if (err == nil) && (len(history) > 0) {
+				placedOrder = history[0]
+				break
+			}
+			if i == maxRetries-1 {
+				placeOrderLog.Result = placeOrderLog.Result + "\nGet placed order failed:" + err.Error()
+			}
+		}
 	}
-	placedOrder := history[0]
+
 	//依下單結果補足資料
 	//寫入訂單編號
 	placeOrderLog.Result = strconv.FormatInt((*order).OrderId, 10)
