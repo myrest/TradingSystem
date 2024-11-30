@@ -13,7 +13,7 @@ import (
 func (client *Client) CreateOrder(c context.Context, tv models.TvSiginalData, Customer models.CustomerCurrencySymboWithCustomer) (models.Log_TvSiginalData, bool, models.AlertMessageModel, error) {
 	//取出Symbol，並改為沒有"-"
 	Symbol := strings.Replace(tv.Symbol, "-", "", 1)
-	client.Debug = true
+	//client.Debug = true
 	AlertMessageModel := models.CustomerAlertDefault
 	placeOrderLog := models.Log_TvSiginalData{
 		PlaceOrderType: tv.PlaceOrderType,
@@ -104,19 +104,14 @@ func (client *Client) CreateOrder(c context.Context, tv models.TvSiginalData, Cu
 	log.Printf("Customer:%s %v order created: %+v", Customer.CustomerID, MarketOrder, order)
 
 	//取出下單結果，用來記錄amount及price，只能取出歷史記錄來判斷
-	history, err := client.GetUMUserTradeService().Symbol(Symbol).Limit(1).Do(c)
-	placedOrder := &UMUserTradeResponse{}
+	history, err := client.GetUMUserTradeService().Symbol(Symbol).OrderId(order.OrderId).Do(c)
 
 	//無法取得下單的資料
 	if (err != nil) || (history == nil) || len(history) == 0 {
 		placeOrderLog.Result = placeOrderLog.Result + "\nGet placed order failed:" + err.Error()
 
 	}
-	placedOrder = history[0]
-	//因為只取最近成交的一筆，所以訂單編號應該要一致才對
-	if placedOrder.ID != order.OrderId {
-		placeOrderLog.Result = placeOrderLog.Result + "\n查無成交記錄。需要手動修正盈虧及手續費"
-	}
+	placedOrder := history[0]
 	//依下單結果補足資料
 	//寫入訂單編號
 	placeOrderLog.Result = strconv.FormatInt((*order).OrderId, 10)

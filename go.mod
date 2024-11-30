@@ -12,15 +12,7 @@ require (
 	google.golang.org/api v0.191.0
 )
 
-require (
-	github.com/joho/godotenv v1.5.1
-	github.com/stretchr/testify v1.9.0
-)
-
-require (
-	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/pmezard/go-difflib v1.0.0 // indirect
-)
+require github.com/joho/godotenv v1.5.1
 
 require (
 	cloud.google.com/go v0.115.0 // indirect
@@ -33,7 +25,6 @@ require (
 	cloud.google.com/go/secretmanager v1.13.5
 	cloud.google.com/go/storage v1.43.0 // indirect
 	github.com/binance/binance-connector-go v0.7.0
-	github.com/bitly/go-simplejson v0.5.1
 	github.com/bytedance/sonic v1.12.1 // indirect
 	github.com/bytedance/sonic/loader v0.2.0 // indirect
 	github.com/cloudwego/base64x v0.1.4 // indirect

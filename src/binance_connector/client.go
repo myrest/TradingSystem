@@ -12,10 +12,10 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/binance/binance-connector-go/handlers"
-	"github.com/bitly/go-simplejson"
 )
 
 // TimeInForceType define time in force type of order
@@ -83,6 +83,15 @@ func NewClient(apiKey string, secretKey string, baseURL ...string) *Client {
 }
 
 func (c *Client) parseRequest(r *request, opts ...RequestOption) (err error) {
+	//如果不是api系列的request，要依request換掉endpoint
+	if !strings.HasPrefix(r.endpoint, "/api/") {
+		if strings.HasPrefix(r.endpoint, "/fapi/") {
+			c.BaseURL = "https://fapi.binance.com"
+		} else if strings.HasPrefix(r.endpoint, "/sapi/") {
+			c.BaseURL = "https://sapi.binance.com"
+		}
+	}
+
 	// set request options from user
 	for _, opt := range opts {
 		opt(r)
@@ -191,446 +200,33 @@ func (c *Client) callAPI(ctx context.Context, r *request, opts ...RequestOption)
 	return data, nil
 }
 
-func newJSON(data []byte) (j *simplejson.Json, err error) {
-	j, err = simplejson.NewJson(data)
-	if err != nil {
-		return nil, err
-	}
-	return j, nil
+// region 新增功能
+func (c *Client) GetLeverageService() *GetLeverageService {
+	return &GetLeverageService{c: c}
 }
 
-// Account Endpoints:
-func (c *Client) NewTestNewOrder() *TestNewOrder {
-	return &TestNewOrder{c: c}
+func (c *Client) GetPositionService() *GetPositionService {
+	return &GetPositionService{c: c}
 }
 
-func (c *Client) NewCreateOrderService() *CreateOrderService {
-	return &CreateOrderService{c: c}
+func (c *Client) GetMarginTypeService() *GetMarginTypeService {
+	return &GetMarginTypeService{c: c}
 }
 
-func (c *Client) NewCancelOrderService() *CancelOrderService {
-	return &CancelOrderService{c: c}
+func (c *Client) GetAccountBalanceService() *GetAccountBalanceService {
+	return &GetAccountBalanceService{c: c}
 }
 
-func (c *Client) NewCancelOpenOrdersService() *CancelOpenOrdersService {
-	return &CancelOpenOrdersService{c: c}
+func (c *Client) GetUMPositionRiskService() *GetUMPositionRiskService {
+	return &GetUMPositionRiskService{c: c}
 }
 
-func (c *Client) NewGetOrderService() *GetOrderService {
-	return &GetOrderService{c: c}
+func (c *Client) GetUMNewOrderService() *GetUMNewOrderService {
+	return &GetUMNewOrderService{c: c}
 }
 
-func (c *Client) NewCancelReplaceService() *CancelReplaceService {
-	return &CancelReplaceService{c: c}
+func (c *Client) GetUMUserTradeService() *GetUMUserTradeService {
+	return &GetUMUserTradeService{c: c}
 }
 
-func (c *Client) NewGetOpenOrdersService() *GetOpenOrdersService {
-	return &GetOpenOrdersService{c: c}
-}
-
-func (c *Client) NewGetAllOrdersService() *GetAllOrdersService {
-	return &GetAllOrdersService{c: c}
-}
-
-func (c *Client) NewNewOCOService() *NewOCOService {
-	return &NewOCOService{c: c}
-}
-
-func (c *Client) NewCancelOCOService() *CancelOCOService {
-	return &CancelOCOService{c: c}
-}
-
-func (c *Client) NewQueryOCOService() *QueryOCOService {
-	return &QueryOCOService{c: c}
-}
-
-func (c *Client) NewQueryAllOCOService() *QueryAllOCOService {
-	return &QueryAllOCOService{c: c}
-}
-
-func (c *Client) NewQueryOpenOCOService() *QueryOpenOCOService {
-	return &QueryOpenOCOService{c: c}
-}
-
-func (c *Client) NewGetAccountService() *GetAccountService {
-	return &GetAccountService{c: c}
-}
-
-func (c *Client) NewGetMyTradesService() *GetMyTradesService {
-	return &GetMyTradesService{c: c}
-}
-
-func (c *Client) NewGetQueryCurrentOrderCountUsageService() *GetQueryCurrentOrderCountUsageService {
-	return &GetQueryCurrentOrderCountUsageService{c: c}
-}
-
-func (c *Client) NewGetQueryPreventedMatchesService() *GetQueryPreventedMatchesService {
-	return &GetQueryPreventedMatchesService{c: c}
-}
-
-// Market Endpoints:
-func (c *Client) NewPingService() *Ping {
-	return &Ping{c: c}
-}
-
-func (c *Client) NewServerTimeService() *ServerTime {
-	return &ServerTime{c: c}
-}
-
-func (c *Client) NewExchangeInfoService() *ExchangeInfo {
-	return &ExchangeInfo{c: c}
-}
-
-func (c *Client) NewOrderBookService() *OrderBook {
-	return &OrderBook{c: c}
-}
-
-func (c *Client) NewRecentTradesListService() *RecentTradesList {
-	return &RecentTradesList{c: c}
-}
-
-func (c *Client) NewHistoricalTradeLookupService() *HistoricalTradeLookup {
-	return &HistoricalTradeLookup{c: c}
-}
-
-func (c *Client) NewAggTradesListService() *AggTradesList {
-	return &AggTradesList{c: c}
-}
-
-func (c *Client) NewKlinesService() *Klines {
-	return &Klines{c: c}
-}
-
-func (c *Client) NewUIKlinesService() *UiKlines {
-	return &UiKlines{c: c}
-}
-
-func (c *Client) NewAvgPriceService() *AvgPrice {
-	return &AvgPrice{c: c}
-}
-
-func (c *Client) NewTicker24hrService() *Ticker24hr {
-	return &Ticker24hr{c: c}
-}
-
-func (c *Client) NewTickerPriceService() *TickerPrice {
-	return &TickerPrice{c: c}
-}
-
-func (c *Client) NewTickerBookTickerService() *TickerBookTicker {
-	return &TickerBookTicker{c: c}
-}
-
-func (c *Client) NewTickerService() *Ticker {
-	return &Ticker{c: c}
-}
-
-func (c *Client) NewGetAllMarginAssetsService() *GetAllMarginAssetsService {
-	return &GetAllMarginAssetsService{c: c}
-}
-
-func (c *Client) NewGetAllMarginPairsService() *GetAllMarginPairsService {
-	return &GetAllMarginPairsService{c: c}
-}
-
-func (c *Client) NewQueryMarginPriceIndexService() *QueryMarginPriceIndexService {
-	return &QueryMarginPriceIndexService{c: c}
-}
-
-func (c *Client) NewQueryMarginAvailableInventoryService() *QueryMarginAvailableInventoryService {
-	return &QueryMarginAvailableInventoryService{c: c}
-}
-
-func (c *Client) NewQueryLiabilityCoinLeverageBracketService() *QueryLiabilityCoinLeverageBracketService {
-	return &QueryLiabilityCoinLeverageBracketService{c: c}
-}
-
-func (c *Client) NewMarginAccountNewOrderService() *MarginAccountNewOrderService {
-	return &MarginAccountNewOrderService{c: c}
-}
-
-func (c *Client) NewMarginAccountCancelOrderService() *MarginAccountCancelOrderService {
-	return &MarginAccountCancelOrderService{c: c}
-}
-
-func (c *Client) NewMarginAccountCancelAllOrdersService() *MarginAccountCancelAllOrdersService {
-	return &MarginAccountCancelAllOrdersService{c: c}
-}
-
-func (c *Client) NewCrossMarginTransferHistoryService() *CrossMarginTransferHistoryService {
-	return &CrossMarginTransferHistoryService{c: c}
-}
-
-func (c *Client) NewInterestHistoryService() *InterestHistoryService {
-	return &InterestHistoryService{c: c}
-}
-
-func (c *Client) NewForceLiquidationRecordService() *ForceLiquidationRecordService {
-	return &ForceLiquidationRecordService{c: c}
-}
-
-func (c *Client) NewCrossMarginAccountDetailService() *CrossMarginAccountDetailService {
-	return &CrossMarginAccountDetailService{c: c}
-}
-
-func (c *Client) NewMarginAccountOrderService() *MarginAccountOrderService {
-	return &MarginAccountOrderService{c: c}
-}
-
-func (c *Client) NewMarginAccountOpenOrderService() *MarginAccountOpenOrderService {
-	return &MarginAccountOpenOrderService{c: c}
-}
-
-func (c *Client) NewMarginAccountAllOrderService() *MarginAccountAllOrderService {
-	return &MarginAccountAllOrderService{c: c}
-}
-
-func (c *Client) NewMarginAccountNewOCOService() *MarginAccountNewOCOService {
-	return &MarginAccountNewOCOService{c: c}
-}
-
-func (c *Client) NewMarginAccountCancelOCOService() *MarginAccountCancelOCOService {
-	return &MarginAccountCancelOCOService{c: c}
-}
-
-func (c *Client) NewMarginAccountQueryOCOService() *MarginAccountQueryOCOService {
-	return &MarginAccountQueryOCOService{c: c}
-}
-
-func (c *Client) NewMarginAccountQueryAllOCOService() *MarginAccountQueryAllOCOService {
-	return &MarginAccountQueryAllOCOService{c: c}
-}
-
-func (c *Client) NewMarginAccountQueryOpenOCOService() *MarginAccountQueryOpenOCOService {
-	return &MarginAccountQueryOpenOCOService{c: c}
-}
-
-func (c *Client) NewMarginAccountQueryTradeListService() *MarginAccountQueryTradeListService {
-	return &MarginAccountQueryTradeListService{c: c}
-}
-
-func (c *Client) NewMarginAccountQueryMaxBorrowService() *MarginAccountQueryMaxBorrowService {
-	return &MarginAccountQueryMaxBorrowService{c: c}
-}
-
-func (c *Client) NewMarginAccountQueryMaxTransferOutAmountService() *MarginAccountQueryMaxTransferOutAmountService {
-	return &MarginAccountQueryMaxTransferOutAmountService{c: c}
-}
-
-func (c *Client) NewMarginAccountAdjustCrossMaxLeverageService() *MarginAccountAdjustCrossMaxLeverageService {
-	return &MarginAccountAdjustCrossMaxLeverageService{c: c}
-}
-
-func (c *Client) NewMarginAccountSummaryService() *MarginAccountSummaryService {
-	return &MarginAccountSummaryService{c: c}
-}
-
-func (c *Client) NewMarginIsolatedAccountInfoService() *MarginIsolatedAccountInfoService {
-	return &MarginIsolatedAccountInfoService{c: c}
-}
-
-func (c *Client) NewMarginIsolatedAccountDisableService() *MarginIsolatedAccountDisableService {
-	return &MarginIsolatedAccountDisableService{c: c}
-}
-
-func (c *Client) NewMarginIsolatedAccountEnableService() *MarginIsolatedAccountEnableService {
-	return &MarginIsolatedAccountEnableService{c: c}
-}
-
-func (c *Client) NewMarginIsolatedAccountLimitService() *MarginIsolatedAccountLimitService {
-	return &MarginIsolatedAccountLimitService{c: c}
-}
-
-func (c *Client) NewAllIsolatedMarginSymbolService() *AllIsolatedMarginSymbolService {
-	return &AllIsolatedMarginSymbolService{c: c}
-}
-
-func (c *Client) NewMarginToggleBnbBurnService() *MarginToggleBnbBurnService {
-	return &MarginToggleBnbBurnService{c: c}
-}
-
-func (c *Client) NewMarginIsolatedCapitalFlowService() *MarginIsolatedCapitalFlowService {
-	return &MarginIsolatedCapitalFlowService{c: c}
-}
-
-func (c *Client) NewMarginBnbBurnStatusService() *MarginBnbBurnStatusService {
-	return &MarginBnbBurnStatusService{c: c}
-}
-
-func (c *Client) NewMarginInterestRateHistoryService() *MarginInterestRateHistoryService {
-	return &MarginInterestRateHistoryService{c: c}
-}
-
-func (c *Client) NewMarginCrossMarginFeeService() *MarginCrossMarginFeeService {
-	return &MarginCrossMarginFeeService{c: c}
-}
-
-func (c *Client) NewMarginIsolatedMarginFeeService() *MarginIsolatedMarginFeeService {
-	return &MarginIsolatedMarginFeeService{c: c}
-}
-
-func (c *Client) NewMarginIsolatedMarginTierService() *MarginIsolatedMarginTierService {
-	return &MarginIsolatedMarginTierService{c: c}
-}
-
-func (c *Client) NewMarginCurrentOrderCountService() *MarginCurrentOrderCountService {
-	return &MarginCurrentOrderCountService{c: c}
-}
-
-func (c *Client) NewMarginCrossCollateralRatioService() *MarginCrossCollateralRatioService {
-	return &MarginCrossCollateralRatioService{c: c}
-}
-
-func (c *Client) NewMarginSmallLiabilityExchangeCoinListService() *MarginSmallLiabilityExchangeCoinListService {
-	return &MarginSmallLiabilityExchangeCoinListService{c: c}
-}
-
-func (c *Client) NewMarginManualLiquidationService() *MarginManualLiquidationService {
-	return &MarginManualLiquidationService{c: c}
-}
-
-func (c *Client) NewMarginAccountNewOTOService() *MarginAccountNewOTOService {
-	return &MarginAccountNewOTOService{c: c}
-}
-
-func (c *Client) NewMarginAccountNewOTOCOService() *MarginAccountNewOTOCOService {
-	return &MarginAccountNewOTOCOService{c: c}
-}
-
-func (c *Client) NewMarginSmallLiabilityExchangeService() *MarginSmallLiabilityExchangeService {
-	return &MarginSmallLiabilityExchangeService{c: c}
-}
-
-func (c *Client) NewMarginSmallLiabilityExchangeHistoryService() *MarginSmallLiabilityExchangeHistoryService {
-	return &MarginSmallLiabilityExchangeHistoryService{c: c}
-}
-
-// Wallet Endpoints:
-func (c *Client) NewGetSystemStatusService() *GetSystemStatusService {
-	return &GetSystemStatusService{c: c}
-}
-
-func (c *Client) NewGetSymbolsDelistScheduleService() *GetSymbolsDelistScheduleService {
-	return &GetSymbolsDelistScheduleService{c: c}
-}
-
-func (c *Client) NewGetAllCoinsInfoService() *GetAllCoinsInfoService {
-	return &GetAllCoinsInfoService{c: c}
-}
-
-func (c *Client) NewGetAccountSnapshotService() *GetAccountSnapshotService {
-	return &GetAccountSnapshotService{c: c}
-}
-
-func (c *Client) NewDisableFastWithdrawSwitchService() *DisableFastWithdrawSwitchService {
-	return &DisableFastWithdrawSwitchService{c: c}
-}
-
-func (c *Client) NewEnableFastWithdrawSwitchService() *EnableFastWithdrawSwitchService {
-	return &EnableFastWithdrawSwitchService{c: c}
-}
-
-func (c *Client) NewWithdrawService() *WithdrawService {
-	return &WithdrawService{c: c}
-}
-
-func (c *Client) NewDepositHistoryService() *DepositHistoryService {
-	return &DepositHistoryService{c: c}
-}
-
-func (c *Client) NewWithdrawHistoryService() *WithdrawHistoryService {
-	return &WithdrawHistoryService{c: c}
-}
-
-func (c *Client) NewDepositAddressService() *DepositAddressService {
-	return &DepositAddressService{c: c}
-}
-
-func (c *Client) NewDepositAddressListService() *DepositAddressListService {
-	return &DepositAddressListService{c: c}
-}
-
-func (c *Client) NewAccountStatusService() *AccountStatusService {
-	return &AccountStatusService{c: c}
-}
-
-func (c *Client) NewAccountApiTradingStatusService() *AccountApiTradingStatusService {
-	return &AccountApiTradingStatusService{c: c}
-}
-
-func (c *Client) NewDustLogService() *DustLogService {
-	return &DustLogService{c: c}
-}
-
-func (c *Client) NewAssetDetailService() *AssetDetailService {
-	return &AssetDetailService{c: c}
-}
-
-func (c *Client) NewDustTransferService() *DustTransferService {
-	return &DustTransferService{c: c}
-}
-
-func (c *Client) NewAssetDividendRecordService() *AssetDividendRecordService {
-	return &AssetDividendRecordService{c: c}
-}
-
-func (c *Client) NewAssetDetailV2Service() *AssetDetailV2Service {
-	return &AssetDetailV2Service{c: c}
-}
-
-func (c *Client) NewWalletBalanceService() *WalletBalanceService {
-	return &WalletBalanceService{c: c}
-}
-
-func (c *Client) NewTradeFeeService() *TradeFeeService {
-	return &TradeFeeService{c: c}
-}
-
-func (c *Client) NewUserUniversalTransferService() *UserUniversalTransferService {
-	return &UserUniversalTransferService{c: c}
-}
-
-func (c *Client) NewUserUniversalTransferHistoryService() *UserUniversalTransferHistoryService {
-	return &UserUniversalTransferHistoryService{c: c}
-}
-
-func (c *Client) NewFundingWalletService() *FundingWalletService {
-	return &FundingWalletService{c: c}
-}
-
-func (c *Client) NewUserAssetService() *UserAssetService {
-	return &UserAssetService{c: c}
-}
-
-func (c *Client) NewBUSDConvertHistoryService() *BUSDConvertHistoryService {
-	return &BUSDConvertHistoryService{c: c}
-}
-
-func (c *Client) NewCloudMiningPaymentHistoryService() *CloudMiningPaymentHistoryService {
-	return &CloudMiningPaymentHistoryService{c: c}
-}
-
-func (c *Client) NewUserDelegationHistoryService() *UserDelegationHistoryService {
-	return &UserDelegationHistoryService{c: c}
-}
-
-func (c *Client) NewAccountInfoService() *AccountInfoService {
-	return &AccountInfoService{c: c}
-}
-
-func (c *Client) NewAPIKeyPermissionService() *APIKeyPermissionService {
-	return &APIKeyPermissionService{c: c}
-}
-
-// User Data Streams:
-func (c *Client) NewCreateListenKeyService() *CreateListenKey {
-	return &CreateListenKey{c: c}
-}
-
-func (c *Client) NewPingUserStream() *PingUserStream {
-	return &PingUserStream{c: c}
-}
-
-func (c *Client) NewCloseUserStream() *CloseUserStream {
-	return &CloseUserStream{c: c}
-}
+// endregion

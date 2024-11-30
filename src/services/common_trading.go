@@ -1,6 +1,7 @@
 package services
 
 import (
+	"TradingSystem/src/binance_connector"
 	"TradingSystem/src/binance_connector_portfolio"
 	"TradingSystem/src/bingx"
 	"TradingSystem/src/models"
@@ -14,6 +15,8 @@ func GetTradingClient(apiKey, secretKey string, isTEST bool, ExchangeName models
 		client = bingx.NewClient(apiKey, secretKey, isTEST)
 	case models.ExchangeBinance_P:
 		client = binance_connector_portfolio.NewPortfolioClient(apiKey, secretKey)
+	case models.ExchangeBinance_N:
+		client = binance_connector.NewClient(apiKey, secretKey)
 	}
 	return
 }

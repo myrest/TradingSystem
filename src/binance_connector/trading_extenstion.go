@@ -1,140 +1,66 @@
-package binance_connector_portfolio
+package binance_connector
 
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 )
 
 // region 基本定義
-
 type OrderSide string
+type PositionSide string
+type OrderType string
+type SelfTradePreventionMode string
+type MarginTradingType string
+type TimeInForce string
 
 const (
 	Buy  OrderSide = "BUY"
 	Sell OrderSide = "SELL"
-)
 
-type PositionSide string
-
-const (
 	PositionBoth  PositionSide = "BOTH"
 	PositionLong  PositionSide = "LONG"
 	PositionShort PositionSide = "SHORT"
-)
 
-type OrderType string
-
-const (
-	LimitOrder  OrderType = "LIMIT"
-	MarketOrder OrderType = "MARKET"
-)
-
-type TimeInForce string
-
-const (
-	GTC TimeInForce = "GTC" // Good Till Cancelled
-	GTD TimeInForce = "GTD" // Good Till Date
-)
-
-type SelfTradePreventionMode string
-
-const (
 	None        SelfTradePreventionMode = "NONE"
 	ExpireTaker SelfTradePreventionMode = "EXPIRE_TAKER"
 	ExpireMaker SelfTradePreventionMode = "EXPIRE_MAKER"
 	ExpireBoth  SelfTradePreventionMode = "EXPIRE_BOTH"
+
+	MarginIsolated MarginTradingType = "ISOLATED" //全倉
+	MarginCrossed  MarginTradingType = "CROSSED"  //逐倉
+
+	GTC TimeInForce = "GTC" // Good Till Cancelled
+	GTD TimeInForce = "GTD" // Good Till Date
+
+	LimitOrder  OrderType = "LIMIT"
+	MarketOrder OrderType = "MARKET"
 )
 
-type UMStandardResponse struct {
+type StandardResponse struct {
 	Code int64  `json:"code"`
 	Msg  string `json:"msg"`
 }
 
 // endregion 基本定義
 
-// region 取得帳戶資產
-// https://developers.binance.com/docs/derivatives/portfolio-margin/account/Get-UM-Account-Detail
-type GetUMAccountAssetService struct {
-	c *Client
-}
-
-// Asset 表示單個資產的結構
-type Asset struct {
-	Asset                  string `json:"asset"`                  // 資產名稱
-	CrossWalletBalance     string `json:"crossWalletBalance"`     // 錢包餘額
-	CrossUnPnl             string `json:"crossUnPnl"`             // 未實現盈虧
-	MaintMargin            string `json:"maintMargin"`            // 所需維護保證金
-	InitialMargin          string `json:"initialMargin"`          // 當前市價所需的總初始保證金
-	PositionInitialMargin  string `json:"positionInitialMargin"`  // 當前市價所需的頭寸初始保證金
-	OpenOrderInitialMargin string `json:"openOrderInitialMargin"` // 當前市價所需的未平倉訂單初始保證金
-	UpdateTime             int64  `json:"updateTime"`             // 最後更新時間
-}
-
-// Position 表示單個交易品種的頭寸
-type Position struct {
-	Symbol                 string `json:"symbol"`                 // 交易品種名稱
-	InitialMargin          string `json:"initialMargin"`          // 當前市價所需的初始保證金
-	MaintMargin            string `json:"maintMargin"`            // 所需維護保證金
-	UnrealizedProfit       string `json:"unrealizedProfit"`       // 未實現盈虧
-	PositionInitialMargin  string `json:"positionInitialMargin"`  // 當前市價所需的頭寸初始保證金
-	OpenOrderInitialMargin string `json:"openOrderInitialMargin"` // 當前市價所需的未平倉訂單初始保證金
-	Leverage               string `json:"leverage"`               // 當前初始杠桿
-	EntryPrice             string `json:"entryPrice"`             // 平均入場價格
-	MaxNotional            string `json:"maxNotional"`            // 當前杠桿下的最大可用名義
-	BidNotional            string `json:"bidNotional"`            // 買入名義（忽略）
-	AskNotional            string `json:"askNotional"`            // 賣出名義（忽略）
-	PositionSide           string `json:"positionSide"`           // 頭寸方向
-	PositionAmt            string `json:"positionAmt"`            // 頭寸數量
-	UpdateTime             int64  `json:"updateTime"`             // 最後更新時間
-}
-
-// AccountAssetResponse 表示帳戶資產響應的結構
-type AccountAssetResponse struct {
-	Assets    []Asset    `json:"assets"`    // 資產列表
-	Positions []Position `json:"positions"` // 頭寸列表
-}
-
-func (s *GetUMAccountAssetService) Do(ctx context.Context, opts ...RequestOption) (res *AccountAssetResponse, err error) {
-	//s.c.Debug = true
-	r := &request{
-		method:   http.MethodGet,
-		endpoint: "/papi/v1/um/account",
-		secType:  secTypeSigned,
-	}
-	data, err := s.c.callAPI(ctx, r, opts...)
-	if err != nil {
-		return nil, err
-	}
-	res = &AccountAssetResponse{}
-	err = json.Unmarshal(data, &res)
-	if err != nil {
-		return nil, err
-	}
-	return res, nil
-}
-
-//endregion
-
 // region 持倉模式 "true": 双向持仓模式；"false": 单向持仓模式
-// https://developers.binance.com/docs/zh-CN/derivatives/portfolio-margin/account/Get-UM-Current-Position-Mode
-type GetUMPositionService struct {
+// https://developers.binance.com/docs/zh-CN/derivatives/usds-margined-futures/account/rest-api/Get-Current-Position-Mode
+type GetPositionService struct {
 	c                *Client
 	dualSidePosition string
 }
-
-//DualSidePosition bool `json:"dualSidePosition,string"` // 字串轉 bool
 
 type UMPositionResponse struct {
 	//"true": 双向持仓模式；"false": 单向持仓模式
 	DualSidePosition bool `json:"dualSidePosition"`
 }
 
-func (s *GetUMPositionService) Do(ctx context.Context, opts ...RequestOption) (res *UMPositionResponse, err error) {
-	//s.c.Debug = true
+func (s *GetPositionService) Do(ctx context.Context, opts ...RequestOption) (res *UMPositionResponse, err error) {
 	r := &request{
 		method:   http.MethodGet,
-		endpoint: "/papi/v1/um/positionSide/dual",
+		endpoint: "/fapi/v1/positionSide/dual",
 		secType:  secTypeSigned,
 	}
 
@@ -153,18 +79,16 @@ func (s *GetUMPositionService) Do(ctx context.Context, opts ...RequestOption) (r
 //endregion
 
 // region 更改持倉模式 "true": 双向持仓模式；"false": 单向持仓模式
-// https://developers.binance.com/docs/derivatives/portfolio-margin/account/Change-UM-Position-Mode
 
-func (s *GetUMPositionService) DualSidePosition(dualSidePosition string) *GetUMPositionService {
+func (s *GetPositionService) DualSidePosition(dualSidePosition string) *GetPositionService {
 	s.dualSidePosition = dualSidePosition
 	return s
 }
 
-func (s *GetUMPositionService) DoUpdate(ctx context.Context, opts ...RequestOption) (res *UMStandardResponse, err error) {
-	//s.c.Debug = true
+func (s *GetPositionService) DoUpdate(ctx context.Context, opts ...RequestOption) (res *StandardResponse, err error) {
 	r := &request{
 		method:   http.MethodPost,
-		endpoint: "/papi/v1/um/positionSide/dual",
+		endpoint: "/fapi/v1/positionSide/dual",
 		secType:  secTypeSigned,
 	}
 
@@ -175,7 +99,7 @@ func (s *GetUMPositionService) DoUpdate(ctx context.Context, opts ...RequestOpti
 	if err != nil {
 		return nil, err
 	}
-	res = &UMStandardResponse{}
+	res = &StandardResponse{}
 	err = json.Unmarshal(data, &res)
 	if err != nil {
 		return nil, err
@@ -185,51 +109,46 @@ func (s *GetUMPositionService) DoUpdate(ctx context.Context, opts ...RequestOpti
 
 //endregion
 
-// region 可用餘額
-// https://developers.binance.com/docs/derivatives/portfolio-margin/account
-type GetUMAccountBalanceService struct {
-	c     *Client
-	asset string
+// region 調整槓桿
+type GetLeverageService struct {
+	c        *Client
+	symbol   *string
+	leverage *int64 //target initial leverage: int from 1 to 125
 }
 
-type UMAccountBalanceResponse struct {
-	Asset               string `json:"asset"`               // 資產名稱
-	TotalWalletBalance  string `json:"totalWalletBalance"`  // 錢包餘額
-	CrossMarginAsset    string `json:"crossMarginAsset"`    // 跨保證金資產
-	CrossMarginBorrowed string `json:"crossMarginBorrowed"` // 跨保證金借入的本金
-	CrossMarginFree     string `json:"crossMarginFree"`     // 跨保證金的自由資產
-	CrossMarginInterest string `json:"crossMarginInterest"` // 跨保證金的利息
-	CrossMarginLocked   string `json:"crossMarginLocked"`   // 跨保證金鎖定的資產
-	UMWalletBalance     string `json:"umWalletBalance"`     // UM 錢包餘額
-	UMUnrealizedPNL     string `json:"umUnrealizedPNL"`     // UM 的未實現利潤
-	CMWalletBalance     string `json:"cmWalletBalance"`     // CM 錢包餘額
-	CMUnrealizedPNL     string `json:"cmUnrealizedPNL"`     // CM 的未實現利潤
-	UpdateTime          int64  `json:"updateTime"`          // 更新時間
-	NegativeBalance     string `json:"negativeBalance"`     // 負餘額
+type LeverageResponse struct {
+	Leverage         int64  `json:"leverage"`
+	MaxNotionalValue string `json:"maxNotionalValue"`
+	Symbol           string `json:"symbol"`
 }
 
-func (s *GetUMAccountBalanceService) Asset(asset string) *GetUMAccountBalanceService {
-	s.asset = asset
+func (s *GetLeverageService) Symbol(symbol string) *GetLeverageService {
+	s.symbol = &symbol
 	return s
 }
 
-func (s *GetUMAccountBalanceService) Do(ctx context.Context, opts ...RequestOption) (res []*UMAccountBalanceResponse, err error) {
-	//s.c.Debug = true
+func (s *GetLeverageService) Leverage(leverage int64) *GetLeverageService {
+	s.leverage = &leverage
+	return s
+}
+
+func (s *GetLeverageService) Do(ctx context.Context, opts ...RequestOption) (res *LeverageResponse, err error) {
 	r := &request{
-		method:   http.MethodGet,
-		endpoint: "/papi/v1/balance",
+		method:   http.MethodPost,
+		endpoint: "/fapi/v1/leverage",
 		secType:  secTypeSigned,
 	}
-
-	if s.asset != "" {
-		r.setParam("asset", s.asset)
+	if s.symbol != nil {
+		r.setParam("symbol", *s.symbol)
 	}
-
+	if s.leverage != nil {
+		r.setParam("leverage", *s.leverage)
+	}
 	data, err := s.c.callAPI(ctx, r, opts...)
 	if err != nil {
 		return nil, err
 	}
-	res = make([]*UMAccountBalanceResponse, 0)
+	res = &LeverageResponse{}
 	err = json.Unmarshal(data, &res)
 	if err != nil {
 		return nil, err
@@ -237,35 +156,147 @@ func (s *GetUMAccountBalanceService) Do(ctx context.Context, opts ...RequestOpti
 	return res, nil
 }
 
-func (s *GetUMAccountBalanceService) DoSingle(ctx context.Context, opts ...RequestOption) (res *UMAccountBalanceResponse, err error) {
-	//s.c.Debug = true
+// endregion
+
+// region 修改全逐倉模式
+type GetMarginTypeService struct {
+	c          *Client
+	symbol     *string
+	marginType MarginTradingType
+}
+
+type MarginTypeResponse struct {
+	Symbol           string `json:"symbol"`
+	MarginType       string `json:"marginType"`
+	IsAutoAddMargin  bool   `json:"isAutoAddMargin"`
+	Leverage         int64  `json:"leverage"`
+	MaxNotionalValue string `json:"maxNotionalValue"`
+}
+
+func (s *GetMarginTypeService) Symbol(symbol string) *GetMarginTypeService {
+	s.symbol = &symbol
+	return s
+}
+
+func (s *GetMarginTypeService) MarginType(marginType MarginTradingType) *GetMarginTypeService {
+	s.marginType = marginType
+	return s
+}
+
+func (s *GetMarginTypeService) DoUpdate(ctx context.Context, opts ...RequestOption) (res *MarginTypeResponse, err error) {
 	r := &request{
-		method:   http.MethodGet,
-		endpoint: "/papi/v1/balance",
+		method:   http.MethodPost,
+		endpoint: "/fapi/v1/marginType",
 		secType:  secTypeSigned,
 	}
+	if s.symbol != nil {
+		r.setParam("symbol", *s.symbol)
+	}
 
-	if s.asset != "" {
-		r.setParam("asset", s.asset)
+	if s.marginType != "" {
+		r.setParam("marginType", string(s.marginType))
 	}
 
 	data, err := s.c.callAPI(ctx, r, opts...)
 	if err != nil {
 		return nil, err
 	}
-	res = &UMAccountBalanceResponse{}
+	res = &MarginTypeResponse{}
 	err = json.Unmarshal(data, &res)
 	if err != nil {
 		return nil, err
 	}
 	return res, nil
+}
+
+func (s *GetMarginTypeService) Do(ctx context.Context, opts ...RequestOption) (*MarginTypeResponse, error) {
+	r := &request{
+		method:   http.MethodGet,
+		endpoint: "/fapi/v1/symbolConfig",
+		secType:  secTypeSigned,
+	}
+	if s.symbol != nil {
+		r.setParam("symbol", *s.symbol)
+	}
+
+	data, err := s.c.callAPI(ctx, r, opts...)
+	if err != nil {
+		return nil, err
+	}
+	res := make([]*MarginTypeResponse, 0)
+	err = json.Unmarshal(data, &res)
+	if err != nil {
+		return nil, err
+	}
+	if len(res) > 0 {
+		return res[0], nil
+	} else {
+		return nil, errors.New("symbol not found")
+	}
+}
+
+// endregion
+
+// region 可用餘額
+type GetAccountBalanceService struct {
+	c      *Client
+	symbol *string //自己加的功能，用來filter指定的幣種
+}
+
+type AccountBalanceResponse struct {
+	AccountAlias       string `json:"accountAlias"`       // 账户唯一识别码
+	Asset              string `json:"asset"`              // 资产
+	Balance            string `json:"balance"`            // 总余额
+	CrossWalletBalance string `json:"crossWalletBalance"` // 全仓余额
+	CrossUnPnl         string `json:"crossUnPnl"`         // 全仓持仓未实现盈亏
+	AvailableBalance   string `json:"availableBalance"`   // 下单可用余额
+	MaxWithdrawAmount  string `json:"maxWithdrawAmount"`  // 最大可转出余额
+	MarginAvailable    bool   `json:"marginAvailable"`    // 是否可用作联合保证金
+	UpdateTime         int64  `json:"updateTime"`
+}
+
+func (s *GetAccountBalanceService) Do(ctx context.Context, opts ...RequestOption) (res []*AccountBalanceResponse, err error) {
+	r := &request{
+		method:   http.MethodGet,
+		endpoint: "/fapi/v3/balance",
+		secType:  secTypeSigned,
+	}
+
+	data, err := s.c.callAPI(ctx, r, opts...)
+	if err != nil {
+		return nil, err
+	}
+	res = make([]*AccountBalanceResponse, 0)
+	err = json.Unmarshal(data, &res)
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
+func (s *GetAccountBalanceService) Symbol(symbol string) *GetAccountBalanceService {
+	s.symbol = &symbol
+	return s
+}
+
+func (s *GetAccountBalanceService) DoSingle(ctx context.Context, opts ...RequestOption) (*AccountBalanceResponse, error) {
+	result, err := s.Do(ctx, opts...)
+	if err != nil {
+		return nil, err
+	}
+	if len(result) > 0 {
+		for _, v := range result {
+			if v.Asset == "USDT" {
+				return v, nil
+			}
+		}
+	}
+	return nil, errors.New("asset not found")
 }
 
 //endregion
 
 // region 下單
-// https://developers.binance.com/docs/derivatives/portfolio-margin/trade
-// 目前會遇到 Order's position side does not match user's setting.的錯誤
 type GetUMNewOrderService struct {
 	c                *Client
 	symbol           *string
@@ -292,10 +323,17 @@ type UMNewOrderResponse struct {
 	Side                    string `json:"side"`
 	PositionSide            string `json:"positionSide"`
 	Status                  string `json:"status"`
+	StopPrice               string `json:"stopPrice"`
+	ClosePosition           bool   `json:"closePosition"`
 	Symbol                  string `json:"symbol"`
 	TimeInForce             string `json:"timeInForce"`
 	Type                    string `json:"type"`
+	OrigType                string `json:"origType"`
+	ActivatePrice           string `json:"activatePrice"`
+	PriceRate               string `json:"priceRate"`
+	WorkingType             string `json:"workingType"`
 	SelfTradePreventionMode string `json:"selfTradePreventionMode"`
+	PriceProtect            bool   `json:"priceProtect"`
 	GoodTillDate            int64  `json:"goodTillDate"`
 	UpdateTime              int64  `json:"updateTime"`
 	PriceMatch              string `json:"priceMatch"`
@@ -345,10 +383,9 @@ func (s *GetUMNewOrderService) TimeInForce(timeInForce TimeInForce) *GetUMNewOrd
 }
 
 func (s *GetUMNewOrderService) Do(ctx context.Context, opts ...RequestOption) (res *UMNewOrderResponse, err error) {
-	//s.c.Debug = true
 	r := &request{
 		method:   http.MethodPost,
-		endpoint: "/papi/v1/um/order",
+		endpoint: "/fapi/v1/order",
 		secType:  secTypeSigned,
 	}
 	if s.symbol != nil {
@@ -401,26 +438,7 @@ type GetUMOrderService struct {
 }
 
 type UMOrderResponse struct {
-	AvgPrice                string `json:"avgPrice"`
-	ClientOrderId           string `json:"clientOrderId"`
-	CumQuote                string `json:"cumQuote"`
-	ExecutedQty             string `json:"executedQty"`
-	OrderId                 int64  `json:"orderId"`
-	OrigQty                 string `json:"origQty"`
-	OrigType                string `json:"origType"`
-	Price                   string `json:"price"`
-	ReduceOnly              bool   `json:"reduceOnly"`
-	Side                    string `json:"side"`
-	PositionSide            string `json:"positionSide"`
-	Status                  string `json:"status"`
-	Symbol                  string `json:"symbol"`
-	Time                    int64  `json:"time"`
-	TimeInForce             string `json:"timeInForce"`
-	Type                    string `json:"type"`
-	UpdateTime              int64  `json:"updateTime"`
-	SelfTradePreventionMode string `json:"selfTradePreventionMode"`
-	GoodTillDate            int64  `json:"goodTillDate"`
-	PriceMatch              string `json:"priceMatch"`
+	UMNewOrderResponse
 }
 
 func (s *GetUMOrderService) Symbol(symbol string) *GetUMOrderService {
@@ -434,10 +452,9 @@ func (s *GetUMOrderService) OrderId(orderid int64) *GetUMOrderService {
 }
 
 func (s *GetUMOrderService) Do(ctx context.Context, opts ...RequestOption) (res *UMOrderResponse, err error) {
-	//s.c.Debug = true
 	r := &request{
 		method:   http.MethodGet,
-		endpoint: "/papi/v1/um/order",
+		endpoint: "/fapi/v1/order",
 		secType:  secTypeSigned,
 	}
 	if s.symbol != nil {
@@ -451,56 +468,6 @@ func (s *GetUMOrderService) Do(ctx context.Context, opts ...RequestOption) (res 
 		return nil, err
 	}
 	res = &UMOrderResponse{}
-	err = json.Unmarshal(data, &res)
-	if err != nil {
-		return nil, err
-	}
-	return res, nil
-}
-
-// endregion
-
-// region 調整槓桿
-type GetUMLeverageService struct {
-	c        *Client
-	symbol   *string
-	leverage *int64 //target initial leverage: int from 1 to 125
-}
-
-type UMLeverageResponse struct {
-	Leverage         int64  `json:"leverage"`
-	MaxNotionalValue string `json:"maxNotionalValue"`
-	Symbol           string `json:"symbol"`
-}
-
-func (s *GetUMLeverageService) Symbol(symbol string) *GetUMLeverageService {
-	s.symbol = &symbol
-	return s
-}
-
-func (s *GetUMLeverageService) Leverage(leverage int64) *GetUMLeverageService {
-	s.leverage = &leverage
-	return s
-}
-
-func (s *GetUMLeverageService) Do(ctx context.Context, opts ...RequestOption) (res *UMLeverageResponse, err error) {
-	//s.c.Debug = true
-	r := &request{
-		method:   http.MethodPost,
-		endpoint: "/papi/v1/um/leverage",
-		secType:  secTypeSigned,
-	}
-	if s.symbol != nil {
-		r.setParam("symbol", *s.symbol)
-	}
-	if s.leverage != nil {
-		r.setParam("leverage", *s.leverage)
-	}
-	data, err := s.c.callAPI(ctx, r, opts...)
-	if err != nil {
-		return nil, err
-	}
-	res = &UMLeverageResponse{}
 	err = json.Unmarshal(data, &res)
 	if err != nil {
 		return nil, err
@@ -536,10 +503,9 @@ func (s *GetUMPositionRiskService) Symbol(symbol string) *GetUMPositionRiskServi
 }
 
 func (s *GetUMPositionRiskService) Do(ctx context.Context, opts ...RequestOption) (res []*UMPositionRiskResponse, err error) {
-	//s.c.Debug = true
 	r := &request{
 		method:   http.MethodGet,
-		endpoint: "/papi/v1/um/positionRisk",
+		endpoint: "/fapi/v3/positionRisk",
 		secType:  secTypeSigned,
 	}
 	if s.symbol != "" {
@@ -612,10 +578,9 @@ func (s *GetUMUserTradeService) Limit(limit int64) *GetUMUserTradeService {
 }
 
 func (s *GetUMUserTradeService) Do(ctx context.Context, opts ...RequestOption) (res []*UMUserTradeResponse, err error) {
-	//s.c.Debug = true
 	r := &request{
 		method:   http.MethodGet,
-		endpoint: "/papi/v1/um/userTrades",
+		endpoint: "/fapi/v1/userTrades",
 		secType:  secTypeSigned,
 	}
 	if s.symbol != "" {
