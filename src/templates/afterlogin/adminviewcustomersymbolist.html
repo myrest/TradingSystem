@@ -38,7 +38,7 @@
                     <span class="status-toggle disabled">停用</span>
                     {{ end }}
                 </td>
-                <td>{{.Amount}}</td>
+                <td>{{.Amount}} * {{.Leverage}}</td>
                 <td><a href="/customers/placeorderhistory?symbol={{ .Symbol }}&cid={{.CustomerID}}">記錄</a></td>
             </tr>
             {{end}}

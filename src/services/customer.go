@@ -1,6 +1,7 @@
 package services
 
 import (
+	"TradingSystem/src/common"
 	"TradingSystem/src/models"
 	"context"
 	"errors"
@@ -11,7 +12,7 @@ import (
 )
 
 func CreateCustomer(ctx context.Context, customer *models.Customer) (string, error) {
-	client := getFirestoreClient()
+	client := common.GetFirestoreClient()
 
 	//只有Email格式的要驗Email是否存在，Email為ID型式的為subaccount
 	i := strings.Index(customer.Email, "@")
@@ -37,7 +38,7 @@ func CreateCustomer(ctx context.Context, customer *models.Customer) (string, err
 }
 
 func GetCustomer(ctx context.Context, id string) (*models.Customer, error) {
-	client := getFirestoreClient()
+	client := common.GetFirestoreClient()
 
 	doc, err := client.Collection("customers").Doc(id).Get(ctx)
 	if err != nil {
@@ -52,21 +53,21 @@ func GetCustomer(ctx context.Context, id string) (*models.Customer, error) {
 }
 
 func UpdateCustomer(ctx context.Context, customer *models.Customer) error {
-	client := getFirestoreClient()
+	client := common.GetFirestoreClient()
 
 	_, err := client.Collection("customers").Doc(customer.ID).Set(ctx, customer)
 	return err
 }
 
 func DeleteCustomer(ctx context.Context, id string) error {
-	client := getFirestoreClient()
+	client := common.GetFirestoreClient()
 
 	_, err := client.Collection("customers").Doc(id).Delete(ctx)
 	return err
 }
 
 func GetCustomerByEmail(ctx context.Context, email string) (*models.Customer, error) {
-	client := getFirestoreClient()
+	client := common.GetFirestoreClient()
 
 	iter := client.Collection("customers").Where("Email", "==", email).Limit(1).Documents(ctx)
 	defer iter.Stop()
@@ -86,7 +87,7 @@ func GetCustomerByEmail(ctx context.Context, email string) (*models.Customer, er
 }
 
 func GetCustomerByTgIdentifyKey(ctx context.Context, key string) (*models.Customer, error) {
-	client := getFirestoreClient()
+	client := common.GetFirestoreClient()
 
 	iter := client.Collection("customers").Where("TgIdentifyKey", "==", key).Limit(1).Documents(ctx)
 	defer iter.Stop()
@@ -106,7 +107,7 @@ func GetCustomerByTgIdentifyKey(ctx context.Context, key string) (*models.Custom
 }
 
 func GetCustomerByTgChatID(ctx context.Context, key int64) (*[]models.Customer, error) {
-	client := getFirestoreClient()
+	client := common.GetFirestoreClient()
 
 	iter := client.Collection("customers").Where("TgChatID", "==", key).Documents(ctx)
 	defer iter.Stop()

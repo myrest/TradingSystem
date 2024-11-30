@@ -13,6 +13,7 @@ type Customer struct {
 	TgChatID           int64             `json:"tgchatid"`
 	TgIdentifyKey      string            `json:"tgidentifykey"`
 	AlertMessageType   AlertMessageModel `json:"alertmessagetype"`
+	ExchangeSystemName ExchangeSystem    `json:"exchangesystem"`
 }
 
 type CustomerRelationUI struct {
@@ -23,12 +24,16 @@ type CustomerRelationUI struct {
 }
 
 type AlertMessageModel string
+type ExchangeSystem string
 
 const (
-	CustomerAlertAll     AlertMessageModel = "All"     //全都發
-	CustomerAlertClose   AlertMessageModel = "Close"   //平倉發
-	CustomerAlertLoss    AlertMessageModel = "Loss"    //虧損發
-	CustomerAlertDefault AlertMessageModel = "Default" //預設，下單失敗、開第六倉及日結通知
+	CustomerAlertAll     AlertMessageModel = "All"               //全都發
+	CustomerAlertClose   AlertMessageModel = "Close"             //平倉發
+	CustomerAlertLoss    AlertMessageModel = "Loss"              //虧損發
+	CustomerAlertDefault AlertMessageModel = "Default"           //預設，下單失敗、開第六倉及日結通知
+	ExchangeBingx        ExchangeSystem    = "Bingx"             //Bingx
+	ExchangeBinance_N    ExchangeSystem    = "Binance_Normal"    //Binance 一般帳戶
+	ExchangeBinance_P    ExchangeSystem    = "Binance_Portfolio" //Binance 統一帳戶
 )
 
 // 定義一個警告消息的結構體

@@ -39,7 +39,7 @@ func SetTGIdentifyKey(ctx context.Context, CustomerID string) (string, error) {
 }
 
 func GetCustomerByTGChatIDss(ctx context.Context, ChatID int64) (*models.Customer, error) {
-	client := getFirestoreClient()
+	client := common.GetFirestoreClient()
 
 	iter := client.Collection("customers").Where("TgChatID", "==", ChatID).Limit(1).Documents(ctx)
 	defer iter.Stop()

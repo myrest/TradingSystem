@@ -1,6 +1,7 @@
 package services
 
 import (
+	"TradingSystem/src/common"
 	"TradingSystem/src/models"
 	"context"
 	"strings"
@@ -13,7 +14,7 @@ import (
 
 func GetMappedCustomerList(ctx context.Context) (map[string]models.CustomerRelationUI, error) {
 	customermap := make(map[string]models.CustomerRelationUI)
-	client := getFirestoreClient()
+	client := common.GetFirestoreClient()
 	//取出所有的客戶資料
 	iter := client.Collection("customers").Documents(ctx)
 	for {
@@ -76,7 +77,7 @@ func getCount(ctx context.Context, query *firestore.AggregationQuery) int64 {
 // 取得各資料表的筆數
 func GetCustomerData(ctx context.Context, customerID string) map[string]int64 {
 	rtn := make(map[string]int64)
-	client := getFirestoreClient()
+	client := common.GetFirestoreClient()
 
 	//placeOrderLog
 	query := client.Collection("placeOrderLog").
@@ -102,7 +103,7 @@ func GetCustomerData(ctx context.Context, customerID string) map[string]int64 {
 
 // 刪除資料
 func DeleteCustomerData(ctx context.Context, customerID string, cutoffDatetime time.Time) error {
-	client := getFirestoreClient()
+	client := common.GetFirestoreClient()
 	query := client.Collection("placeOrderLog").
 		Where("Time", "<", cutoffDatetime).
 		Where("CustomerID", "==", customerID)

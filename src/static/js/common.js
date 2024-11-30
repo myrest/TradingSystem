@@ -22,13 +22,22 @@ function saveKeys() {
     const amount = Number(document.getElementById('SubscribeAmount').value);
     const alertmessagetype = document.getElementById('AlertMessageType').value;
 
+    const ExchangRadios = document.getElementsByName('ExchangeSystemName');
+    let exchangesystem = '';
+    for (const radio of ExchangRadios) {
+        if (radio.checked) {
+            exchangesystem = radio.value;
+            break;
+        }
+    }
     const data = {
         apiKey,
         secretKey,
         autosubscribe,
         subscribtype,
         amount,
-        alertmessagetype
+        alertmessagetype,
+        exchangesystem
     };
 
     fetch('/customers/update', {
@@ -44,6 +53,12 @@ function saveKeys() {
             response.json().then(error => {
                 alert('Error updating customer:', error);
             });
+        }
+        //如果有換交易所，要reload page.
+        isBinalance = isRealonly == '1';
+        if ((isBinalance && !exchangesystem.startsWith("Binance")) ||
+            (!isBinalance && exchangesystem.startsWith("Binance"))) {
+            window.location.reload();
         }
     }).catch(error => {
         alert('Error:', error);

@@ -13,7 +13,7 @@ import (
 )
 
 func GetCustomerCurrencySymbosBySymbol(ctx context.Context, symbol string) ([]models.CustomerCurrencySymboWithCustomer, error) {
-	client := getFirestoreClient()
+	client := common.GetFirestoreClient()
 
 	// 查询 CustomerCurrencySymbol 集合
 	iter := client.Collection("customerssymbol").Where("Symbol", "==", symbol).Where("Status", "==", true).Documents(ctx)
@@ -83,7 +83,7 @@ func GetCustomerCurrencySymbosBySymbol(ctx context.Context, symbol string) ([]mo
 
 // SaveWebhookData saves the webhook data to Firestore
 func SaveWebhookData(ctx context.Context, webhookData models.TvWebhookData) (string, error) {
-	client := getFirestoreClient()
+	client := common.GetFirestoreClient()
 	doc, _, err := client.Collection("webhookData").Add(ctx, webhookData)
 	if err != nil {
 		return "", err
@@ -92,7 +92,7 @@ func SaveWebhookData(ctx context.Context, webhookData models.TvWebhookData) (str
 }
 
 func SaveCustomerPlaceOrderResultLog(ctx context.Context, placeorderlog models.Log_TvSiginalData) (string, error) {
-	client := getFirestoreClient()
+	client := common.GetFirestoreClient()
 	doc, _, err := client.Collection("placeOrderLog").Add(ctx, placeorderlog)
 	if err != nil {
 		return "", err
@@ -101,7 +101,7 @@ func SaveCustomerPlaceOrderResultLog(ctx context.Context, placeorderlog models.L
 }
 
 func GetPlaceOrderHistory(ctx context.Context, Symbol, CustomerID string, sdt, edt time.Time, page, pageSize int) ([]models.Log_TvSiginalData, int, error) {
-	client := getFirestoreClient()
+	client := common.GetFirestoreClient()
 
 	query := client.Collection("placeOrderLog").
 		Where("CustomerID", "==", CustomerID).
@@ -137,7 +137,7 @@ func GetPlaceOrderHistory(ctx context.Context, Symbol, CustomerID string, sdt, e
 }
 
 func getTotalPages(ctx context.Context, Symbol, CustomerID string, sdt, edt time.Time, pageSize int) (int, error) {
-	client := getFirestoreClient()
+	client := common.GetFirestoreClient()
 
 	// Firestore COUNT query
 	query := client.Collection("placeOrderLog").

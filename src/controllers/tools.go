@@ -47,9 +47,9 @@ func GetBingxOrderByID(c *gin.Context) {
 	//無法取得下單的資料
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{"error": err.Error()})
+	} else {
+		c.JSON(http.StatusOK, gin.H{"data": placedOrder})
 	}
-
-	c.JSON(http.StatusOK, gin.H{"data": placedOrder})
 }
 
 func GetAvailableAmountByID(c *gin.Context) {

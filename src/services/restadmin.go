@@ -19,7 +19,7 @@ const (
 )
 
 func CreateNewSymbol(ctx context.Context, Symbol models.AdminCurrencySymbol) (*models.AdminCurrencySymbol, error) {
-	client := getFirestoreClient()
+	client := common.GetFirestoreClient()
 	Symbol.Cert = common.GenerateRandomString(8)
 
 	//檢查有無重覆
@@ -46,7 +46,7 @@ func CreateNewSymbol(ctx context.Context, Symbol models.AdminCurrencySymbol) (*m
 
 // 只有在Create的時候才幫有自動訂閱的客戶加上去。
 func updateAutoSubscriberCustomerSymbol(ctx context.Context, AdminSymbol models.AdminCurrencySymbol) error {
-	client := getFirestoreClient()
+	client := common.GetFirestoreClient()
 
 	//找出有啟用自動訂閱的客戶
 	iter := client.Collection("customers").Where("IsAutoSubscribe", "==", true).
@@ -84,7 +84,7 @@ func updateAutoSubscriberCustomerSymbol(ctx context.Context, AdminSymbol models.
 }
 
 func DeleteAdminSymbol(ctx context.Context, Symbol string) error {
-	client := getFirestoreClient()
+	client := common.GetFirestoreClient()
 
 	iter := client.Collection("SymbolData").Where("Symbol", "==", Symbol).Documents(ctx)
 	defer iter.Stop()
@@ -108,7 +108,7 @@ func DeleteAdminSymbol(ctx context.Context, Symbol string) error {
 }
 
 func DisableCustomerSymbolStatus(ctx context.Context, Symbol string) error {
-	client := getFirestoreClient()
+	client := common.GetFirestoreClient()
 
 	// 使用 Firestore 批量写入操作
 	bulkWriter := client.BulkWriter(ctx)
@@ -136,7 +136,7 @@ func DisableCustomerSymbolStatus(ctx context.Context, Symbol string) error {
 }
 
 func getSymbolFromDB(ctx context.Context, symbol string) (*firestore.DocumentSnapshot, error) {
-	client := getFirestoreClient()
+	client := common.GetFirestoreClient()
 
 	iter := client.Collection("SymbolData").Where("Symbol", "==", symbol).Limit(1).Documents(ctx)
 	defer iter.Stop()
@@ -148,7 +148,7 @@ func getSymbolFromDB(ctx context.Context, symbol string) (*firestore.DocumentSna
 }
 
 func UpdateSymbolStatus(ctx context.Context, Symbol models.AdminCurrencySymbol) error {
-	client := getFirestoreClient()
+	client := common.GetFirestoreClient()
 
 	doc, err := getSymbolFromDB(ctx, Symbol.Symbol)
 	if err != nil {
@@ -164,7 +164,7 @@ func UpdateSymbolStatus(ctx context.Context, Symbol models.AdminCurrencySymbol) 
 }
 
 func UpdateSymbolMessage(ctx context.Context, Symbol models.AdminCurrencySymbol) error {
-	client := getFirestoreClient()
+	client := common.GetFirestoreClient()
 
 	doc, err := getSymbolFromDB(ctx, Symbol.Symbol)
 	if err != nil {
@@ -180,7 +180,7 @@ func UpdateSymbolMessage(ctx context.Context, Symbol models.AdminCurrencySymbol)
 }
 
 func GetAllSymbol(ctx context.Context) ([]models.AdminCurrencySymbol, error) {
-	client := getFirestoreClient()
+	client := common.GetFirestoreClient()
 	iter := client.Collection("SymbolData").Documents(ctx)
 	defer iter.Stop()
 
@@ -208,7 +208,7 @@ func GetAllSymbol(ctx context.Context) ([]models.AdminCurrencySymbol, error) {
 }
 
 func GetSymbol(ctx context.Context, Symbol, Cert string) (*models.AdminCurrencySymbol, error) {
-	client := getFirestoreClient()
+	client := common.GetFirestoreClient()
 	var rtn *models.AdminCurrencySymbol
 	iter := client.Collection("SymbolData").Where("Symbol", "==", Symbol).Limit(1).Documents(ctx)
 	defer iter.Stop()
@@ -226,7 +226,7 @@ func GetSymbol(ctx context.Context, Symbol, Cert string) (*models.AdminCurrencyS
 }
 
 func GetLatestWebhook(ctx context.Context) ([]models.TvWebhookData, error) {
-	client := getFirestoreClient()
+	client := common.GetFirestoreClient()
 
 	allAdminSymbol, err := GetAllSymbol(ctx)
 	if err != nil {
@@ -288,7 +288,7 @@ func GetLatestWebhook(ctx context.Context) ([]models.TvWebhookData, error) {
 }
 
 func GetSubscribeCustomersBySymbol(ctx context.Context, Symbol string) ([]models.CustomerCurrencySymbolUI, error) {
-	client := getFirestoreClient()
+	client := common.GetFirestoreClient()
 
 	MappedSubCustomerList, err := GetMappedCustomerList(ctx)
 	if err != nil {
@@ -320,7 +320,7 @@ func GetSubscribeCustomersBySymbol(ctx context.Context, Symbol string) ([]models
 }
 
 func GetCustomerIDByBingxOrderID(ctx context.Context, OrderID string) (string, error) {
-	client := getFirestoreClient()
+	client := common.GetFirestoreClient()
 	var data models.Log_TvSiginalData
 	iter := client.Collection("placeOrderLog").Where("Result", "==", OrderID).Limit(1).Documents(ctx)
 	defer iter.Stop()

@@ -1,7 +1,6 @@
 package models
 
 import (
-	"TradingSystem/src/bingx"
 	"TradingSystem/src/common"
 	"strconv"
 	"strings"
@@ -40,8 +39,8 @@ type TvSiginalData struct {
 }
 
 type PlaceOrderType struct {
-	PositionSideType bingx.PositionSideType //Long, Short
-	Side             bingx.SideType         //Buy, Sell
+	PositionSideType PositionSideType //Long, Short
+	Side             SideType         //Buy, Sell
 }
 
 type Log_TvSiginalData struct {
@@ -68,11 +67,11 @@ func (t *TvSiginalData) Convert(d TvWebhookData) {
 	if t.TVData.PositionSize == 0 {
 		//平倉
 		if t.TVData.Action == "sell" {
-			t.PlaceOrderType.Side = bingx.SellSideType
-			t.PlaceOrderType.PositionSideType = bingx.LongPositionSideType //平多倉
+			t.PlaceOrderType.Side = SellSideType
+			t.PlaceOrderType.PositionSideType = LongPositionSideType //平多倉
 		} else {
-			t.PlaceOrderType.Side = bingx.BuySideType
-			t.PlaceOrderType.PositionSideType = bingx.ShortPositionSideType //平空倉
+			t.PlaceOrderType.Side = BuySideType
+			t.PlaceOrderType.PositionSideType = ShortPositionSideType //平空倉
 		}
 	} else {
 		//可能為開倉、加倉，減倉
@@ -81,23 +80,23 @@ func (t *TvSiginalData) Convert(d TvWebhookData) {
 			//應持多倉
 			if t.TVData.Action == "buy" {
 				//開多倉 or 加多倉
-				t.PlaceOrderType.Side = bingx.BuySideType
-				t.PlaceOrderType.PositionSideType = bingx.LongPositionSideType
+				t.PlaceOrderType.Side = BuySideType
+				t.PlaceOrderType.PositionSideType = LongPositionSideType
 			} else {
 				//減倉
-				t.PlaceOrderType.Side = bingx.SellSideType
-				t.PlaceOrderType.PositionSideType = bingx.LongPositionSideType
+				t.PlaceOrderType.Side = SellSideType
+				t.PlaceOrderType.PositionSideType = LongPositionSideType
 			}
 		} else {
 			//應持空倉
 			if t.TVData.Action == "sell" {
 				//開空倉 or 加空倉
-				t.PlaceOrderType.Side = bingx.SellSideType
-				t.PlaceOrderType.PositionSideType = bingx.ShortPositionSideType
+				t.PlaceOrderType.Side = SellSideType
+				t.PlaceOrderType.PositionSideType = ShortPositionSideType
 			} else {
 				//減倉
-				t.PlaceOrderType.Side = bingx.BuySideType
-				t.PlaceOrderType.PositionSideType = bingx.ShortPositionSideType
+				t.PlaceOrderType.Side = BuySideType
+				t.PlaceOrderType.PositionSideType = ShortPositionSideType
 			}
 		}
 	}

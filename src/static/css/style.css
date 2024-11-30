@@ -218,6 +218,7 @@ th {
 
 .status-toggle.SysDisabled {
     background-color: #707070;
+    cursor: not-allowed;
 }
 
 .login-box {

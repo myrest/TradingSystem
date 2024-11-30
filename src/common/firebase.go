@@ -1,7 +1,6 @@
-package services
+package common
 
 import (
-	"TradingSystem/src/common"
 	"context"
 	"log"
 	"sync"
@@ -10,6 +9,7 @@ import (
 	secretmanager "cloud.google.com/go/secretmanager/apiv1"
 	secretmanagerpb "cloud.google.com/go/secretmanager/apiv1/secretmanagerpb"
 	firebase "firebase.google.com/go"
+	"firebase.google.com/go/auth"
 	"google.golang.org/api/option"
 )
 
@@ -20,7 +20,11 @@ var (
 )
 var secmanagerCert string
 
-func getSecret(ctx context.Context, name string) (string, error) {
+func FirebaseAuth(ctx context.Context) (*auth.Client, error) {
+	return app.Auth(ctx)
+}
+
+func GetSecret(ctx context.Context, name string) (string, error) {
 	if secmanagerCert != "" {
 		return secmanagerCert, nil
 	}
@@ -46,13 +50,13 @@ func init() {
 	ctx := context.Background()
 	var err error
 
-	settings := common.GetEnvironmentSetting()
+	settings := GetFirebaseSetting()
 
 	var sa option.ClientOption
-	if common.IsFileExists(settings.FireBaseKeyFullPath) {
+	if IsFileExists(settings.FireBaseKeyFullPath) {
 		sa = option.WithCredentialsFile(settings.FireBaseKeyFullPath)
 	} else {
-		creds, err := getSecret(ctx, "projects/635522974118/secrets/GOOGLE_APPLICATION_CREDENTIALS/versions/latest")
+		creds, err := GetSecret(ctx, "projects/635522974118/secrets/GOOGLE_APPLICATION_CREDENTIALS/versions/latest")
 		if err != nil {
 			log.Fatalf("failed to access secret version: %v", err)
 		}
@@ -71,7 +75,7 @@ func init() {
 	}
 }
 
-func getFirestoreClient() *firestore.Client {
+func GetFirestoreClient() *firestore.Client {
 	firestoreMu.Lock()
 	defer firestoreMu.Unlock()
 	return firestoreClient

@@ -6,3 +6,8 @@ src/firebaseConfig*
 firebaseConfig_dev.json
 src/TmpCache/*
 src/note.txt
+.env
+src/binance_connector/portfolio_service_test.go
+src/binance_connector_portfolio/portfolio_service_test.go
+src/binance_connector/trading_extenstion_test.go
+src/common/test.go

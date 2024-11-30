@@ -15,6 +15,26 @@ function toggleCustomerSettings() {
 
 //切換實盤、模擬盤
 function toggleSubscribeType(obj) {
+    //確認交易所
+    const ExchangRadios = document.getElementsByName('ExchangeSystemName');
+    let exchangesystem = '';
+    for (const radio of ExchangRadios) {
+        if (radio.checked) {
+            exchangesystem = radio.value;
+            break;
+        }
+    }
+
+    if (exchangesystem.startsWith("Binance")) {
+        obj.classList.remove("disabled");
+        obj.innerText = "實盤"
+        document.querySelector('#amountSetting').style.visibility = 'visible'
+        var elem = document.getElementById("SubscribeType");
+        elem.classList.add("SysDisabled");
+        elem.removeAttribute("onclick");
+        return
+    }
+
     if (obj.innerText == "實盤") {
         obj.innerText = "模擬"
         obj.classList.add("disabled");
@@ -67,9 +87,11 @@ function fetchSymbolData() {
 // 渲染加密貨幣表格
 function renderCryptoTable() {
     const tableBody = document.querySelector('#cryptoTable tbody');
+    const _RealOnly = isRealonly == '1'
     tableBody.innerHTML = '';
     coinData.forEach(item => {
         sysdisabled = ""
+        realCausedSysdisable = ""
         if (item.SystemStatus == "Disabled") {
             sysdisabled = "SysDisabled"
         }
@@ -84,12 +106,19 @@ function renderCryptoTable() {
         } else {
             starageName = "無名"
         }
+
+        if (_RealOnly){
+            //只有實盤
+            item.simulation = false
+            realCausedSysdisable = "SysDisabled"
+        }
+
         const row = `
             <tr>
                 <td>${item.symbol} <span class="info-icon" onclick="showDataModal('${item.symbol}', '${item.message.replace(/\n/g, '<br>')}')"><i class="fa-regular fa-file"></i></span></td>
                 <td>${starageName}</td>
                 <td><span class="status-toggle ${item.status ? '' : 'disabled'} ${sysdisabled}" onclick="updateCustomerCurrency('${item.symbol}', 'Status')">${item.status ? '啟用' : '停用'}</span></td>
-                <td><span class="status-toggle ${!item.simulation ? '' : 'disabled'} ${sysdisabled}" onclick="updateCustomerCurrency('${item.symbol}', 'Simulation')">${item.simulation ? '模擬' : '實盤'}</span></td>
+                <td><span class="status-toggle ${!item.simulation ? '' : 'disabled'} ${sysdisabled} ${realCausedSysdisable}" onclick="updateCustomerCurrency('${item.symbol}', 'Simulation')">${item.simulation ? '模擬' : '實盤'}</span></td>
                 <td>
                     <span class="${displayamount}" >
                         <input type="text" style="width:30%" name="amount-${item.symbol}" value="${item.amount || 0}" ${item.SystemStatus} onchange="displaySaveCurrenyBTN('${item.symbol}', 'Amount', this)">
@@ -184,6 +213,10 @@ function updateCustomerCurrency(Symbol, updatetype) {
                 }
                 break;
             default:
+                if (isRealonly == "1"){
+                    alert("該交易所只支援實盤交易");
+                    return
+                }
                 crypto.simulation = crypto.simulation ? false : true;
         }
         const customersymbol = {

@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"TradingSystem/src/bingx"
 	"TradingSystem/src/common"
 	"TradingSystem/src/models"
 	"TradingSystem/src/services"
@@ -48,8 +47,9 @@ func ShowDashboardPage(c *gin.Context) {
 	if CustomerByEmail == nil || CustomerByEmail.ID == "" {
 		//帳號不存在，要建一個新的
 		c.HTML(http.StatusOK, "iscreatenew.html", gin.H{
-			"Name":  name,
-			"Email": email,
+			"Name":              name,
+			"Email":             email,
+			"StaticFileVersion": common.GetEnvironmentSetting().StartTimestemp,
 		})
 		return
 	}
@@ -59,6 +59,17 @@ func ShowDashboardPage(c *gin.Context) {
 	//情境2,3
 
 	customer, err := services.GetCustomer(c, SubCustomerID)
+	//為了向下相容
+	if customer.ExchangeSystemName == "" {
+		customer.ExchangeSystemName = models.ExchangeBingx
+	}
+
+	//Binance只有實盤
+	if customer.ExchangeSystemName == models.ExchangeBinance_N ||
+		customer.ExchangeSystemName == models.ExchangeBinance_P {
+		customer.AutoSubscribReal = true
+	}
+
 	if err == nil {
 		c.HTML(http.StatusOK, "dashboard.html", gin.H{
 			"Name":                name,
@@ -71,6 +82,7 @@ func ShowDashboardPage(c *gin.Context) {
 			"AutoSubscribeAmount": customer.AutoSubscribAmount,
 			"AlertMessageType":    customer.AlertMessageType,
 			"StaticFileVersion":   common.GetEnvironmentSetting().StartTimestemp,
+			"ExchangeSystemName":  customer.ExchangeSystemName,
 		})
 	} else {
 		session := sessions.Default(c)
@@ -97,9 +109,10 @@ func getcustomerbalance(c *gin.Context, customerid string) {
 	}
 	//有key，啟用時要檢查餘額
 	if dbCustomer.APIKey != "" && dbCustomer.SecretKey != "" {
-		freeamount, err = services.GetAccountBalance(dbCustomer.APIKey, dbCustomer.SecretKey)
+		freeamount, err = services.GetAccountBalance(c, dbCustomer.APIKey, dbCustomer.SecretKey, dbCustomer.ExchangeSystemName)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
 		}
 	}
 	errmsg := ""
@@ -259,12 +272,11 @@ func PlaceOrderHistory(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "No Customer Data."})
 		return
 	}
-	sdt, edt := common.GetReportStartEndDate(session)
-	if sdt == common.TimeMax() || edt == common.TimeMax() {
-		sdt = common.GetMonthlyDay1(1)[0]
-		edt = time.Now().UTC()
-		common.SetReportStartEndDate(session, sdt, edt)
-	}
+
+	date := time.Now().UTC()
+	sdt, edt := common.GetMonthStartEndDate(date)
+	sdt = sdt.AddDate(0, -3, 0) //一次三個月內的資料
+	common.SetReportStartEndDate(session, sdt, edt)
 
 	list, totalPages, err := services.GetPlaceOrderHistory(c, symbol, customerid, sdt, edt, page, pageSize)
 	if err != nil {
@@ -275,11 +287,11 @@ func PlaceOrderHistory(c *gin.Context) {
 	for i := 0; i < len(list); i++ {
 		positionside := "多"
 		side := "開"
-		if list[i].PositionSideType == bingx.ShortPositionSideType {
+		if list[i].PositionSideType == models.ShortPositionSideType {
 			positionside = "空"
 		}
-		if (list[i].PositionSideType == bingx.ShortPositionSideType && list[i].Side == bingx.BuySideType) ||
-			(list[i].PositionSideType == bingx.LongPositionSideType && list[i].Side == bingx.SellSideType) {
+		if (list[i].PositionSideType == models.ShortPositionSideType && list[i].Side == models.BuySideType) ||
+			(list[i].PositionSideType == models.LongPositionSideType && list[i].Side == models.SellSideType) {
 			side = "平"
 		}
 		rtn = append(rtn, Log_PlaceBetHistoryUI{
@@ -289,11 +301,12 @@ func PlaceOrderHistory(c *gin.Context) {
 	}
 
 	c.HTML(http.StatusOK, "placeorderhistory.html", gin.H{
-		"data":       rtn,
-		"page":       page,
-		"pageSize":   pageSize,
-		"totalPages": totalPages,
-		"symbol":     symbol,
-		"cid":        c.Query("cid"),
+		"data":              rtn,
+		"page":              page,
+		"pageSize":          pageSize,
+		"totalPages":        totalPages,
+		"symbol":            symbol,
+		"cid":               c.Query("cid"),
+		"StaticFileVersion": common.GetEnvironmentSetting().StartTimestemp,
 	})
 }

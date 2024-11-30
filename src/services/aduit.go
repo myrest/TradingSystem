@@ -24,9 +24,10 @@ const (
 	customerEvent AduitLogType = "CustomerEvent"
 	systemEvent   AduitLogType = "SystemEvent"
 
-	EventNameLogin EventNameType = "LoginEvent"
-	PlaceOrder     EventNameType = "PlaceOrder"
-	WeeklyReport   EventNameType = "WeeklyReport"
+	EventNameLogin      EventNameType = "LoginEvent"
+	EventNameSystemInit EventNameType = "SystemInit"
+	PlaceOrder          EventNameType = "PlaceOrder"
+	WeeklyReport        EventNameType = "WeeklyReport"
 )
 
 type CustomerEventLog struct {
@@ -57,13 +58,13 @@ type systemEventLogDB struct {
 }
 
 func init() {
-	settings := common.GetEnvironmentSetting()
+	settings := common.GetFirebaseSetting()
 	var sa option.ClientOption
 	ctx := context.Background()
 	if common.IsFileExists(settings.FireBaseKeyFullPath) {
 		sa = option.WithCredentialsFile(settings.FireBaseKeyFullPath)
 	} else {
-		creds, err := getSecret(ctx, "projects/635522974118/secrets/GOOGLE_APPLICATION_CREDENTIALS/versions/latest")
+		creds, err := common.GetSecret(ctx, "projects/635522974118/secrets/GOOGLE_APPLICATION_CREDENTIALS/versions/latest")
 		if err != nil {
 			log.Fatalf("failed to access secret version: %v", err)
 		}

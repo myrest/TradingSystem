@@ -1,7 +1,6 @@
 package services
 
 import (
-	"TradingSystem/src/bingx"
 	"TradingSystem/src/common"
 	"TradingSystem/src/models"
 	"context"
@@ -11,14 +10,15 @@ import (
 	"google.golang.org/api/iterator"
 )
 
-// 預設會幫客戶自動修改槓桿及全倉，傳入false可以不修改
+// 預設會幫客戶自動修改槓桿及全倉，傳入false可以不修改，目前是固定自動改
 func UpdateCustomerCurrency(ctx context.Context, customercurrency *models.CustomerCurrencySymbol, flag ...bool) error {
+	//依據ExchangeSystemName來判斷使用哪一個client
 	autoUpdateBingXLeverage := true
 	if len(flag) > 0 {
 		autoUpdateBingXLeverage = flag[0]
 	}
 
-	client := getFirestoreClient()
+	client := common.GetFirestoreClient()
 	customer, err := GetCustomer(ctx, customercurrency.CustomerID)
 	if err != nil || customer == nil || customer.Email == "" {
 		if err == nil {
@@ -73,32 +73,8 @@ func UpdateCustomerCurrency(ctx context.Context, customercurrency *models.Custom
 
 	//該幣種有啟用，有自動修改，且為實盤才改設定
 	if customercurrency.Status && autoUpdateBingXLeverage && !customercurrency.Simulation {
-		//幫客戶改槓桿
-		bingxclient := bingx.NewClient(customer.APIKey, customer.SecretKey, customercurrency.Simulation)
-		//改多單槓桿
-		_, err = bingxclient.NewSetTradService().
-			Symbol(common.FormatSymbol(customercurrency.Symbol)).
-			PositionSide(bingx.LongPositionSideType).
-			Leverage(int64(customercurrency.Leverage)).
-			Do(ctx)
-		if err != nil {
-			return err
-		}
-
-		_, err = bingxclient.NewSetTradService().
-			Symbol(common.FormatSymbol(customercurrency.Symbol)).
-			PositionSide(bingx.ShortPositionSideType).
-			Leverage(int64(customercurrency.Leverage)).
-			Do(ctx)
-		if err != nil {
-			return err
-		}
-
-		//改全倉
-		_, err = bingxclient.NewSetMarginTypeService().
-			Symbol(common.FormatSymbol(customercurrency.Symbol)).
-			Margin(bingx.MarginCrossed).
-			Do(ctx)
+		//幫客戶改槓桿及持倉模式
+		err = UpdateLeverage(ctx, customer.APIKey, customer.SecretKey, customer.ExchangeSystemName, customercurrency.Symbol, int64(customercurrency.Leverage))
 		if err != nil {
 			return err
 		}
@@ -107,7 +83,7 @@ func UpdateCustomerCurrency(ctx context.Context, customercurrency *models.Custom
 }
 
 func GetAllCustomerCurrency(ctx context.Context, customerID string) ([]models.CustomerCurrencySymbol, error) {
-	client := getFirestoreClient()
+	client := common.GetFirestoreClient()
 
 	iter := client.Collection("customerssymbol").Where("CustomerID", "==", customerID).Documents(ctx)
 	defer iter.Stop()
@@ -131,7 +107,7 @@ func GetAllCustomerCurrency(ctx context.Context, customerID string) ([]models.Cu
 }
 
 func GetCustomerCurrency(ctx context.Context, customerID, symbol string) (*models.CustomerCurrencySymbol, error) {
-	client := getFirestoreClient()
+	client := common.GetFirestoreClient()
 
 	iter := client.Collection("customerssymbol").Where("Symbol", "==", symbol).
 		Where("CustomerID", "==", customerID).
@@ -150,7 +126,7 @@ func GetCustomerCurrency(ctx context.Context, customerID, symbol string) (*model
 }
 
 func DeleteCustomerCurrency(ctx context.Context, CustomerID, Symbol string) error {
-	client := getFirestoreClient()
+	client := common.GetFirestoreClient()
 
 	iter := client.Collection("customerssymbol").Where("Symbol", "==", Symbol).
 		Where("CustomerID", "==", CustomerID).
@@ -176,7 +152,7 @@ func DeleteCustomerCurrency(ctx context.Context, CustomerID, Symbol string) erro
 }
 
 func GetCustomerByTGChatID(ctx context.Context, ChatID int64) (*models.Customer, error) {
-	client := getFirestoreClient()
+	client := common.GetFirestoreClient()
 
 	iter := client.Collection("customers").Where("TgChatID", "==", ChatID).Limit(1).Documents(ctx)
 	defer iter.Stop()

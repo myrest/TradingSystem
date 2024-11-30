@@ -17,12 +17,21 @@
             <h2>設定</h2>
         </div>
         <div class="api-keys-content">
-            <p>
+            <fieldset>
+                <legend>交易所:</legend>
+                <div>
+                    <input type="radio" name="ExchangeSystemName" id="Bingx" value="Bingx" {{ if eq .ExchangeSystemName "Bingx" }}checked{{ end }}  />
+                    <label for="Bingx">Bingx</label>
+                    <input type="radio" name="ExchangeSystemName" id="Binance_N" value="Binance_Normal" {{ if eq .ExchangeSystemName "Binance_Normal" }}checked{{ end }}  />
+                    <label for="Binance_N">Binance一般帳戶</label>
+                    <input type="radio" name="ExchangeSystemName" id="Binance_P" value="Binance_Portfolio" {{ if eq .ExchangeSystemName "Binance_Portfolio" }}checked{{ end }}  />
+                    <label for="Binance_P">Binance統一帳戶</label>
+                </div>
                 <strong>API Key：</strong>
                 <input type="text" id="apiKey" placeholder="Enter API Key" value="{{ .ApiKey }}">
                 <strong>Secret Key：</strong>
                 <input type="text" id="secretKey" placeholder="Enter Secret Key" value="{{ .SecretKey }}">
-            </p>
+            </fieldset>
             <div class="auto-follow-settings">
                 <h3>自動跟單設定</h3>
                 <div class="setting-group">
@@ -34,11 +43,12 @@
                 </div>
                 <span id="GroupSubscribeType" class="{{ if not .AutoSubscribeStatus }}displayNone{{ end }}">
                     跟隨盤種：
-                    <span class="status-toggle  {{ if not .AutoSubscribeType }}disabled{{ end }}"
+                    <span class="status-toggle  {{ if not .AutoSubscribeType }}disabled{{ end }} {{ if eq .ExchangeSystemName "Binance_Normal" }}SysDisabled{{ end }} {{ if eq .ExchangeSystemName "Binance_Portfolio" }}SysDisabled{{ end }}"
                         onclick="toggleSubscribeType(this)" id="SubscribeType">
                         {{ if .AutoSubscribeType }}實盤{{ else }}模擬{{ end }}
                     </span>
-                    <div id="amountSetting" class="setting-group {{ if not .AutoSubscribeType }}visibilityHidden{{ end }}">
+                    <div id="amountSetting"
+                        class="setting-group {{ if not .AutoSubscribeType }}visibilityHidden{{ end }}">
                         <label for="amount">金額：</label>
                         <input type="number" id="SubscribeAmount" value="{{ .AutoSubscribeAmount }}"
                             placeholder="輸入跟單金額">X10倍槓桿
@@ -71,3 +81,8 @@
             <p id="dataModalContent"></p>
         </div>
     </div>
+
+    <script>
+        var isRealonly = '{{ if eq .ExchangeSystemName "Binance_Normal" }}1{{ end }}{{ if eq .ExchangeSystemName "Binance_Portfolio" }}1{{ end }}';
+    </script>
+    

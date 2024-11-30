@@ -93,6 +93,7 @@ func commandList(c context.Context, chatID int64, param string) {
 	if len(rtnarr) == 0 {
 		resp := tgbotapi.NewMessage(chatID, "您還沒有綁定任何帳號唷。")
 		tgbot.Send(resp)
+		return
 	}
 
 	rtn := "己綁定帳號如下：\n" + strings.Join(rtnarr[:], "\n") //轉成字串
@@ -222,10 +223,19 @@ func runTGCommand(c context.Context, chatID int64, cmd string, cmdList map[strin
 
 func init() {
 	settings := common.GetEnvironmentSetting()
+	ApplyTgBotSetting(settings.TgToken)
+}
+
+func ApplyTgBotSetting(tgToken string) {
 	go func() {
-		bot, err := tgbotapi.NewBotAPI(settings.TgToken)
+		bot, err := tgbotapi.NewBotAPI(tgToken)
 		if err != nil {
-			log.Panic(err)
+			systemerror := fmt.Errorf("error creating Telegram bot: %v", err)
+			services.SystemEventLog{
+				EventName: services.EventNameSystemInit,
+				Message:   systemerror.Error(),
+			}.Send()
+			log.Println(systemerror.Error())
 		}
 		tgbot = bot
 	}()
@@ -240,8 +250,8 @@ func TGbot(c *gin.Context) {
 		return
 	}
 
-	// 处理 Telegram 消息
-	if update.Message != nil {
+	// 处理 個人 消息
+	if update.Message != nil || update.ChannelPost != nil {
 		handleUpdate(c, update)
 	}
 
@@ -254,13 +264,21 @@ func handleUpdate(c *gin.Context, update tgbotapi.Update) {
 	//if username == "" {
 	//	username = fmt.Sprintf("%s %s", update.Message.From.FirstName, update.Message.From.LastName)
 	//}
+	var chatID int64
+	var message string
+	if update.Message != nil {
+		chatID = update.Message.Chat.ID
+		message = update.Message.Text
+	} else {
+		chatID = update.ChannelPost.Chat.ID
+		message = update.ChannelPost.Text
+	}
 
-	chatID := update.Message.Chat.ID
 	if chatID == 0 {
 		return //沒有找到ChatID，直接忽略
 	}
 
-	fmt.Println(update.Message.Text)
+	fmt.Println(message)
 	//從第一層執行起
-	runTGCommand(c, chatID, update.Message.Text, tgBotCommandRoot)
+	runTGCommand(c, chatID, message, tgBotCommandRoot)
 }

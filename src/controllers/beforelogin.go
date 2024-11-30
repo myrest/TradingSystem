@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"TradingSystem/src/common"
 	"TradingSystem/src/models"
 	"TradingSystem/src/services"
 	"context"
@@ -17,7 +18,9 @@ func ShowLoginPage(c *gin.Context) {
 	email := session.Get("email")
 
 	if name == nil || email == nil {
-		c.HTML(http.StatusOK, "login.html", nil)
+		c.HTML(http.StatusOK, "login.html", gin.H{
+			"StaticFileVersion": common.GetEnvironmentSetting().StartTimestemp,
+		})
 		return
 	}
 	c.Redirect(http.StatusFound, "/customers/dashboard")
