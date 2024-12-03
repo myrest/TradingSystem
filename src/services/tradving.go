@@ -62,6 +62,10 @@ func GetCustomerCurrencySymbosBySymbol(ctx context.Context, symbol string) ([]mo
 			var customer models.Customer
 			doc.DataTo(&customer)
 			customer.ID = doc.Ref.ID
+			//因為Hikari是最早，所以向下相容，若沒設定就是Hikari
+			if customer.DataCenter == "" {
+				customer.DataCenter = common.Datacenter_Hikari_JP
+			}
 			customers[customer.ID] = customer
 		}
 	}

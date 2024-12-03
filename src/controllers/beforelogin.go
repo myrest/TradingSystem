@@ -28,9 +28,15 @@ func ShowLoginPage(c *gin.Context) {
 
 func CreateCustomer(c *gin.Context) {
 	session := sessions.Default(c)
+	DC, err := common.GetHostName(c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
 	var customer = models.Customer{
-		Name:  session.Get("name").(string),
-		Email: session.Get("email").(string),
+		Name:       session.Get("name").(string),
+		Email:      session.Get("email").(string),
+		DataCenter: DC,
 	}
 	//先查該Email是否有被用掉。
 	dbCustomer, err := services.GetCustomerByEmail(c, customer.Email)

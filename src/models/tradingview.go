@@ -13,10 +13,11 @@ type TvWebhookData struct {
 		Contracts    string `json:"contracts"`
 		PositionSize string `json:"position_size"`
 	} `json:"data"`
-	Price  string `json:"price"`
-	Cert   string `json:"cert"`
-	Symbol string `json:"symbol"`
-	Time   string `json:"time"`
+	Price      string              `json:"price"`
+	Cert       string              `json:"cert"`
+	Symbol     string              `json:"symbol"`
+	Time       string              `json:"time"`
+	DataCenter common.ServerLocale `json:"dataCenter"`
 }
 
 type CustomerCurrencySymboWithCustomer struct {
