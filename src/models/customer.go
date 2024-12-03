@@ -1,19 +1,22 @@
 package models
 
+import "TradingSystem/src/common"
+
 type Customer struct {
-	ID                 string            `json:"id"`
-	Name               string            `json:"name"`
-	Email              string            `json:"email"`
-	APIKey             string            `json:"apikey"`
-	SecretKey          string            `json:"secretkey"`
-	IsAdmin            bool              `json:"isadmin"`
-	IsAutoSubscribe    bool              `json:"autosubscribe"`
-	AutoSubscribReal   bool              `json:"subscribtype"`
-	AutoSubscribAmount int               `json:"amount"`
-	TgChatID           int64             `json:"tgchatid"`
-	TgIdentifyKey      string            `json:"tgidentifykey"`
-	AlertMessageType   AlertMessageModel `json:"alertmessagetype"`
-	ExchangeSystemName ExchangeSystem    `json:"exchangesystem"`
+	ID                 string              `json:"id"`
+	Name               string              `json:"name"`
+	Email              string              `json:"email"`
+	APIKey             string              `json:"apikey"`
+	SecretKey          string              `json:"secretkey"`
+	IsAdmin            bool                `json:"isadmin"`
+	IsAutoSubscribe    bool                `json:"autosubscribe"`
+	AutoSubscribReal   bool                `json:"subscribtype"`
+	AutoSubscribAmount int                 `json:"amount"`
+	TgChatID           int64               `json:"tgchatid"`
+	TgIdentifyKey      string              `json:"tgidentifykey"`
+	AlertMessageType   AlertMessageModel   `json:"alertmessagetype"`
+	ExchangeSystemName ExchangeSystem      `json:"exchangesystem"`
+	DataCenter         common.ServerLocale `json:"dataCenter"`
 }
 
 type CustomerRelationUI struct {

@@ -5,6 +5,7 @@ import (
 	"TradingSystem/src/models"
 	"TradingSystem/src/services"
 	"context"
+	"errors"
 	"net/http"
 	"sort"
 	"strconv"
@@ -59,18 +60,22 @@ func ShowDashboardPage(c *gin.Context) {
 	//情境2,3
 
 	customer, err := services.GetCustomer(c, SubCustomerID)
-	//為了向下相容
-	if customer.ExchangeSystemName == "" {
-		customer.ExchangeSystemName = models.ExchangeBingx
-	}
 
-	//Binance只有實盤
-	if customer.ExchangeSystemName == models.ExchangeBinance_N ||
-		customer.ExchangeSystemName == models.ExchangeBinance_P {
-		customer.AutoSubscribReal = true
+	if (customer == nil || customer.ID == "") && err == nil {
+		err = errors.New("customer data not exist")
 	}
 
 	if err == nil {
+		//為了向下相容
+		if customer.ExchangeSystemName == "" {
+			customer.ExchangeSystemName = models.ExchangeBingx
+		}
+
+		//Binance只有實盤
+		if customer.ExchangeSystemName == models.ExchangeBinance_N ||
+			customer.ExchangeSystemName == models.ExchangeBinance_P {
+			customer.AutoSubscribReal = true
+		}
 		c.HTML(http.StatusOK, "dashboard.html", gin.H{
 			"Name":                name,
 			"Email":               email,

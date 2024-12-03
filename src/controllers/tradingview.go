@@ -20,8 +20,14 @@ func TradingViewWebhook(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
 		return
 	}
+	servername, err := common.GetHostName(c)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 
-	err := preProcessPlaceOrder(c, WebhookData)
+	WebhookData.DataCenter = servername
+	err = preProcessPlaceOrder(c, WebhookData)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 	}
@@ -37,7 +43,10 @@ func preProcessPlaceOrder(c *gin.Context, WebhookData models.TvWebhookData) erro
 	//檢查Cert
 	_, err = services.GetSymbol(c, WebhookData.Symbol, WebhookData.Cert)
 	if err != nil {
-		//Todo:要寫Log
+		services.SystemEventLog{
+			EventName: services.PlaceOrder,
+			Message:   fmt.Sprintf("Symbol: %s, Error: %s", WebhookData.Symbol, err.Error()),
+		}.Send()
 		return err
 	}
 
@@ -52,10 +61,13 @@ func preProcessPlaceOrder(c *gin.Context, WebhookData models.TvWebhookData) erro
 
 	var wg sync.WaitGroup
 	for i := 0; i < len(customerList); i++ {
+		//如果不同DC就跳過
+		if customerList[i].DataCenter != WebhookData.DataCenter {
+			continue
+		}
 		wg.Add(1)
 		go func(customer models.CustomerCurrencySymboWithCustomer) {
 			defer wg.Done()
-			//todo:要依客戶的交易所來判斷
 			client := services.GetTradingClient(customer.APIKey, customer.SecretKey, customer.Simulation, customer.ExchangeSystemName)
 			//processPlaceOrder(client, customer, tvData, TvWebHookLog, c)
 			placeOrderLog, isTowWayPositionOnHand, AlertMessageModel, err := client.CreateOrder(c, tvData, customer)
