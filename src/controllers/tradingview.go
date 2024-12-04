@@ -20,14 +20,15 @@ func TradingViewWebhook(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
 		return
 	}
-	servername, err := common.GetHostName(c)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
+	//Todo:先不處理DC
+	servername, _ := common.GetHostName(c)
+	//if err != nil {
+	//	c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	//	return
+	//}
 
 	WebhookData.DataCenter = servername
-	err = preProcessPlaceOrder(c, WebhookData)
+	err := preProcessPlaceOrder(c, WebhookData)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 	}
@@ -61,10 +62,10 @@ func preProcessPlaceOrder(c *gin.Context, WebhookData models.TvWebhookData) erro
 
 	var wg sync.WaitGroup
 	for i := 0; i < len(customerList); i++ {
-		//如果不同DC就跳過
-		if customerList[i].DataCenter != WebhookData.DataCenter {
-			continue
-		}
+		//如果不同DC就跳過，有問題，先不做
+		//if customerList[i].DataCenter != WebhookData.DataCenter {
+		//	continue
+		//}
 		wg.Add(1)
 		go func(customer models.CustomerCurrencySymboWithCustomer) {
 			defer wg.Done()
