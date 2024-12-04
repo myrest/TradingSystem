@@ -28,11 +28,12 @@ func ShowLoginPage(c *gin.Context) {
 
 func CreateCustomer(c *gin.Context) {
 	session := sessions.Default(c)
-	DC, err := common.GetHostName(c)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
+	//Todo:先不處理DC
+	DC, _ := common.GetHostName(c)
+	//if err != nil {
+	//	c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	//	return
+	//}
 	var customer = models.Customer{
 		Name:       session.Get("name").(string),
 		Email:      session.Get("email").(string),
