@@ -221,11 +221,6 @@ func runTGCommand(c context.Context, chatID int64, cmd string, cmdList map[strin
 	runHelpCmd(c, chatID, cmdList)
 }
 
-func init() {
-	settings := common.GetEnvironmentSetting()
-	ApplyTgBotSetting(settings.TgToken)
-}
-
 func ApplyTgBotSetting(tgToken string) {
 	go func() {
 		bot, err := tgbotapi.NewBotAPI(tgToken)

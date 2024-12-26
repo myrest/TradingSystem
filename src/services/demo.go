@@ -16,9 +16,8 @@ import (
 
 func GetDemoCurrencyList(ctx context.Context, numberOfDays int, isFromCache bool) ([]models.DemoSymbolList, error) {
 	const layout = "2006-01-02"
-	systemSettings := common.GetEnvironmentSetting()
 	DaysAgo := time.Now().UTC().AddDate(0, 0, numberOfDays*-1).Format(layout)
-	cacheKey := getLog_TVCacheKey(systemSettings.DemoCustomerID, "SymbolList", strconv.Itoa(numberOfDays))
+	cacheKey := getLog_TVCacheKey(systemsettings.DemoCustomerID, "SymbolList", strconv.Itoa(numberOfDays))
 
 	if isFromCache {
 		data, err := loadDemoSymbolListCache(cacheKey)
@@ -30,7 +29,7 @@ func GetDemoCurrencyList(ctx context.Context, numberOfDays int, isFromCache bool
 	client := common.GetFirestoreClient()
 	//先找出所有的History
 	iter := client.Collection("placeOrderLog").
-		Where("CustomerID", "==", systemSettings.DemoCustomerID).
+		Where("CustomerID", "==", systemsettings.DemoCustomerID).
 		Where("Time", ">", DaysAgo).
 		Documents(ctx)
 	defer iter.Stop()
@@ -111,9 +110,8 @@ func GetDemoCurrencyList(ctx context.Context, numberOfDays int, isFromCache bool
 
 func GetDemoHistory(ctx context.Context, numberOfDays int, Symbol string, isFromCache bool) ([]models.Log_TvSiginalData, error) {
 	const layout = "2006-01-02"
-	systemSettings := common.GetEnvironmentSetting()
 	DaysAgo := time.Now().UTC().AddDate(0, 0, numberOfDays*-1).Format(layout)
-	cacheKey := getLog_TVCacheKey(systemSettings.DemoCustomerID, Symbol, strconv.Itoa(numberOfDays))
+	cacheKey := getLog_TVCacheKey(systemsettings.DemoCustomerID, Symbol, strconv.Itoa(numberOfDays))
 
 	if isFromCache {
 		data, err := loadLog_TVCache(cacheKey)
@@ -125,7 +123,7 @@ func GetDemoHistory(ctx context.Context, numberOfDays int, Symbol string, isFrom
 	client := common.GetFirestoreClient()
 	// 先找出所有的History
 	iter := client.Collection("placeOrderLog").
-		Where("CustomerID", "==", systemSettings.DemoCustomerID).
+		Where("CustomerID", "==", systemsettings.DemoCustomerID).
 		Where("Symbol", "==", Symbol).
 		Where("Time", ">", DaysAgo).
 		OrderBy("Time", firestore.Desc).

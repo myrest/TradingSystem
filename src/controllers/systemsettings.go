@@ -7,21 +7,22 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+//Todo:重新考慮是否只處理Production
+
 func SystemSettings(c *gin.Context) {
 	//需要限制只處理現行環境
 	sys, err := common.GetDBSystemSettings(c)
-	currentsettings := common.GetEnvironmentSetting()
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	sys.SectestWord = currentsettings.SectestWord
+	sys.SectestWord = systemsettings.SectestWord
 
 	c.HTML(http.StatusOK, "systemsettings.html", gin.H{
 		"data":              sys,
-		"StaticFileVersion": common.GetEnvironmentSetting().StartTimestemp,
+		"StaticFileVersion": systemsettings.StartTimestemp,
 	})
 }
 
@@ -35,7 +36,7 @@ func SaveSystemSettings(c *gin.Context) {
 	}
 
 	//需要限制只處理現行環境
-	settings.Env = common.GetEnvironmentSetting().Env
+	settings.Env = systemsettings.Env
 
 	err = common.SaveDBSystemSettings(c, settings)
 	if err != nil {

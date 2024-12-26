@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"TradingSystem/src/common"
 	"TradingSystem/src/models"
 	"TradingSystem/src/services"
 	"context"
@@ -170,7 +169,7 @@ func GetSubscribeCustomerBySymbol(c *gin.Context) {
 	c.HTML(http.StatusOK, "adminviewcustomersymbolist.html", gin.H{
 		"data":              customerSymbolList,
 		"symbol":            symbol,
-		"StaticFileVersion": common.GetEnvironmentSetting().StartTimestemp,
+		"StaticFileVersion": systemsettings.StartTimestemp,
 	})
 }
 
@@ -184,7 +183,7 @@ func GetAllCustomerList(c *gin.Context) {
 
 	c.HTML(http.StatusOK, "adminviewcustomers.html", gin.H{
 		"data":              rtn,
-		"StaticFileVersion": common.GetEnvironmentSetting().StartTimestemp,
+		"StaticFileVersion": systemsettings.StartTimestemp,
 	})
 }
 
@@ -197,7 +196,7 @@ func GetSubscribeSymbolbyCompanyID(c *gin.Context) {
 	c.HTML(http.StatusOK, "adminviewcustomersubscribe.html", gin.H{
 		"data":              rtn,
 		"cid":               customerid,
-		"StaticFileVersion": common.GetEnvironmentSetting().StartTimestemp,
+		"StaticFileVersion": systemsettings.StartTimestemp,
 	})
 }
 
@@ -209,7 +208,7 @@ func GetCustomerData(c *gin.Context) {
 	c.HTML(http.StatusOK, "adminviewcustomerssum.html", gin.H{
 		"data":              data,
 		"customer":          customer,
-		"StaticFileVersion": common.GetEnvironmentSetting().StartTimestemp,
+		"StaticFileVersion": systemsettings.StartTimestemp,
 	})
 }
 

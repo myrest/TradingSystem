@@ -19,7 +19,7 @@ func ShowLoginPage(c *gin.Context) {
 
 	if name == nil || email == nil {
 		c.HTML(http.StatusOK, "login.html", gin.H{
-			"StaticFileVersion": common.GetEnvironmentSetting().StartTimestemp,
+			"StaticFileVersion": systemsettings.StartTimestemp,
 		})
 		return
 	}

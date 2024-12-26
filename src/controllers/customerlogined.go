@@ -50,7 +50,7 @@ func ShowDashboardPage(c *gin.Context) {
 		c.HTML(http.StatusOK, "iscreatenew.html", gin.H{
 			"Name":              name,
 			"Email":             email,
-			"StaticFileVersion": common.GetEnvironmentSetting().StartTimestemp,
+			"StaticFileVersion": systemsettings.StartTimestemp,
 		})
 		return
 	}
@@ -86,7 +86,7 @@ func ShowDashboardPage(c *gin.Context) {
 			"AutoSubscribeType":   customer.AutoSubscribReal,
 			"AutoSubscribeAmount": customer.AutoSubscribAmount,
 			"AlertMessageType":    customer.AlertMessageType,
-			"StaticFileVersion":   common.GetEnvironmentSetting().StartTimestemp,
+			"StaticFileVersion":   systemsettings.StartTimestemp,
 			"ExchangeSystemName":  customer.ExchangeSystemName,
 		})
 	} else {
@@ -312,6 +312,6 @@ func PlaceOrderHistory(c *gin.Context) {
 		"totalPages":        totalPages,
 		"symbol":            symbol,
 		"cid":               c.Query("cid"),
-		"StaticFileVersion": common.GetEnvironmentSetting().StartTimestemp,
+		"StaticFileVersion": systemsettings.StartTimestemp,
 	})
 }

@@ -76,7 +76,7 @@ func CustomerWeeklyReportList(c *gin.Context) {
 		"cid":               customerid,
 		"week":              fmt.Sprintf("%s ~ %s (%s)", common.FormatDate(startDate), common.FormatDate(endDate), common.GetWeeksByDate(startDate)),
 		"IsAdmin":           c.GetBool("IsAdmin"),
-		"StaticFileVersion": common.GetEnvironmentSetting().StartTimestemp,
+		"StaticFileVersion": systemsettings.StartTimestemp,
 	})
 }
 
@@ -128,7 +128,7 @@ func CustomerWeeklyReportSummaryList(c *gin.Context) {
 	c.HTML(http.StatusOK, "weeklyreportsummary.html", gin.H{
 		"data":              rtn,
 		"cid":               customerid,
-		"StaticFileVersion": common.GetEnvironmentSetting().StartTimestemp,
+		"StaticFileVersion": systemsettings.StartTimestemp,
 	})
 }
 
@@ -181,7 +181,7 @@ func CustomerMonthlyReportSummaryList(c *gin.Context) {
 	c.HTML(http.StatusOK, "monthlyreportsummary.html", gin.H{
 		"data":              rtn,
 		"cid":               customerid,
-		"StaticFileVersion": common.GetEnvironmentSetting().StartTimestemp,
+		"StaticFileVersion": systemsettings.StartTimestemp,
 	})
 }
 
@@ -243,6 +243,6 @@ func CustomerMonthlyReportList(c *gin.Context) {
 		"days":              common.FormatDate(startDate),
 		"cid":               customerid,
 		"month":             common.GetMonthsInRange(startDate)[0],
-		"StaticFileVersion": common.GetEnvironmentSetting().StartTimestemp,
+		"StaticFileVersion": systemsettings.StartTimestemp,
 	})
 }

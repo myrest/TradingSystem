@@ -1,12 +1,8 @@
 package common
 
 import (
-	"bytes"
-	"compress/gzip"
 	"context"
-	"encoding/json"
 	"fmt"
-	"io"
 	"log"
 	"math/rand"
 	"os"
@@ -20,12 +16,6 @@ import (
 	"github.com/joho/godotenv"
 )
 
-type FirebaseSettings struct {
-	FireBaseKeyFullPath string `firestore:"-"` //連Firebase的key，不能放DB裏
-	OAuthKeyFullPath    string `firestore:"-"` //連OAuth的key
-	ProjectID           string `firestore:"-"` //Firebase專案ID
-}
-
 type SystemSettings struct {
 	Env             EnviromentType `firestore:"Env"`            //環境
 	DemoCustomerID  string         `firestore:"DemoCustomerID"` //測試用的CustomerID
@@ -35,39 +25,38 @@ type SystemSettings struct {
 	SectestWord     string         `firestore:"-"`              //後門路由
 }
 
+// region 環境
 const (
-	Prod EnviromentType = "prod"
-	Dev  EnviromentType = "dev"
+	EmptyEnvironment EnviromentType = iota // 預設為空值
+	Dev                                    // http://localhost:8080/
+	Prod                                   // https://hikari.lolo.finance/
+	GoogleJP                               // https://trading.innoroot.com/
 )
 
-type firebaseConfig struct {
-	APIKey            string `json:"apiKey"`
-	AuthDomain        string `json:"authDomain"`
-	ProjectID         string `json:"projectId"`
-	StorageBucket     string `json:"storageBucket"`
-	MessagingSenderID string `json:"messagingSenderId"`
-	AppID             string `json:"appId"`
+type EnviromentType int
+
+// 將字串轉換為 EnviromentType
+func StringToEnviromentType(s string) (EnviromentType, bool) {
+	switch strings.ToLower(s) {
+	case "prod":
+		return Prod, true
+	case "googlejp":
+		return GoogleJP, true
+	case "dev":
+		return Dev, true
+	default:
+		return EmptyEnvironment, false // 返回一個錯誤
+	}
 }
 
-type EnviromentType string
+// 使用 stringer 生成的 String() 方法
+func (e EnviromentType) String() string {
+	return [...]string{"prod", "googlejp", "dev"}[e]
+}
+
+// endregion 環境
 
 var systemSettings SystemSettings
-var firebaseSettings FirebaseSettings
-
-func DecodeGzip(data []byte) ([]byte, error) {
-	reader, err := gzip.NewReader(bytes.NewReader(data))
-	if err != nil {
-		return nil, err
-	}
-	defer reader.Close()
-
-	decodedMsg, err := io.ReadAll(reader)
-	if err != nil {
-		return nil, err
-	}
-
-	return decodedMsg, nil
-}
 
 const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
@@ -101,52 +90,8 @@ func IsFileExists(filePath string) bool {
 	return !info.IsDir()
 }
 
-func GetFirebaseSetting() FirebaseSettings {
-	if firebaseSettings.FireBaseKeyFullPath != "" {
-		return firebaseSettings
-	}
-
-	//載入.env當作環境變數，如果有成功，要顯示訊息。
-	wd, _ := os.Getwd()
-	if err := godotenv.Load(filepath.Join(wd, ".env")); err == nil {
-		log.Printf("使用.env檔，作為環境變數")
-	}
-
-	root := os.Getenv("KEYROOT")
-	env := os.Getenv("ENVIRONMENT") //用來取得Prod or Dev的檔案資料
-	var rtn FirebaseSettings
-
-	//沒有設定Key的目錄，就以當前執行目錄為設定檔目錄
-	if root == "" {
-		wd, err := os.Getwd()
-		if err != nil {
-			log.Fatalf("Error getting current working directory: %v", err)
-		}
-		root = filepath.Dir(wd)
-	}
-
-	//預設為Prod
-	Environment := Prod
-	//嚴格限制只有Prod才是真的Production環境
-	if strings.ToLower(env) != "prod" {
-		Environment = Dev
-	}
-
-	rtn.OAuthKeyFullPath = filepath.Join(root, fmt.Sprintf("firebaseConfig_%s.json", Environment))
-	rtn.FireBaseKeyFullPath = filepath.Join(root, fmt.Sprintf("serviceAccountKey_%s.json", Environment))
-	projectid, err := getProjectID(rtn.OAuthKeyFullPath)
-
-	if err != nil {
-		log.Fatalf("Error getting project id: %v", err)
-	}
-	rtn.ProjectID = projectid
-
-	firebaseSettings = rtn
-	return rtn
-}
-
 func GetEnvironmentSetting() SystemSettings {
-	if systemSettings.Env != "" {
+	if systemSettings.Env != EmptyEnvironment {
 		return systemSettings
 	}
 
@@ -179,30 +124,6 @@ func GetEnvironmentSetting() SystemSettings {
 func ApplySystemSettings(settings SystemSettings) {
 	systemSettings.DemoCustomerID = settings.DemoCustomerID
 	systemSettings.TgToken = settings.TgToken
-}
-
-// GetProjectID reads the firebaseConfig_dev.json file and returns the projectId value
-func getProjectID(filename string) (string, error) {
-	// Open the JSON file
-	file, err := os.Open(filename)
-	if err != nil {
-		return "", fmt.Errorf("failed to open file: %w", err)
-	}
-	defer file.Close()
-
-	// Read the file contents
-	data, err := io.ReadAll(file)
-	if err != nil {
-		return "", fmt.Errorf("failed to read file: %w", err)
-	}
-
-	// Parse the JSON data
-	var config firebaseConfig
-	if err := json.Unmarshal(data, &config); err != nil {
-		return "", fmt.Errorf("failed to unmarshal JSON: %w", err)
-	}
-
-	return config.ProjectID, nil
 }
 
 func Decimal(value interface{}, rounds ...int) float64 {
