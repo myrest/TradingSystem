@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"path/filepath"
 	"sync"
@@ -15,7 +14,6 @@ import (
 	secretmanagerpb "cloud.google.com/go/secretmanager/apiv1/secretmanagerpb"
 	firebase "firebase.google.com/go"
 	"firebase.google.com/go/auth"
-	"github.com/joho/godotenv"
 	"google.golang.org/api/option"
 )
 
@@ -25,15 +23,16 @@ var (
 	firestoreClient *firestore.Client
 )
 var secmanagerCert string
-var firebaseSettings FirebaseSettings
+var firebaseVariable FirebaseVariable
+var firebaseconfigfile firebaseConfigFile
 
-type FirebaseSettings struct {
+type FirebaseVariable struct {
 	FireBaseKeyFullPath string `firestore:"-"` //連Firebase的key，不能放DB裏
 	OAuthKeyFullPath    string `firestore:"-"` //連OAuth的key
 	ProjectID           string `firestore:"-"` //Firebase專案ID
 }
 
-type firebaseConfig struct {
+type firebaseConfigFile struct {
 	APIKey            string `json:"apiKey"`
 	AuthDomain        string `json:"authDomain"`
 	ProjectID         string `json:"projectId"`
@@ -43,66 +42,91 @@ type firebaseConfig struct {
 }
 
 func init() {
+	//先手動取得OAuth及Firebase Config，因為後面有需要共用
+	root := os.Getenv("KEYROOT") //這個會是由外部變數來決定ServiceAccount放哪裏
+	//沒有設定Key的目錄，就以當前執行目錄為設定檔目錄
+	if root == "" {
+		wd, _ := os.Getwd()
+		root = filepath.Dir(wd)
+	}
+	OAuthKeyFullPath := filepath.Join(root, fmt.Sprintf("firebaseConfig_%s.json", systemSettings.Env.String()))
+	FireBaseKeyFullPath := filepath.Join(root, fmt.Sprintf("serviceAccountKey_%s.json", systemSettings.Env.String()))
+
+	//完成firebaseconfigfile -> OAuth
+	firebaseconfigfile = initFirebaseConfigFile(OAuthKeyFullPath)
+
+	//完成firebaseconfigfile -> Firebase
+	firebaseVariable = FirebaseVariable{
+		FireBaseKeyFullPath: FireBaseKeyFullPath,
+		OAuthKeyFullPath:    OAuthKeyFullPath,
+		ProjectID:           firebaseconfigfile.ProjectID,
+	}
+	//初始化Firebase Database
+	initFirebaseDatabase()
+}
+
+func initFirebaseDatabase() {
 	ctx := context.Background()
 	var err error
 
-	settings := GetFirebaseSetting()
-
+	// Initialize Firebase，如果設定的檔案不存在，就從Google Secret Manager 取得
 	var sa option.ClientOption
-	if IsFileExists(settings.FireBaseKeyFullPath) {
-		sa = option.WithCredentialsFile(settings.FireBaseKeyFullPath)
+	if IsFileExists(firebaseVariable.FireBaseKeyFullPath) {
+		sa = option.WithCredentialsFile(firebaseVariable.FireBaseKeyFullPath)
 	} else {
-		creds, err := GetSecret(ctx, "projects/635522974118/secrets/GOOGLE_APPLICATION_CREDENTIALS/versions/latest")
+		creds, err := GetSecret(ctx)
 		if err != nil {
-			log.Fatalf("failed to access secret version: %v", err)
+			panic(fmt.Errorf("failed to access secret version: %v", err))
 		}
 		sa = option.WithCredentialsJSON([]byte(creds))
 	}
 
 	app, err = firebase.NewApp(ctx, nil, sa)
 	if err != nil {
-		log.Fatalf("error initializing app: %v\n", err)
+		panic(fmt.Errorf("error initializing firebase.NewApp(): %v", err))
 	}
 
 	// Initialize Firestore client
 	firestoreClient, err = app.Firestore(ctx)
 	if err != nil {
-		log.Fatalf("error initializing Firestore client: %v\n", err)
+		panic(fmt.Errorf("error initializing Firestore client app.Firestore(): %v", err))
 	}
 }
 
-// GetProjectID reads the firebaseConfig_dev.json file and returns the projectId value
-func getProjectID(filename string) (string, error) {
+// 從檔案取得Firebase Config，用來做Oauth使用
+func initFirebaseConfigFile(filename string) (rtn firebaseConfigFile) {
 	// Open the JSON file
 	file, err := os.Open(filename)
 	if err != nil {
-		return "", fmt.Errorf("failed to open file: %w", err)
+		panic(fmt.Errorf("failed to open file: %w", err))
 	}
 	defer file.Close()
 
 	// Read the file contents
 	data, err := io.ReadAll(file)
 	if err != nil {
-		return "", fmt.Errorf("failed to read file: %w", err)
+		panic(fmt.Errorf("failed to read file: %w", err))
 	}
 
 	// Parse the JSON data
-	var config firebaseConfig
-	if err := json.Unmarshal(data, &config); err != nil {
-		return "", fmt.Errorf("failed to unmarshal JSON: %w", err)
+	if err := json.Unmarshal(data, &rtn); err != nil {
+		panic(fmt.Errorf("failed to unmarshal JSON: %w", err))
 	}
-
-	return config.ProjectID, nil
+	return rtn
 }
 
 func FirebaseAuth(ctx context.Context) (*auth.Client, error) {
 	return app.Auth(ctx)
 }
 
-func GetSecret(ctx context.Context, name string) (string, error) {
+func GetSecret(ctx context.Context) (string, error) {
 	if secmanagerCert != "" {
 		return secmanagerCert, nil
 	}
+
+	//"projects/635522974118/secrets/GOOGLE_APPLICATION_CREDENTIALS/versions/latest"
+	securityFullPath := fmt.Sprintf("projects/%s/secrets/GOOGLE_APPLICATION_CREDENTIALS/versions/latest", firebaseconfigfile.MessagingSenderID)
+
 	client, err := secretmanager.NewClient(ctx)
 	if err != nil {
 		return "", err
@@ -110,7 +134,7 @@ func GetSecret(ctx context.Context, name string) (string, error) {
 	defer client.Close()
 
 	accessRequest := &secretmanagerpb.AccessSecretVersionRequest{
-		Name: name,
+		Name: securityFullPath,
 	}
 
 	result, err := client.AccessSecretVersion(ctx, accessRequest)
@@ -127,39 +151,6 @@ func GetFirestoreClient() *firestore.Client {
 	return firestoreClient
 }
 
-func GetFirebaseSetting() FirebaseSettings {
-	if firebaseSettings.FireBaseKeyFullPath != "" {
-		return firebaseSettings
-	}
-
-	//載入.env當作環境變數，如果有成功，要顯示訊息。
-	wd, _ := os.Getwd()
-	if err := godotenv.Load(filepath.Join(wd, ".env")); err == nil {
-		log.Printf("使用.env檔，作為環境變數")
-	}
-
-	root := os.Getenv("KEYROOT") //這個會是由外部變數來決定
-	setting := GetEnvironmentSetting()
-	var rtn FirebaseSettings
-
-	//沒有設定Key的目錄，就以當前執行目錄為設定檔目錄
-	if root == "" {
-		wd, err := os.Getwd()
-		if err != nil {
-			log.Fatalf("Error getting current working directory: %v", err)
-		}
-		root = filepath.Dir(wd)
-	}
-
-	rtn.OAuthKeyFullPath = filepath.Join(root, fmt.Sprintf("firebaseConfig_%s.json", setting.Env.String()))
-	rtn.FireBaseKeyFullPath = filepath.Join(root, fmt.Sprintf("serviceAccountKey_%s.json", setting.Env.String()))
-	projectid, err := getProjectID(rtn.OAuthKeyFullPath)
-
-	if err != nil {
-		log.Fatalf("Error getting project id: %v", err)
-	}
-	rtn.ProjectID = projectid
-
-	firebaseSettings = rtn
-	return rtn
+func GetFirebaseSetting() FirebaseVariable {
+	return firebaseVariable
 }

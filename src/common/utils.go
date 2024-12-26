@@ -39,13 +39,13 @@ type EnviromentType int
 func StringToEnviromentType(s string) (EnviromentType, bool) {
 	switch strings.ToLower(s) {
 	case "prod":
-		return Prod, true
+		return Prod, false
 	case "googlejp":
-		return GoogleJP, true
+		return GoogleJP, false
 	case "dev":
-		return Dev, true
+		return Dev, false
 	default:
-		return EmptyEnvironment, false // 返回一個錯誤
+		return EmptyEnvironment, true // 返回一個錯誤
 	}
 }
 
@@ -59,6 +59,54 @@ func (e EnviromentType) String() string {
 var systemSettings SystemSettings
 
 const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+
+func init() {
+	//優先權為
+	//1. .env檔，因為會將檔案載入，變成環境變數
+	//2. 機器上的環境變數
+	//最後會一律套用DB setting，目前只有支援DemoCustomerID及TgToken
+	loadEnvironmentFromFile() //讀取.env檔的環境變數
+
+	strEnv := os.Getenv("ENVIRONMENT")
+
+	env, err := StringToEnviromentType(strEnv)
+	if err {
+		panic("環境變數不正確")
+	}
+
+	systemSettings = SystemSettings{
+		Env:             env,
+		TempCacheFolder: getTempCacheFolder(),
+		StartTimestemp:  strconv.FormatInt(time.Now().Unix(), 10),
+		SectestWord:     GenerateRandomString(8),
+		TgToken:         "", //由DB取得
+		DemoCustomerID:  "", //由DB取得
+	}
+
+	//Todo:這邊還取不到資料
+	dbSystemSetting, _ := GetDBSystemSettings(context.Background())
+	ApplySystemSettings(dbSystemSetting)
+}
+
+func loadEnvironmentFromFile() bool {
+	//判斷執行目錄是否有.env檔案
+	if IsFileExists(".env") {
+		//如果有 .env檔就載入
+		wd, _ := os.Getwd()
+		if err := godotenv.Load(filepath.Join(wd, ".env")); err == nil {
+			log.Printf("使用.env檔，作為環境變數")
+		}
+		return true
+	}
+	return false
+}
+
+func getTempCacheFolder() string {
+	//tempCacheFolder固定為"tmpCache"
+	tmpFolderName := "tmpCache"
+	wd, _ := os.Getwd()
+	return filepath.Join(wd, tmpFolderName)
+}
 
 func GenerateRandomString(length int) string {
 	seededRand := rand.New(rand.NewSource(time.Now().UnixNano()))
@@ -91,34 +139,7 @@ func IsFileExists(filePath string) bool {
 }
 
 func GetEnvironmentSetting() SystemSettings {
-	if systemSettings.Env != EmptyEnvironment {
-		return systemSettings
-	}
-
-	var rtn SystemSettings
-
-	//載入.env當作環境變數
-	wd, _ := os.Getwd()
-	if err := godotenv.Load(filepath.Join(wd, ".env")); err == nil {
-		log.Printf("使用.env檔，作為環境變數")
-	}
-
-	env := os.Getenv("ENVIRONMENT")
-	tmpCacheFolder := os.Getenv("TEMPCACHEFOLDER")
-
-	if env == "" || strings.ToLower(env) == "prod" {
-		rtn.Env = Prod
-	} else {
-		rtn.Env = Dev
-	}
-
-	rtn.TempCacheFolder = filepath.Join(wd, tmpCacheFolder)
-	rtn.StartTimestemp = strconv.FormatInt(time.Now().Unix(), 10)
-	rtn.SectestWord = GenerateRandomString(8)
-	dbSystemSetting, _ := GetDBSystemSettings(context.Background())
-	systemSettings = rtn //先把值寫入，再ApplyDB的資料
-	ApplySystemSettings(dbSystemSetting)
-	return rtn
+	return systemSettings
 }
 
 func ApplySystemSettings(settings SystemSettings) {

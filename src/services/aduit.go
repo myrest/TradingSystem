@@ -64,7 +64,7 @@ func init() {
 	if common.IsFileExists(settings.FireBaseKeyFullPath) {
 		sa = option.WithCredentialsFile(settings.FireBaseKeyFullPath)
 	} else {
-		creds, err := common.GetSecret(ctx, "projects/635522974118/secrets/GOOGLE_APPLICATION_CREDENTIALS/versions/latest")
+		creds, err := common.GetSecret(ctx)
 		if err != nil {
 			log.Fatalf("failed to access secret version: %v", err)
 		}
