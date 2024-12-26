@@ -51,7 +51,7 @@ func StringToEnviromentType(s string) (EnviromentType, bool) {
 
 // 使用 stringer 生成的 String() 方法
 func (e EnviromentType) String() string {
-	return [...]string{"prod", "googlejp", "dev"}[e]
+	return [...]string{"EmptyEnvironment", "dev", "prod", "googlejp"}[e]
 }
 
 // endregion 環境
@@ -83,7 +83,8 @@ func init() {
 		DemoCustomerID:  "", //由DB取得
 	}
 
-	//Todo:這邊還取不到資料
+	//初始化DB
+	initFirebaseSetting()
 	dbSystemSetting, _ := GetDBSystemSettings(context.Background())
 	ApplySystemSettings(dbSystemSetting)
 }

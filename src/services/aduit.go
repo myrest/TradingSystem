@@ -57,7 +57,7 @@ type systemEventLogDB struct {
 	EventTime string
 }
 
-func init() {
+func initAduit() {
 	settings := common.GetFirebaseSetting()
 	var sa option.ClientOption
 	ctx := context.Background()

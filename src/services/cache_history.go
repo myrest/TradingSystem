@@ -1,7 +1,6 @@
 package services
 
 import (
-	"TradingSystem/src/common"
 	"TradingSystem/src/models"
 	"encoding/json"
 	"fmt"
@@ -19,15 +18,6 @@ var (
 	cacheMu  sync.Mutex
 	cacheDir string
 )
-
-func init() {
-	// 确保缓存目录存在
-	cacheDir = common.GetEnvironmentSetting().TempCacheFolder
-	_, err := os.Stat(cacheDir)
-	if os.IsNotExist(err) {
-		os.MkdirAll(cacheDir, os.ModePerm)
-	}
-}
 
 func getCacheFilePath(key string) string {
 	return filepath.Join(cacheDir, fmt.Sprintf("%s.json", key))

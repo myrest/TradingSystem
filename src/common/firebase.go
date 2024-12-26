@@ -41,7 +41,7 @@ type firebaseConfigFile struct {
 	AppID             string `json:"appId"`
 }
 
-func init() {
+func initFirebaseSetting() {
 	//先手動取得OAuth及Firebase Config，因為後面有需要共用
 	root := os.Getenv("KEYROOT") //這個會是由外部變數來決定ServiceAccount放哪裏
 	//沒有設定Key的目錄，就以當前執行目錄為設定檔目錄
