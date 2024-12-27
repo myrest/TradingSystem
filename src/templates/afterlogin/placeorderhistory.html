@@ -1,48 +1,138 @@
-{{ template "afterloginheader.html" . }}
-<nav class="nav-bar">
-    <button class="back-button"><a href="/">回到首頁</a></button>
-</nav>
+{{ template "beforeloginheader.html" . }}
+<style>
+    .table-container {
+        margin-top: 20px;
+    }
+
+    .dropdown-container {
+        margin-bottom: 20px;
+        display: inline;
+    }
+
+    .custom-select {
+        position: relative;
+        display: inline-block;
+        font-size: 16px;
+        color: #2c3e50;
+    }
+
+    .custom-select select {
+        display: none;
+    }
+
+    .select-selected {
+        background-color: #e3f2fd;
+        border: 1px solid #90caf9;
+        border-radius: 4px;
+        padding: 8px 16px;
+        cursor: pointer;
+    }
+
+    .select-selected:after {
+        position: absolute;
+        content: "";
+        top: 14px;
+        right: 10px;
+        width: 0;
+        height: 0;
+        border: 6px solid transparent;
+        border-color: #1e88e5 transparent transparent transparent;
+    }
+
+    .select-items div,
+    .select-selected {
+        padding: 8px 16px;
+        border: 1px solid transparent;
+        border-color: transparent transparent rgba(30, 136, 229, 0.1) transparent;
+        cursor: pointer;
+    }
+
+    .select-items {
+        position: absolute;
+        background-color: #e3f2fd;
+        top: 100%;
+        left: 0;
+        right: 0;
+        z-index: 99;
+        border: 1px solid #90caf9;
+        border-radius: 0 0 4px 4px;
+    }
+
+    .select-hide {
+        display: none;
+    }
+
+    .select-items div:hover,
+    .same-as-selected {
+        background-color: #bbdefb;
+    }
+
+    #demoCryptoTable {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    #demoCryptoTable td:not(:first-child):not(:last-child) {
+        text-align: right;
+    }
+
+    .home-icon {
+        color: #ff8157;
+        cursor: pointer;
+        float: right;
+    }
+</style>
 <div class="dashboard">
-    <h1>下單歷史 - {{.symbol}}</h1>
-    <p>手續費：內含開倉、平倉手續費及持倉資金費率總合。</p>
-    <p>利潤：為交易獲利。</p>
-    <table>
-        <thead>
-            <tr>
-                <th>時間</th>
-                <th>交易類型</th>
-                <th>價格</th>
-                <th>數量</th>
-                <th>手續費</th>
-                <th>獲利</th>
-                <th>結果</th>
-            </tr>
-        </thead>
-        <tbody>
-            {{range .data}}
-            <tr>
-                <td>{{.Time}}</td>
-                <td>{{.Position}}</td>
-                <td>{{.Price}}</td>
-                <td>{{.Amount | formatFloat64 6}}</td>
-                <td>{{.Fee | formatFloat64 6}}</td>
-                <td>{{.Profit}}</td>
-                <td>{{.Result}}</td>
-            </tr>
+    <span class="fa-solid fa-house home-icon" id="home-icon">
+        <span>回首頁</span>
+    </span>
+
+    <div class="crypto-table">
+        <h2>下單歷史 - {{.symbol}}</h2>
+        <span class="alignright" style="margin-top: 23px;">績效為扣除手續費、資金費後之盈虧</span>
+        <table id="demoCryptoTable">
+            <thead>
+                <tr>
+                    <th>時間</th>
+                    <th>交易類型</th>
+                    <th>價格</th>
+                    <th>數量</th>
+                    <th>手續費</th>
+                    <th>獲利</th>
+                    <th>結果</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{range .data}}
+                <tr>
+                    <td>{{.Time}}</td>
+                    <td>{{.Position}}</td>
+                    <td>{{.Price}}</td>
+                    <td>{{.Amount | formatFloat64 6}}</td>
+                    <td>{{.Fee | formatFloat64 6}}</td>
+                    <td>{{.Profit}}</td>
+                    <td>{{.Result}}</td>
+                </tr>
+                {{end}}
+            </tbody>
+        </table>
+        <div class="pagination">
+            {{if gt .page 1}}
+            <a href="?symbol={{.symbol}}&page={{subtract .page 1}}&pageSize={{.pageSize}}&cid={{ .cid }}">&laquo;</a>
             {{end}}
-        </tbody>
-    </table>
-    <div class="pagination">
-        {{if gt .page 1}}
-        <a href="?symbol={{.symbol}}&page={{subtract .page 1}}&pageSize={{.pageSize}}&cid={{ .cid }}">&laquo;</a>
-        {{end}}
-        {{range $i := iterate 1 .totalPages}}
-        <a href="?symbol={{$.symbol}}&page={{$i}}&pageSize={{$.pageSize}}&cid={{ $.cid }}" {{if eq $i $.page}}class="active"
-            {{end}}>{{$i}}</a>
-        {{end}}
-        {{if lt .page .totalPages}}
-        <a href="?symbol={{.symbol}}&page={{add .page 1}}&pageSize={{.pageSize}}&cid={{ .cid }}">&raquo;</a>
-        {{end}}
+            {{range $i := iterate 1 .totalPages}}
+            <a href="?symbol={{$.symbol}}&page={{$i}}&pageSize={{$.pageSize}}&cid={{ $.cid }}" {{if eq $i
+                $.page}}class="active" {{end}}>{{$i}}</a>
+            {{end}}
+            {{if lt .page .totalPages}}
+            <a href="?symbol={{.symbol}}&page={{add .page 1}}&pageSize={{.pageSize}}&cid={{ .cid }}">&raquo;</a>
+            {{end}}
+        </div>
     </div>
 </div>
+<script>
+    document.getElementById('home-icon').addEventListener('click', () => {
+        window.location.href = '/';
+    });        
+</script>
 {{ template "beforeloginfooter.html" . }}

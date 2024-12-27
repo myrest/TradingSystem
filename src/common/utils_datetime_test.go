@@ -171,62 +171,6 @@ func TestWeekToDateRange(t *testing.T) {
 	}
 }
 
-func TestGetWeeksByDate(t *testing.T) {
-	type args struct {
-		date time.Time
-	}
-	tests := []struct {
-		name string
-		args args
-		want string
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := GetWeeksByDate(tt.args.date); got != tt.want {
-				t.Errorf("GetWeeksByDate() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func TestGetUtcTimeNow(t *testing.T) {
-	tests := []struct {
-		name string
-		want string
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := GetUtcTimeNow(); got != tt.want {
-				t.Errorf("GetUtcTimeNow() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func TestFormatTime(t *testing.T) {
-	type args struct {
-		t time.Time
-	}
-	tests := []struct {
-		name string
-		args args
-		want string
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := FormatTime(tt.args.t); got != tt.want {
-				t.Errorf("FormatTime() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
 func TestParseTime(t *testing.T) {
 	type args struct {
 		timeStr string

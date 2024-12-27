@@ -11,15 +11,14 @@ func GetDBSystemSettings(ctx context.Context) (SystemSettings, error) {
 	client := GetFirestoreClient()
 
 	// 查詢 SystemSettings 集合，限制結果為 1
-	docs, err := client.Collection("SystemSettings").Where("Env", "==", systemSettings.Env.String()).Limit(1).Documents(ctx).GetAll()
+	docs, err := client.Collection("SystemSettings").Where("Env", "==", systemSettings.Env).Limit(1).Documents(ctx).GetAll()
 	if err != nil {
 		return rtn, err
 	}
 
 	// 檢查是否有資料
 	if len(docs) == 0 {
-		//return nil, fmt.Errorf("查無系統設定資料。")
-		fmt.Printf("查無系統設定資料。")
+		fmt.Printf("查無已儲存之系統設定資料。")
 		return rtn, nil
 	}
 
@@ -30,7 +29,7 @@ func GetDBSystemSettings(ctx context.Context) (SystemSettings, error) {
 
 func SaveDBSystemSettings(ctx context.Context, settings SystemSettings) error {
 	client := GetFirestoreClient()
-	doc, err := client.Collection("SystemSettings").Where("Env", "==", settings.Env.String()).Limit(1).Documents(ctx).GetAll()
+	doc, err := client.Collection("SystemSettings").Where("Env", "==", settings.Env).Limit(1).Documents(ctx).GetAll()
 
 	if err != nil {
 		return err

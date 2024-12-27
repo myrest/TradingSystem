@@ -21,6 +21,7 @@ var trustedDomains = []ServerLocale{
 	Datacenter_Hikari_JP,
 }
 
+// 還沒驗證過的取得主機名 Todo:需要檢驗該函式
 func GetHostName(c *gin.Context) (ServerLocale, error) {
 	// 嘗試從請求中獲取 X-Forwarded-Host 標頭
 	xForwardedHost := c.GetHeader("X-Forwarded-Host")

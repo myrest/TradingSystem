@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"TradingSystem/src/common"
 	"TradingSystem/src/models"
 	"TradingSystem/src/services"
 	"context"
@@ -28,16 +27,10 @@ func ShowLoginPage(c *gin.Context) {
 
 func CreateCustomer(c *gin.Context) {
 	session := sessions.Default(c)
-	//Todo:先不處理DC
-	DC, _ := common.GetHostName(c)
-	//if err != nil {
-	//	c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-	//	return
-	//}
+
 	var customer = models.Customer{
-		Name:       session.Get("name").(string),
-		Email:      session.Get("email").(string),
-		DataCenter: DC,
+		Name:  session.Get("name").(string),
+		Email: session.Get("email").(string),
 	}
 	//先查該Email是否有被用掉。
 	dbCustomer, err := services.GetCustomerByEmail(c, customer.Email)

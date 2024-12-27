@@ -7,10 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-//Todo:重新考慮是否只處理Production
-
 func SystemSettings(c *gin.Context) {
-	//需要限制只處理現行環境
 	sys, err := common.GetDBSystemSettings(c)
 
 	if err != nil {

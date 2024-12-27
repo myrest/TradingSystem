@@ -20,14 +20,7 @@ func TradingViewWebhook(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
 		return
 	}
-	//Todo:先不處理DC
-	servername, _ := common.GetHostName(c)
-	//if err != nil {
-	//	c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-	//	return
-	//}
 
-	WebhookData.DataCenter = servername
 	err := preProcessPlaceOrder(c, WebhookData)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -88,11 +81,6 @@ func preProcessPlaceOrder(c *gin.Context, WebhookData models.TvWebhookData) erro
 		}(customerList[i])
 	}
 	wg.Wait()
-	//要更新績效的cache
-	go func() {
-		//清暫存檔
-		services.RemoveLog_TVExpiredCacheFiles()
-	}()
 	return nil
 }
 

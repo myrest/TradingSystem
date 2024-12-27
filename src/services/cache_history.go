@@ -7,11 +7,6 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
-	"time"
-)
-
-const (
-	cacheDuration = 30 * time.Minute
 )
 
 var (
@@ -89,26 +84,4 @@ func loadDemoSymbolListCache(key string) ([]models.DemoSymbolList, error) {
 	decoder := json.NewDecoder(file)
 	err = decoder.Decode(&data)
 	return data, err
-}
-
-// Todo:應該清除相關幣就好
-func RemoveLog_TVExpiredCacheFiles() {
-	cacheMu.Lock()
-	defer cacheMu.Unlock()
-
-	files, err := os.ReadDir(cacheDir)
-	if err != nil {
-		return
-	}
-
-	now := time.Now()
-	for _, file := range files {
-		info, err := file.Info()
-		if err != nil {
-			continue
-		}
-		if now.Sub(info.ModTime()) > cacheDuration {
-			os.Remove(filepath.Join(cacheDir, file.Name()))
-		}
-	}
 }

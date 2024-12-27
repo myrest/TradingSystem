@@ -278,9 +278,13 @@ func PlaceOrderHistory(c *gin.Context) {
 		return
 	}
 
-	date := time.Now().UTC()
-	sdt, edt := common.GetMonthStartEndDate(date)
-	sdt = sdt.AddDate(0, -3, 0) //一次三個月內的資料
+	//如果Session有值，就以Session的為主，若沒有就取三個月內的
+	sdt, edt := common.GetReportStartEndDate(session)
+	if sdt == edt {
+		sdt, edt = common.GetMonthStartEndDate(time.Now().UTC())
+		sdt = sdt.AddDate(0, -3, 0) //一次三個月內的資料
+	}
+
 	common.SetReportStartEndDate(session, sdt, edt)
 
 	list, totalPages, err := services.GetPlaceOrderHistory(c, symbol, customerid, sdt, edt, page, pageSize)

@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math"
 	"sort"
 	"time"
 
@@ -13,7 +14,7 @@ import (
 	"google.golang.org/api/iterator"
 )
 
-func generateCustomerReport(ctx context.Context, customerID string, startDate, endDate time.Time) ([]models.CustomerProfitReport, error) {
+func generateCustomerReport(ctx context.Context, customerID string, startDate, endDate time.Time, isSimulation bool) ([]models.CustomerProfitReport, error) {
 	//取出week值
 	weeks := common.GetWeeksInDateRange(startDate, endDate)
 	if len(weeks) > 1 {
@@ -24,7 +25,7 @@ func generateCustomerReport(ctx context.Context, customerID string, startDate, e
 	//先找出所有的History
 	iter := client.Collection("placeOrderLog").
 		Where("CustomerID", "==", customerID).
-		Where("Simulation", "==", false).
+		Where("Simulation", "==", isSimulation).
 		Where("Time", ">=", common.FormatDate(startDate)).
 		Where("Time", "<", common.FormatTime(endDate)).
 		Documents(ctx)
@@ -106,13 +107,13 @@ type reportMapkey struct {
 	YearUnit string
 }
 
-func getCustomerFirstPlaceOrderDateTime(ctx context.Context, customerID string) time.Time {
+func getCustomerFirstPlaceOrderDateTime(ctx context.Context, customerID string, isSimulation bool) time.Time {
 	client := common.GetFirestoreClient()
 
 	// 查詢所有的 placeOrderLog
 	iter := client.Collection("placeOrderLog").
 		Where("CustomerID", "==", customerID).
-		Where("Simulation", "==", false).
+		Where("Simulation", "==", isSimulation).
 		OrderBy("Time", firestore.Asc). // 按時間排序
 		Limit(1).                       // 只取第一筆
 		Documents(ctx)
@@ -134,9 +135,14 @@ func getCustomerFirstPlaceOrderDateTime(ctx context.Context, customerID string) 
 	return common.ParseTime(log.Time)
 }
 
-func GetCustomerWeeklyReportCurrencyList(ctx context.Context, customerID string, startDate, endDate time.Time) ([]models.CustomerProfitReport, error) {
+func GetCustomerWeeklyReportCurrencyList(ctx context.Context, customerID string, startDate, endDate time.Time, isSimulation ...bool) ([]models.CustomerProfitReport, error) {
+	Simulation := false //預設取出正式單，只有Demo才取出模擬單
+	if len(isSimulation) > 0 {
+		Simulation = isSimulation[0]
+	}
+
 	//找出客戶的第一筆資料，如果起始日期早於它，則以第一筆資料為起始日期
-	firstPlaceOrderTime := getCustomerFirstPlaceOrderDateTime(ctx, customerID)
+	firstPlaceOrderTime := getCustomerFirstPlaceOrderDateTime(ctx, customerID, Simulation)
 	if startDate.Before(firstPlaceOrderTime) {
 		startDate = firstPlaceOrderTime
 	}
@@ -192,7 +198,7 @@ func GetCustomerWeeklyReportCurrencyList(ctx context.Context, customerID string,
 
 	//處理尚未產生的週資料
 	for week := range missingWeeks {
-		getWeekReport(ctx, week, customerID, mapData)
+		getWeekReport(ctx, week, customerID, mapData, Simulation)
 	}
 
 	var rtn []models.CustomerProfitReport
@@ -202,12 +208,16 @@ func GetCustomerWeeklyReportCurrencyList(ctx context.Context, customerID string,
 	return rtn, nil
 }
 
-func GetCustomerMonthlyReportCurrencyList(ctx context.Context, customerID string, startDate, endDate time.Time) ([]models.CustomerProfitReport, error) {
+func GetCustomerMonthlyReportCurrencyList(ctx context.Context, customerID string, startDate, endDate time.Time, isSimulation ...bool) ([]models.CustomerProfitReport, error) {
+	Simulation := false //預設取出正式單，只有Demo才取出模擬單
+	if len(isSimulation) > 0 {
+		Simulation = isSimulation[0]
+	}
 	var mapData = make(map[reportMapkey]models.CustomerProfitReport)
 	client := common.GetFirestoreClient()
 
 	//找出客戶的第一筆資料，如果起始日期早於它，則以第一筆資料為起始日期
-	firstPlaceOrderTime := getCustomerFirstPlaceOrderDateTime(ctx, customerID)
+	firstPlaceOrderTime := getCustomerFirstPlaceOrderDateTime(ctx, customerID, Simulation)
 	if startDate.Before(firstPlaceOrderTime) {
 		startDate = firstPlaceOrderTime
 	}
@@ -261,7 +271,7 @@ func GetCustomerMonthlyReportCurrencyList(ctx context.Context, customerID string
 
 	//處理尚未產生的週資料
 	for month := range missingMonths {
-		getMonthReport(ctx, month, customerID, mapData)
+		getMonthReport(ctx, month, customerID, mapData, Simulation)
 	}
 
 	var rtn []models.CustomerProfitReport
@@ -272,7 +282,7 @@ func GetCustomerMonthlyReportCurrencyList(ctx context.Context, customerID string
 }
 
 // 依月份、Currency建立月報資料
-func getMonthReport(ctx context.Context, month string, customerID string, mapData map[reportMapkey]models.CustomerProfitReport) error {
+func getMonthReport(ctx context.Context, month string, customerID string, mapData map[reportMapkey]models.CustomerProfitReport, isSimulation bool) error {
 	//傳入的map資料中，不應該有相同月份的資料。
 	for key := range mapData {
 		if key.YearUnit == month {
@@ -286,7 +296,7 @@ func getMonthReport(ctx context.Context, month string, customerID string, mapDat
 	//先找出所有的History，
 	iter := client.Collection("placeOrderLog").
 		Where("CustomerID", "==", customerID).
-		Where("Simulation", "==", false).
+		Where("Simulation", "==", isSimulation).
 		Where("Time", ">=", common.FormatDate(sdt)).
 		Where("Time", "<", common.FormatTime(edt)).
 		Documents(ctx)
@@ -375,7 +385,7 @@ func getMonthReport(ctx context.Context, month string, customerID string, mapDat
 	return nil
 }
 
-func getWeekReport(ctx context.Context, currentWeek string, customerID string, mapData map[reportMapkey]models.CustomerProfitReport) error {
+func getWeekReport(ctx context.Context, currentWeek string, customerID string, mapData map[reportMapkey]models.CustomerProfitReport, isSimulation bool) error {
 	//傳入的map資料中，不應該有相同週數的資料。
 	for key := range mapData {
 		if key.YearUnit == currentWeek {
@@ -385,7 +395,7 @@ func getWeekReport(ctx context.Context, currentWeek string, customerID string, m
 
 	//判斷最後一週有資料且還沒結束，先取得最新的週數
 	lastStartDT, lastEndDT, _ := common.WeekToDateRange(currentWeek)
-	latestReports, err := generateCustomerReport(ctx, customerID, lastStartDT, lastEndDT)
+	latestReports, err := generateCustomerReport(ctx, customerID, lastStartDT, lastEndDT, isSimulation)
 	if err != nil {
 		//寫入log
 		CustomerEventLog{
@@ -467,10 +477,14 @@ func GetCustomerReportCurrencySummaryList(ctx context.Context, customerID string
 	return rtn, nil
 }
 
-func GetCustomerReportCurrencySummaryListMonthly(ctx context.Context, customerID string, startDate, endDate time.Time) ([]models.CustomerReportSummary, error) {
+func GetCustomerReportCurrencySummaryListMonthly(ctx context.Context, customerID string, startDate, endDate time.Time, isSimulation ...bool) ([]models.CustomerReportSummary, error) {
+	Simulation := false //預設取出正式單，只有Demo才取出模擬單
+	if len(isSimulation) > 0 {
+		Simulation = isSimulation[0]
+	}
 	var rtn []models.CustomerReportSummary
 	middleRtn := make(map[string]models.CustomerReportSummary)
-	weeklyData, err := GetCustomerMonthlyReportCurrencyList(ctx, customerID, startDate, endDate)
+	weeklyData, err := GetCustomerMonthlyReportCurrencyList(ctx, customerID, startDate, endDate, Simulation)
 	if err != nil {
 		return nil, err
 	}
@@ -504,4 +518,12 @@ func GetCustomerReportCurrencySummaryListMonthly(ctx context.Context, customerID
 		return week1 > week2 // 降冪排序
 	})
 	return rtn, nil
+}
+
+func formatWinRate(winrate float64) string {
+	if math.IsNaN(winrate) {
+		winrate = 0
+	}
+	rounded := math.Round(winrate*100) / 100 // 四舍五入到小数点后两位
+	return fmt.Sprintf("%.2f%%", rounded)
 }
