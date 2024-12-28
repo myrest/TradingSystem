@@ -107,13 +107,15 @@ type reportMapkey struct {
 	YearUnit string
 }
 
-func getCustomerFirstPlaceOrderDateTime(ctx context.Context, customerID string, isSimulation bool) time.Time {
+func getCustomerFirstPlaceOrderDateTime(ctx context.Context, customerID string, startDate, endDate time.Time, isSimulation bool) time.Time {
 	client := common.GetFirestoreClient()
 
 	// 查詢所有的 placeOrderLog
 	iter := client.Collection("placeOrderLog").
 		Where("CustomerID", "==", customerID).
 		Where("Simulation", "==", isSimulation).
+		Where("Time", ">=", common.FormatDate(startDate)).
+		Where("Time", "<", common.FormatTime(endDate)).
 		OrderBy("Time", firestore.Asc). // 按時間排序
 		Limit(1).                       // 只取第一筆
 		Documents(ctx)
@@ -141,8 +143,8 @@ func GetCustomerWeeklyReportCurrencyList(ctx context.Context, customerID string,
 		Simulation = isSimulation[0]
 	}
 
-	//找出客戶的第一筆資料，如果起始日期早於它，則以第一筆資料為起始日期
-	firstPlaceOrderTime := getCustomerFirstPlaceOrderDateTime(ctx, customerID, Simulation)
+	//找出區間內客戶的第一筆資料，如果起始日期早於它，則以第一筆資料為起始日期
+	firstPlaceOrderTime := getCustomerFirstPlaceOrderDateTime(ctx, customerID, startDate, endDate, Simulation)
 	if startDate.Before(firstPlaceOrderTime) {
 		startDate = firstPlaceOrderTime
 	}
@@ -217,7 +219,7 @@ func GetCustomerMonthlyReportCurrencyList(ctx context.Context, customerID string
 	client := common.GetFirestoreClient()
 
 	//找出客戶的第一筆資料，如果起始日期早於它，則以第一筆資料為起始日期
-	firstPlaceOrderTime := getCustomerFirstPlaceOrderDateTime(ctx, customerID, Simulation)
+	firstPlaceOrderTime := getCustomerFirstPlaceOrderDateTime(ctx, customerID, startDate, endDate, Simulation)
 	if startDate.Before(firstPlaceOrderTime) {
 		startDate = firstPlaceOrderTime
 	}
@@ -295,10 +297,10 @@ func getMonthReport(ctx context.Context, month string, customerID string, mapDat
 	client := common.GetFirestoreClient()
 	//先找出所有的History，
 	iter := client.Collection("placeOrderLog").
-		Where("CustomerID", "==", customerID).
-		Where("Simulation", "==", isSimulation).
 		Where("Time", ">=", common.FormatDate(sdt)).
 		Where("Time", "<", common.FormatTime(edt)).
+		Where("CustomerID", "==", customerID).
+		Where("Simulation", "==", isSimulation).
 		Documents(ctx)
 	defer iter.Stop()
 	symbollist := make(map[string]models.CustomerProfitReport) //Symbol -> Report 資料

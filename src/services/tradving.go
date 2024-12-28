@@ -106,7 +106,6 @@ func GetPlaceOrderHistory(ctx context.Context, Symbol, CustomerID string, sdt, e
 	query := client.Collection("placeOrderLog").
 		Where("CustomerID", "==", CustomerID).
 		Where("Symbol", "==", Symbol).
-		//Where("Simulation", "==", Simulation). //Todo:暫時不濾掉盤種，需要有更多的UI來支援
 		Where("Time", ">=", common.FormatDate(sdt)).
 		Where("Time", "<", common.FormatTime(edt)).
 		OrderBy("Time", firestore.Desc).
@@ -140,11 +139,9 @@ func GetPlaceOrderHistory(ctx context.Context, Symbol, CustomerID string, sdt, e
 func getTotalPages(ctx context.Context, Symbol, CustomerID string, sdt, edt time.Time, pageSize int) (int, error) {
 	client := common.GetFirestoreClient()
 
-	// Firestore COUNT query
 	query := client.Collection("placeOrderLog").
 		Where("CustomerID", "==", CustomerID).
 		Where("Symbol", "==", Symbol).
-		//Where("Simulation", "==", Simulation). //Todo:暫時不濾掉盤種，需要有更多的UI來支援
 		Where("Time", ">=", common.FormatDate(sdt)).
 		Where("Time", "<", common.FormatTime(edt)).
 		OrderBy("Time", firestore.Desc)

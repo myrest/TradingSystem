@@ -108,34 +108,29 @@ func (client *Client) CreateOrder(c context.Context, tv models.TvSiginalData, Cu
 	log.Printf("Customer:%s %v order created: %+v", Customer.CustomerID, MarketOrder, order)
 
 	placedOrder := &UMUserTradeResponse{Commission: "0", RealizedPnl: "0"}
-	if isCloseOrder { //平倉才需要取得下單結果
-		//取出下單結果要先暫停0.5秒，等待下單結果完成
-		for i := 0; i < maxRetries; i++ {
-			fmt.Println("waiting for 0.5 seconds... --> ", i)
-			time.Sleep(waitTime)
+	//取出下單結果要先暫停0.5秒，等待下單結果完成
+	for i := 0; i < maxRetries; i++ {
+		fmt.Println("waiting for 0.5 seconds... --> ", i)
+		time.Sleep(waitTime)
 
-			// 嘗試獲取資料
-			history, err := client.GetUMUserTradeService().Symbol(Symbol).OrderId(order.OrderId).Do(c)
-			if (err == nil) && (len(history) > 0) {
-				placedOrder = history[0]
-				break
-			}
-			if i == maxRetries-1 {
-				placeOrderLog.Result = placeOrderLog.Result + "\nGet placed order failed:" + err.Error()
-			}
+		// 嘗試獲取資料
+		history, err := client.GetUMUserTradeService().Symbol(Symbol).OrderId(order.OrderId).Do(c)
+		if (err == nil) && (len(history) > 0) {
+			placedOrder = history[0]
+			break
+		}
+		if i == maxRetries-1 {
+			placeOrderLog.Result = placeOrderLog.Result + "\nGet placed order failed:" + err.Error()
 		}
 	}
 
 	//依下單結果補足資料
 	//寫入訂單編號
 	placeOrderLog.Result = strconv.FormatInt((*order).OrderId, 10)
-	placeOrderLog.Amount = placeAmount
-	placeOrderLog.Price = common.Decimal(order.AvgPrice)
-	placeOrderLog.Fee = common.Decimal(placedOrder.Commission) * 2 //因為有開、平倉，以平倉值兩倍為大約值
-	if isCloseOrder {
-		//平倉才有profit值
-		placeOrderLog.Profit = common.Decimal(placedOrder.RealizedPnl)
-	}
+	placeOrderLog.Amount = common.Decimal(order.OrigQty)
+	placeOrderLog.Price = common.Decimal(placedOrder.Price) //order.AvgPrice在第一時間不會有值，所以要用placedOrder
+	placeOrderLog.Fee = common.Decimal(placedOrder.Commission)
+	placeOrderLog.Profit = common.Decimal(placedOrder.RealizedPnl)
 
 	if placeOrderLog.Profit < 0 {
 		//虧損

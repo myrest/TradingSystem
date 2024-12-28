@@ -1,9 +1,11 @@
 package controllers
 
 import (
+	"TradingSystem/src/common"
 	"TradingSystem/src/models"
 	"TradingSystem/src/services"
 	"context"
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -12,6 +14,11 @@ import (
 )
 
 func ShowLoginPage(c *gin.Context) {
+	currentHost, err := common.GetHostName(c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
 	session := sessions.Default(c)
 	name := session.Get("name")
 	email := session.Get("email")
@@ -19,6 +26,7 @@ func ShowLoginPage(c *gin.Context) {
 	if name == nil || email == nil {
 		c.HTML(http.StatusOK, "login.html", gin.H{
 			"StaticFileVersion": systemsettings.StartTimestemp,
+			"host":              fmt.Sprintf("%s (%s)", systemsettings.Env.String(), currentHost),
 		})
 		return
 	}

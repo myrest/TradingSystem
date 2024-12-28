@@ -10,7 +10,7 @@ import (
 type ServerLocale string
 
 const (
-	Localhost            ServerLocale = "localhost"
+	Localhost            ServerLocale = "localhost:8080"
 	Datacenter_Google_JP ServerLocale = "trading.innoroot.com"
 	Datacenter_Hikari_JP ServerLocale = "hikari.lolo.finance"
 )
@@ -34,19 +34,14 @@ func GetHostName(c *gin.Context) (ServerLocale, error) {
 		domainName = strings.TrimSpace(hosts[0])    // 獲取第一個並移除空白
 	} else {
 		// 否則使用請求的主機名
-		domainName = c.Request.URL.Hostname()
-	}
-
-	//如果環境為Dev，則設定為Localhost
-	if GetEnvironmentSetting().Env == Dev {
-		domainName = string(Localhost)
+		domainName = c.Request.Host
 	}
 
 	// 檢查 domain name 是否是可信的值
 	isTrusted, rtn := isTrustedDomain(domainName)
 
 	if !isTrusted {
-		return "", fmt.Errorf("不受信任的域名")
+		return "", fmt.Errorf("不受信任的域名:%s", domainName)
 	}
 
 	// 非Localhost的話，確認請求使用 HTTPS

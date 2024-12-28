@@ -5,10 +5,7 @@ import (
 	"TradingSystem/src/models"
 	"context"
 	"strings"
-	"time"
 
-	"cloud.google.com/go/firestore"
-	"cloud.google.com/go/firestore/apiv1/firestorepb"
 	"google.golang.org/api/iterator"
 )
 
@@ -60,77 +57,4 @@ func GetMappedCustomerList(ctx context.Context) (map[string]models.CustomerRelat
 	}
 
 	return customermap, nil
-}
-
-func getCount(ctx context.Context, query *firestore.AggregationQuery) int64 {
-	results, err := query.Get(ctx)
-	if err != nil {
-		return -1
-	}
-	count, ok := results["all"]
-	if !ok {
-		return -1
-	}
-	return count.(*firestorepb.Value).GetIntegerValue()
-}
-
-// 取得各資料表的筆數
-func GetCustomerData(ctx context.Context, customerID string) map[string]int64 {
-	rtn := make(map[string]int64)
-	client := common.GetFirestoreClient()
-
-	//placeOrderLog
-	query := client.Collection("placeOrderLog").
-		Where("CustomerID", "==", customerID)
-	aggregationQuery := query.NewAggregationQuery().WithCount("all") //一定要用all，因為取得的function是用all當key
-	rtn["placeOrderLog"] = getCount(ctx, aggregationQuery)
-
-	//customerssymbol
-	query = client.Collection("customerssymbol").
-		Where("CustomerID", "==", customerID)
-	aggregationQuery = query.NewAggregationQuery().WithCount("all")
-	rtn["customerssymbol"] = getCount(ctx, aggregationQuery)
-
-	//DBCustomerWeeklyReport
-	query = client.Collection("DBCustomerWeeklyReport").
-		Where("CustomerID", "==", customerID)
-	aggregationQuery = query.NewAggregationQuery().WithCount("all")
-	rtn["DBCustomerWeeklyReport"] = getCount(ctx, aggregationQuery)
-
-	return rtn
-
-}
-
-// 刪除資料
-func DeleteCustomerData(ctx context.Context, customerID string, cutoffDatetime time.Time) error {
-	client := common.GetFirestoreClient()
-	query := client.Collection("placeOrderLog").
-		Where("Time", "<", cutoffDatetime).
-		Where("CustomerID", "==", customerID)
-
-	iter := query.Documents(ctx)
-	defer iter.Stop()
-
-	// 創建 BulkWriter
-	bulkWriter := client.BulkWriter(ctx)
-	defer bulkWriter.Flush() // 確保在結束時將所有操作提交
-
-	// 遍歷查詢結果
-	for {
-		doc, err := iter.Next()
-		if err == iterator.Done {
-			break // 沒有更多文件
-		}
-		if err != nil {
-			return err
-		}
-
-		// 在 BulkWriter 中添加刪除操作
-		if _, err := bulkWriter.Delete(doc.Ref); err != nil {
-			return err
-		}
-	}
-	// 提交所有操作
-	bulkWriter.Flush()
-	return nil
 }

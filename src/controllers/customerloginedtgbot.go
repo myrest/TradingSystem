@@ -19,7 +19,7 @@ func GetTGBot(c *gin.Context) {
 		return
 	}
 
-	if customer.TgChatID > 0 {
+	if customer.TgChatID != 0 {
 		isLinked = true
 	}
 

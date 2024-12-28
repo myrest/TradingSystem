@@ -123,42 +123,16 @@ func UpdateMessage(c *gin.Context) {
 }
 
 func GetAllSymbol(c *gin.Context) {
-	var rtn []models.AdminSymboListUI
 
 	symboList, err := services.GetAllSymbol(context.Background())
 	if err != nil {
 		c.JSON(http.StatusFound, gin.H{"error": err.Error()})
 		return
 	}
-
-	webhooklist, err := services.GetLatestWebhook(context.Background())
-	if err != nil {
-		c.JSON(http.StatusFound, gin.H{"error": err.Error()})
-		return
-	}
-
-	// 将webhooklist的数据合并到symboList中
-	webhookMap := make(map[string]models.TvWebhookData)
-	for _, webhook := range webhooklist {
-		webhookMap[webhook.Symbol] = webhook
-	}
-
-	for _, Symbol := range symboList {
-		positionSize := ""
-		if webhook, exists := webhookMap[Symbol.Symbol]; exists {
-			positionSize = webhook.Data.PositionSize
-		}
-		rtn = append(rtn, models.AdminSymboListUI{
-			AdminCurrencySymbol: Symbol,
-			PositionSize:        positionSize,
-		})
-	}
-
-	c.JSON(http.StatusOK, rtn)
+	c.JSON(http.StatusOK, symboList)
 }
 
 func GetSubscribeCustomerBySymbol(c *gin.Context) {
-	//page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	symbol := c.DefaultQuery("symbol", "")
 
 	customerSymbolList, err := services.GetSubscribeCustomersBySymbol(context.Background(), symbol)
@@ -196,18 +170,6 @@ func GetSubscribeSymbolbyCompanyID(c *gin.Context) {
 	c.HTML(http.StatusOK, "adminviewcustomersubscribe.html", gin.H{
 		"data":              rtn,
 		"cid":               customerid,
-		"StaticFileVersion": systemsettings.StartTimestemp,
-	})
-}
-
-func GetCustomerData(c *gin.Context) {
-	customerid := c.Query("cid")
-	data := services.GetCustomerData(c, customerid)
-	customer, _ := services.GetCustomer(c, customerid)
-
-	c.HTML(http.StatusOK, "adminviewcustomerssum.html", gin.H{
-		"data":              data,
-		"customer":          customer,
 		"StaticFileVersion": systemsettings.StartTimestemp,
 	})
 }

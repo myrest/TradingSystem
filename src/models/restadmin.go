@@ -32,8 +32,3 @@ type CustomerCurrencySymboResponse struct {
 	Message      string  `json:"message"`
 	SystemStatus string
 }
-
-type AdminSymboListUI struct {
-	AdminCurrencySymbol
-	PositionSize string `json:"positionsize"`
-}
