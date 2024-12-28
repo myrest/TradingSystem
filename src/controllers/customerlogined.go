@@ -50,7 +50,7 @@ func ShowDashboardPage(c *gin.Context) {
 		c.HTML(http.StatusOK, "iscreatenew.html", gin.H{
 			"Name":              name,
 			"Email":             email,
-			"StaticFileVersion": common.GetEnvironmentSetting().StartTimestemp,
+			"StaticFileVersion": systemsettings.StartTimestemp,
 		})
 		return
 	}
@@ -86,7 +86,7 @@ func ShowDashboardPage(c *gin.Context) {
 			"AutoSubscribeType":   customer.AutoSubscribReal,
 			"AutoSubscribeAmount": customer.AutoSubscribAmount,
 			"AlertMessageType":    customer.AlertMessageType,
-			"StaticFileVersion":   common.GetEnvironmentSetting().StartTimestemp,
+			"StaticFileVersion":   systemsettings.StartTimestemp,
 			"ExchangeSystemName":  customer.ExchangeSystemName,
 		})
 	} else {
@@ -278,9 +278,13 @@ func PlaceOrderHistory(c *gin.Context) {
 		return
 	}
 
-	date := time.Now().UTC()
-	sdt, edt := common.GetMonthStartEndDate(date)
-	sdt = sdt.AddDate(0, -3, 0) //一次三個月內的資料
+	//如果Session有值，就以Session的為主，若沒有就取三個月內的
+	sdt, edt := common.GetReportStartEndDate(session)
+	if sdt == edt {
+		sdt, edt = common.GetMonthStartEndDate(time.Now().UTC())
+		sdt = sdt.AddDate(0, -3, 0) //一次三個月內的資料
+	}
+
 	common.SetReportStartEndDate(session, sdt, edt)
 
 	list, totalPages, err := services.GetPlaceOrderHistory(c, symbol, customerid, sdt, edt, page, pageSize)
@@ -312,6 +316,6 @@ func PlaceOrderHistory(c *gin.Context) {
 		"totalPages":        totalPages,
 		"symbol":            symbol,
 		"cid":               c.Query("cid"),
-		"StaticFileVersion": common.GetEnvironmentSetting().StartTimestemp,
+		"StaticFileVersion": systemsettings.StartTimestemp,
 	})
 }

@@ -5,50 +5,91 @@ import (
 	"TradingSystem/src/models"
 	"TradingSystem/src/services"
 	"net/http"
+	"sort"
 	"strconv"
+	"time"
 
+	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 )
 
 func DemoList(c *gin.Context) {
+	session := sessions.Default(c)
+
+	customerid := systemsettings.DemoCustomerID
+
 	d := c.Query("d")
-	days, _ := strconv.Atoi(d)
-	if days == 0 {
-		days = 7
-	} else if days > 30 {
-		days = 30
+	reportStartDate := time.Now().UTC()
+
+	if d != "" {
+		reportStartDate = common.ParseTime(d)
 	}
 
-	systemSymboList, err := services.GetDemoCurrencyList(c, days, true)
+	startDate, endDate := common.GetMonthStartEndDate(reportStartDate)
+
+	//將日期區間寫入DB
+	common.SetReportStartEndDate(session, startDate, endDate)
+
+	montylyreport, err := services.GetCustomerMonthlyReportCurrencyList(c, customerid, startDate, endDate, true)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.Error(err) // 將錯誤添加到上下文中
 		return
 	}
-	c.HTML(http.StatusOK, "demosymbolist.html", gin.H{
-		"data":              systemSymboList,
-		"days":              days,
-		"StaticFileVersion": common.GetEnvironmentSetting().StartTimestemp,
+
+	//找出每月1號的清單
+	monthday := common.GetMonthlyDay1(3)
+
+	firstDayByMonth := []string{}
+	for _, day := range monthday {
+		firstDayByMonth = append(firstDayByMonth, common.FormatDate(day))
+	}
+
+	// 排序切片
+	sort.Slice(montylyreport, func(i, j int) bool {
+		return montylyreport[i].Symbol > montylyreport[j].Symbol // 降冪排序
+	})
+
+	c.HTML(http.StatusOK, "monthlyreport.html", gin.H{
+		"data":    montylyreport,
+		"mondays": firstDayByMonth,
+		"days":    common.FormatDate(startDate),
+		//"cid":               customerid,
+		"month":             common.GetMonthsInRange(startDate)[0],
+		"StaticFileVersion": systemsettings.StartTimestemp,
 	})
 }
 
 func DemoHistory(c *gin.Context) {
-	d := c.Query("d")
 	symbol := c.Query("symbol")
+	customerid := systemsettings.DemoCustomerID
+	session := sessions.Default(c)
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	pageSize, _ := strconv.Atoi(c.DefaultQuery("pageSize", "10"))
+	symbol = common.FormatSymbol(symbol)
 
-	if symbol == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "No Symbol Data."})
+	var rtn []Log_PlaceBetHistoryUI
+
+	if customerid == "" {
+		cid := session.Get("id")
+		if cid != nil {
+			customerid = cid.(string)
+		}
+	}
+	if customerid == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "No Customer Data."})
 		return
 	}
 
-	days, _ := strconv.Atoi(d)
-	if days == 0 {
-		days = 7
-	} else if days > 30 {
-		days = 30
+	//如果Session有值，就以Session的為主，若沒有就取三個月內的
+	sdt, edt := common.GetReportStartEndDate(session)
+	if sdt == edt {
+		sdt, edt = common.GetMonthStartEndDate(time.Now().UTC())
+		sdt = sdt.AddDate(0, -3, 0) //一次三個月內的資料
 	}
 
-	var rtn []Log_PlaceBetHistoryUI
-	list, err := services.GetDemoHistory(c, days, symbol, true)
+	common.SetReportStartEndDate(session, sdt, edt)
+
+	list, totalPages, err := services.GetPlaceOrderHistory(c, symbol, customerid, sdt, edt, page, pageSize)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -70,10 +111,13 @@ func DemoHistory(c *gin.Context) {
 		})
 	}
 
-	c.HTML(http.StatusOK, "demohistory.html", gin.H{
+	c.HTML(http.StatusOK, "placeorderhistory.html", gin.H{
 		"data":              rtn,
+		"page":              page,
+		"pageSize":          pageSize,
+		"totalPages":        totalPages,
 		"symbol":            symbol,
-		"days":              days,
-		"StaticFileVersion": common.GetEnvironmentSetting().StartTimestemp,
+		"cid":               c.Query("cid"),
+		"StaticFileVersion": systemsettings.StartTimestemp,
 	})
 }

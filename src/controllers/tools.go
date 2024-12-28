@@ -7,7 +7,6 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"TradingSystem/src/bingx"
-	"TradingSystem/src/common"
 	"TradingSystem/src/models"
 	"TradingSystem/src/services"
 )
@@ -94,25 +93,12 @@ func GetSecertWords(c *gin.Context) {
 }
 
 func PlaceOrderManually(c *gin.Context) {
-	host := c.Query("host")
-	var servername common.ServerLocale
-
-	switch host {
-	case string(common.Datacenter_Google_JP):
-		servername = common.Datacenter_Google_JP
-	case string(common.Datacenter_Hikari_JP):
-		servername = common.Datacenter_Hikari_JP
-	default:
-		servername = common.Localhost
-	}
-
 	var WebhookData models.TvWebhookData
 	if err := c.ShouldBindJSON(&WebhookData); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
 		return
 	}
 
-	WebhookData.DataCenter = servername
 	err := preProcessPlaceOrder(c, WebhookData)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})

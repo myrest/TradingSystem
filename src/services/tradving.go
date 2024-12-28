@@ -62,10 +62,6 @@ func GetCustomerCurrencySymbosBySymbol(ctx context.Context, symbol string) ([]mo
 			var customer models.Customer
 			doc.DataTo(&customer)
 			customer.ID = doc.Ref.ID
-			//因為Hikari是最早，所以向下相容，若沒設定就是Hikari
-			if customer.DataCenter == "" {
-				customer.DataCenter = common.Datacenter_Hikari_JP
-			}
 			customers[customer.ID] = customer
 		}
 	}
@@ -143,7 +139,6 @@ func GetPlaceOrderHistory(ctx context.Context, Symbol, CustomerID string, sdt, e
 func getTotalPages(ctx context.Context, Symbol, CustomerID string, sdt, edt time.Time, pageSize int) (int, error) {
 	client := common.GetFirestoreClient()
 
-	// Firestore COUNT query
 	query := client.Collection("placeOrderLog").
 		Where("CustomerID", "==", CustomerID).
 		Where("Symbol", "==", Symbol).
@@ -155,6 +150,7 @@ func getTotalPages(ctx context.Context, Symbol, CustomerID string, sdt, edt time
 	if err != nil {
 		return 0, err
 	}
+
 	count, ok := results["all"]
 	if !ok {
 		return 0, errors.New("firestore: couldn't get alias for COUNT from results")

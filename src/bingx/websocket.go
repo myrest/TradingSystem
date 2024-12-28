@@ -1,7 +1,6 @@
 package bingx
 
 import (
-	"TradingSystem/src/common"
 	"net/http"
 
 	"github.com/gorilla/websocket"
@@ -62,7 +61,7 @@ var wsServe = func(initMessage []byte, config *WsConfig, handler WsHandler, errH
 				}
 				return
 			}
-			decodedMsg, err := common.DecodeGzip(message)
+			decodedMsg, err := DecodeGzip(message)
 			if err != nil {
 				if !silent {
 					errHandler(err)

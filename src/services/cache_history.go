@@ -1,33 +1,18 @@
 package services
 
 import (
-	"TradingSystem/src/common"
 	"TradingSystem/src/models"
 	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
 	"sync"
-	"time"
-)
-
-const (
-	cacheDuration = 30 * time.Minute
 )
 
 var (
 	cacheMu  sync.Mutex
 	cacheDir string
 )
-
-func init() {
-	// 确保缓存目录存在
-	cacheDir = common.GetEnvironmentSetting().TempCacheFolder
-	_, err := os.Stat(cacheDir)
-	if os.IsNotExist(err) {
-		os.MkdirAll(cacheDir, os.ModePerm)
-	}
-}
 
 func getCacheFilePath(key string) string {
 	return filepath.Join(cacheDir, fmt.Sprintf("%s.json", key))
@@ -99,26 +84,4 @@ func loadDemoSymbolListCache(key string) ([]models.DemoSymbolList, error) {
 	decoder := json.NewDecoder(file)
 	err = decoder.Decode(&data)
 	return data, err
-}
-
-// Todo:應該清除相關幣就好
-func RemoveLog_TVExpiredCacheFiles() {
-	cacheMu.Lock()
-	defer cacheMu.Unlock()
-
-	files, err := os.ReadDir(cacheDir)
-	if err != nil {
-		return
-	}
-
-	now := time.Now()
-	for _, file := range files {
-		info, err := file.Info()
-		if err != nil {
-			continue
-		}
-		if now.Sub(info.ModTime()) > cacheDuration {
-			os.Remove(filepath.Join(cacheDir, file.Name()))
-		}
-	}
 }

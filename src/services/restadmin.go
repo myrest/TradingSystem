@@ -7,7 +7,6 @@ import (
 	"errors"
 	"log"
 	"sort"
-	"sync"
 
 	"cloud.google.com/go/firestore"
 	"google.golang.org/api/iterator"
@@ -220,68 +219,6 @@ func GetSymbol(ctx context.Context, Symbol, Cert string) (*models.AdminCurrencyS
 	doc.DataTo(&rtn)
 	if rtn.Cert != Cert {
 		return rtn, errors.New(ErrorCode_002)
-	}
-
-	return rtn, nil
-}
-
-func GetLatestWebhook(ctx context.Context) ([]models.TvWebhookData, error) {
-	client := common.GetFirestoreClient()
-
-	allAdminSymbol, err := GetAllSymbol(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	var mu sync.Mutex
-	var wg sync.WaitGroup
-	var rtn []models.TvWebhookData
-	symboMap := make(map[string]models.TvWebhookData)
-
-	for i := range allAdminSymbol {
-		wg.Add(1)
-		go func(Symbol string) {
-			defer wg.Done()
-			var webhookdata models.TvWebhookData
-			webhookdata.Symbol = Symbol
-			iter := client.Collection("webhookData").
-				Where("Symbol", "==", Symbol).
-				//OrderBy("Time", firestore.Desc).
-				Limit(1).
-				Documents(ctx)
-			defer iter.Stop()
-			doc, err := iter.Next()
-			if err == iterator.Done {
-				mu.Lock()
-				symboMap[Symbol] = webhookdata
-				mu.Unlock()
-				return
-			}
-			if err != nil {
-				log.Printf("Failed to iterate documents for Symbol %s: %v", Symbol, err)
-				mu.Lock()
-				symboMap[Symbol] = webhookdata
-				mu.Unlock()
-				return
-			}
-
-			doc.DataTo(&webhookdata)
-
-			mu.Lock()
-			symboMap[Symbol] = webhookdata
-			mu.Unlock()
-		}(allAdminSymbol[i].Symbol)
-	}
-
-	wg.Wait()
-
-	// 将map转换为slice
-	for _, value := range symboMap {
-		rtn = append(rtn, value)
-	}
-
-	if len(rtn) == 0 {
-		return nil, errors.New("no data found")
 	}
 
 	return rtn, nil

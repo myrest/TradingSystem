@@ -1,12 +1,8 @@
 package common
 
 import (
-	"bytes"
-	"compress/gzip"
 	"context"
-	"encoding/json"
 	"fmt"
-	"io"
 	"log"
 	"math/rand"
 	"os"
@@ -14,62 +10,78 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/gin-contrib/sessions"
 	"github.com/joho/godotenv"
 )
 
-type FirebaseSettings struct {
-	FireBaseKeyFullPath string `firestore:"-"` //連Firebase的key，不能放DB裏
-	OAuthKeyFullPath    string `firestore:"-"` //連OAuth的key
-	ProjectID           string `firestore:"-"` //Firebase專案ID
-}
-
 type SystemSettings struct {
 	Env             EnviromentType `firestore:"Env"`            //環境
 	DemoCustomerID  string         `firestore:"DemoCustomerID"` //測試用的CustomerID
-	TempCacheFolder string         `firestore:"-"`              //緩存資料夾
+	TempCacheFolder string         `firestore:"-"`              //緩存資料夾 Todo:目前沒有使用
 	TgToken         string         `firestore:"TgToken"`        //Telegram Token
 	StartTimestemp  string         `firestore:"-"`              //開始時間，用來避免Static文件被瀏覽器快取
 	SectestWord     string         `firestore:"-"`              //後門路由
 }
 
+var systemSettingsLock sync.Mutex // 定義一個互斥鎖
+
+// region 環境
 const (
-	Prod EnviromentType = "prod"
-	Dev  EnviromentType = "dev"
+	EmptyEnvironment EnviromentType = iota // 預設為空值
+	Dev                                    // http://localhost:8080/
+	Prod                                   // https://hikari.lolo.finance/
+	GoogleJP                               // https://trading.innoroot.com/
 )
 
-type firebaseConfig struct {
-	APIKey            string `json:"apiKey"`
-	AuthDomain        string `json:"authDomain"`
-	ProjectID         string `json:"projectId"`
-	StorageBucket     string `json:"storageBucket"`
-	MessagingSenderID string `json:"messagingSenderId"`
-	AppID             string `json:"appId"`
+type EnviromentType int
+
+// 將字串轉換為 EnviromentType
+func StringToEnviromentType(s string) (EnviromentType, bool) {
+	switch strings.ToLower(s) {
+	case "prod":
+		return Prod, false
+	case "googlejp":
+		return GoogleJP, false
+	case "dev":
+		return Dev, false
+	default:
+		return EmptyEnvironment, true // 返回一個錯誤
+	}
 }
 
-type EnviromentType string
+// 使用 stringer 生成的 String() 方法
+func (e EnviromentType) String() string {
+	return [...]string{"EmptyEnvironment", "dev", "prod", "googlejp"}[e]
+}
+
+// endregion 環境
 
 var systemSettings SystemSettings
-var firebaseSettings FirebaseSettings
-
-func DecodeGzip(data []byte) ([]byte, error) {
-	reader, err := gzip.NewReader(bytes.NewReader(data))
-	if err != nil {
-		return nil, err
-	}
-	defer reader.Close()
-
-	decodedMsg, err := io.ReadAll(reader)
-	if err != nil {
-		return nil, err
-	}
-
-	return decodedMsg, nil
-}
 
 const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+
+func loadEnvironmentFromFile() bool {
+	//判斷執行目錄是否有.env檔案
+	if IsFileExists(".env") {
+		//如果有 .env檔就載入
+		wd, _ := os.Getwd()
+		if err := godotenv.Load(filepath.Join(wd, ".env")); err == nil {
+			log.Printf("使用.env檔，作為環境變數")
+		}
+		return true
+	}
+	return false
+}
+
+func getTempCacheFolder() string {
+	//tempCacheFolder固定為"tmpCache"
+	tmpFolderName := "tmpCache"
+	wd, _ := os.Getwd()
+	return filepath.Join(wd, tmpFolderName)
+}
 
 func GenerateRandomString(length int) string {
 	seededRand := rand.New(rand.NewSource(time.Now().UnixNano()))
@@ -101,108 +113,52 @@ func IsFileExists(filePath string) bool {
 	return !info.IsDir()
 }
 
-func GetFirebaseSetting() FirebaseSettings {
-	if firebaseSettings.FireBaseKeyFullPath != "" {
-		return firebaseSettings
-	}
-
-	//載入.env當作環境變數，如果有成功，要顯示訊息。
-	wd, _ := os.Getwd()
-	if err := godotenv.Load(filepath.Join(wd, ".env")); err == nil {
-		log.Printf("使用.env檔，作為環境變數")
-	}
-
-	root := os.Getenv("KEYROOT")
-	env := os.Getenv("ENVIRONMENT") //用來取得Prod or Dev的檔案資料
-	var rtn FirebaseSettings
-
-	//沒有設定Key的目錄，就以當前執行目錄為設定檔目錄
-	if root == "" {
-		wd, err := os.Getwd()
-		if err != nil {
-			log.Fatalf("Error getting current working directory: %v", err)
-		}
-		root = filepath.Dir(wd)
-	}
-
-	//預設為Prod
-	Environment := Prod
-	//嚴格限制只有Prod才是真的Production環境
-	if strings.ToLower(env) != "prod" {
-		Environment = Dev
-	}
-
-	rtn.OAuthKeyFullPath = filepath.Join(root, fmt.Sprintf("firebaseConfig_%s.json", Environment))
-	rtn.FireBaseKeyFullPath = filepath.Join(root, fmt.Sprintf("serviceAccountKey_%s.json", Environment))
-	projectid, err := getProjectID(rtn.OAuthKeyFullPath)
-
-	if err != nil {
-		log.Fatalf("Error getting project id: %v", err)
-	}
-	rtn.ProjectID = projectid
-
-	firebaseSettings = rtn
-	return rtn
-}
-
+// 因為很常被呼叫，所以統一寫在這
 func GetEnvironmentSetting() SystemSettings {
-	if systemSettings.Env != "" {
+	if systemSettings.Env != EmptyEnvironment {
 		return systemSettings
 	}
 
-	var rtn SystemSettings
+	systemSettingsLock.Lock()         // 獲取鎖
+	defer systemSettingsLock.Unlock() // 確保在函數結束時釋放鎖
 
-	//載入.env當作環境變數
-	wd, _ := os.Getwd()
-	if err := godotenv.Load(filepath.Join(wd, ".env")); err == nil {
-		log.Printf("使用.env檔，作為環境變數")
+	if systemSettings.Env != EmptyEnvironment {
+		return systemSettings
 	}
 
-	env := os.Getenv("ENVIRONMENT")
-	tmpCacheFolder := os.Getenv("TEMPCACHEFOLDER")
+	//優先權為
+	//1. .env檔，因為會將檔案載入，變成環境變數
+	//2. 機器上的環境變數
+	//最後會一律套用DB setting，目前只有支援DemoCustomerID及TgToken
+	loadEnvironmentFromFile() //讀取.env檔的環境變數
 
-	if env == "" || strings.ToLower(env) == "prod" {
-		rtn.Env = Prod
-	} else {
-		rtn.Env = Dev
+	strEnv := os.Getenv("ENVIRONMENT")
+
+	env, err := StringToEnviromentType(strEnv)
+	if err {
+		panic("環境變數不正確")
 	}
 
-	rtn.TempCacheFolder = filepath.Join(wd, tmpCacheFolder)
-	rtn.StartTimestemp = strconv.FormatInt(time.Now().Unix(), 10)
-	rtn.SectestWord = GenerateRandomString(8)
+	systemSettings = SystemSettings{
+		Env:             env,
+		TempCacheFolder: getTempCacheFolder(),
+		StartTimestemp:  strconv.FormatInt(time.Now().Unix(), 10),
+		SectestWord:     GenerateRandomString(8),
+		TgToken:         "", //由DB取得
+		DemoCustomerID:  "", //由DB取得
+	}
+
+	//初始化DB，因為會取systemSettings，所以要放在後面
+	initFirebaseSetting()
 	dbSystemSetting, _ := GetDBSystemSettings(context.Background())
-	systemSettings = rtn //先把值寫入，再ApplyDB的資料
 	ApplySystemSettings(dbSystemSetting)
-	return rtn
+
+	return systemSettings
 }
 
 func ApplySystemSettings(settings SystemSettings) {
 	systemSettings.DemoCustomerID = settings.DemoCustomerID
 	systemSettings.TgToken = settings.TgToken
-}
-
-// GetProjectID reads the firebaseConfig_dev.json file and returns the projectId value
-func getProjectID(filename string) (string, error) {
-	// Open the JSON file
-	file, err := os.Open(filename)
-	if err != nil {
-		return "", fmt.Errorf("failed to open file: %w", err)
-	}
-	defer file.Close()
-
-	// Read the file contents
-	data, err := io.ReadAll(file)
-	if err != nil {
-		return "", fmt.Errorf("failed to read file: %w", err)
-	}
-
-	// Parse the JSON data
-	var config firebaseConfig
-	if err := json.Unmarshal(data, &config); err != nil {
-		return "", fmt.Errorf("failed to unmarshal JSON: %w", err)
-	}
-
-	return config.ProjectID, nil
 }
 
 func Decimal(value interface{}, rounds ...int) float64 {

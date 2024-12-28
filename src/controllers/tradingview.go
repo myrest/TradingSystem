@@ -20,14 +20,7 @@ func TradingViewWebhook(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
 		return
 	}
-	//Todo:先不處理DC
-	servername, _ := common.GetHostName(c)
-	//if err != nil {
-	//	c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-	//	return
-	//}
 
-	WebhookData.DataCenter = servername
 	err := preProcessPlaceOrder(c, WebhookData)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -62,20 +55,15 @@ func preProcessPlaceOrder(c *gin.Context, WebhookData models.TvWebhookData) erro
 
 	var wg sync.WaitGroup
 	for i := 0; i < len(customerList); i++ {
-		//如果不同DC就跳過，有問題，先不做
-		//if customerList[i].DataCenter != WebhookData.DataCenter {
-		//	continue
-		//}
 		wg.Add(1)
 		go func(customer models.CustomerCurrencySymboWithCustomer) {
 			defer wg.Done()
 			client := services.GetTradingClient(customer.APIKey, customer.SecretKey, customer.Simulation, customer.ExchangeSystemName)
-			//processPlaceOrder(client, customer, tvData, TvWebHookLog, c)
 			placeOrderLog, isTowWayPositionOnHand, AlertMessageModel, err := client.CreateOrder(c, tvData, customer)
 			placeOrderLog.WebHookRefID = TvWebHookLog
 			placeOrderLog.Symbol = tvData.Symbol //這裏要改回來成有"-"，報表才找得到
 			if err != nil {
-				placeOrderLog.Result = placeOrderLog.Result + "\nPlace order get exception:" + err.Error()
+				placeOrderLog.Result = placeOrderLog.Result + "\nPlace order exception:" + err.Error()
 				services.SystemEventLog{
 					EventName:  services.PlaceOrder,
 					CustomerID: customer.CustomerID,
@@ -88,11 +76,6 @@ func preProcessPlaceOrder(c *gin.Context, WebhookData models.TvWebhookData) erro
 		}(customerList[i])
 	}
 	wg.Wait()
-	//要更新績效的cache
-	go func() {
-		//清暫存檔
-		services.RemoveLog_TVExpiredCacheFiles()
-	}()
 	return nil
 }
 
@@ -110,7 +93,7 @@ func asyncWriteTVsignalData(alertType models.AlertMessageModel, customer *models
 		customerAlertLevel := customer.AlertMessageType.GetPriority()
 		systmeAlertLevel := alertType.GetPriority()
 		//有綁定，且訊息等級要夠才發
-		if customer.TgChatID > 0 && (customerAlertLevel >= systmeAlertLevel) {
+		if customer.TgChatID != 0 && (customerAlertLevel >= systmeAlertLevel) {
 			positionside := "多"
 			side := "開"
 			if tvdata.PositionSideType == models.ShortPositionSideType {

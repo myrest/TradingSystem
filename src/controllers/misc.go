@@ -10,8 +10,11 @@ import (
 )
 
 var OauthContent []byte
+var systemsettings common.SystemSettings
 
 func init() {
+	systemsettings = common.GetEnvironmentSetting() //確保環境變數有值
+	ApplyTgBotSetting(systemsettings.TgToken)
 	settings := common.GetFirebaseSetting()
 
 	fileContent, err := os.ReadFile(settings.OAuthKeyFullPath)

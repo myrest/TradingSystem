@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"TradingSystem/src/common"
 	"TradingSystem/src/services"
 	"net/http"
 
@@ -20,7 +19,7 @@ func GetTGBot(c *gin.Context) {
 		return
 	}
 
-	if customer.TgChatID > 0 {
+	if customer.TgChatID != 0 {
 		isLinked = true
 	}
 
@@ -36,6 +35,6 @@ func GetTGBot(c *gin.Context) {
 	c.HTML(http.StatusOK, "tgbot.html", gin.H{
 		"tgidentifykey":     customer.TgIdentifyKey,
 		"islinked":          isLinked,
-		"StaticFileVersion": common.GetEnvironmentSetting().StartTimestemp,
+		"StaticFileVersion": systemsettings.StartTimestemp,
 	})
 }

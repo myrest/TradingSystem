@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"TradingSystem/src/common"
 	"TradingSystem/src/models"
 	"TradingSystem/src/services"
 	"net/http"
@@ -20,7 +19,7 @@ func SubaccountList(c *gin.Context) {
 		"youare":            youare,
 		"yourname":          name,
 		"IsAdmin":           c.GetBool("IsAdmin"),
-		"StaticFileVersion": common.GetEnvironmentSetting().StartTimestemp,
+		"StaticFileVersion": systemsettings.StartTimestemp,
 	})
 }
 

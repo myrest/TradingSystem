@@ -5,6 +5,7 @@ import (
 	"TradingSystem/src/models"
 	"TradingSystem/src/services"
 	"context"
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -13,13 +14,19 @@ import (
 )
 
 func ShowLoginPage(c *gin.Context) {
+	currentHost, err := common.GetHostName(c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
 	session := sessions.Default(c)
 	name := session.Get("name")
 	email := session.Get("email")
 
 	if name == nil || email == nil {
 		c.HTML(http.StatusOK, "login.html", gin.H{
-			"StaticFileVersion": common.GetEnvironmentSetting().StartTimestemp,
+			"StaticFileVersion": systemsettings.StartTimestemp,
+			"host":              fmt.Sprintf("%s (%s)", systemsettings.Env.String(), currentHost),
 		})
 		return
 	}
@@ -28,16 +35,10 @@ func ShowLoginPage(c *gin.Context) {
 
 func CreateCustomer(c *gin.Context) {
 	session := sessions.Default(c)
-	//Todo:先不處理DC
-	DC, _ := common.GetHostName(c)
-	//if err != nil {
-	//	c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-	//	return
-	//}
+
 	var customer = models.Customer{
-		Name:       session.Get("name").(string),
-		Email:      session.Get("email").(string),
-		DataCenter: DC,
+		Name:  session.Get("name").(string),
+		Email: session.Get("email").(string),
 	}
 	//先查該Email是否有被用掉。
 	dbCustomer, err := services.GetCustomerByEmail(c, customer.Email)
