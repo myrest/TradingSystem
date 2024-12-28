@@ -6,6 +6,7 @@ import (
 	"TradingSystem/src/services"
 	"context"
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
 
@@ -16,8 +17,9 @@ import (
 func ShowLoginPage(c *gin.Context) {
 	currentHost, err := common.GetHostName(c)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
+		//c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		log.Println(err)
+		//return //先不處理Host問題
 	}
 	session := sessions.Default(c)
 	name := session.Get("name")
