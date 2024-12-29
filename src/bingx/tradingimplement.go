@@ -33,18 +33,15 @@ func (client *Client) CreateOrder(c context.Context, tv models.TvSiginalData, Cu
 	var oepntrade models.OpenPosition //目前持倉
 	var totalAmount float64           //總倉位
 	var totalPrice float64            //總成本
-	var totalFee float64              //總雜支，包含資金費率、手續費
 
-	//這裏假設由系統來下單，應該只會持倉固定方向
+	//這裏假設由系統來下單，應該只會持倉固定方向，找出持倉是為了知道目前持有的數量，用以避免及判斷雙向持倉
 	for i, position := range *positions {
 		if strings.ToUpper(position.PositionSide) == string(tv.PositionSideType) {
 			amount := common.Decimal(position.AvailableAmt)
 			price := common.Decimal(position.AvgPrice)
-			fee := common.Decimal(position.RealisedProfit)
 
 			totalAmount += amount
 			totalPrice += price * amount
-			totalFee += fee
 			if i == 0 {
 				if strings.ToLower(position.PositionSide) == "long" {
 					oepntrade.PositionSide = models.LongPositionSideType
@@ -121,16 +118,11 @@ func (client *Client) CreateOrder(c context.Context, tv models.TvSiginalData, Cu
 
 	profit := common.Decimal(placedOrder.Profit)
 	placedPrice := common.Decimal(placedOrder.AveragePrice)
-	fee := common.Decimal(placedOrder.Fee)
+	placeOrderLog.Fee = common.Decimal(placedOrder.Fee)
 
 	placeOrderLog.Profit = profit
 	placeOrderLog.Price = placedPrice
 
-	if tv.TVData.PositionSize == 0 {
-		//平倉，計算收益
-		totalFee = totalFee + fee
-		placeOrderLog.Fee = totalFee
-	}
 	if placeOrderLog.Profit < 0 {
 		//虧損
 		AlertMessageModel = models.CustomerAlertLoss
