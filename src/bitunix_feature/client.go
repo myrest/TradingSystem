@@ -17,6 +17,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/binance/binance-connector-go/handlers"
 )
 
 // TimeInForceType define time in force type of order
@@ -294,12 +296,16 @@ func (c *Client) callAPI(ctx context.Context, r *request, opts ...RequestOption)
 	c.debug("response body: %s", string(data))
 	c.debug("response status code: %d", res.StatusCode)
 
-	apiErr := new(bitunixAPIRawResponse)
-	json.Unmarshal(data, apiErr)
+	if res.StatusCode >= http.StatusBadRequest {
+		apiErr := new(handlers.APIError)
+		e := json.Unmarshal(data, apiErr)
+		if e != nil {
+			c.debug("failed to unmarshal json: %s", e)
+		}
+		return nil, apiErr
+	}
 
-	err = apiErr.GetError()
-
-	return data, err
+	return data, nil
 }
 
 // region 新增功能

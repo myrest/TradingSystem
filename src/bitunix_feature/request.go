@@ -40,27 +40,7 @@ func (r *request) addParam(key string, value interface{}) *request {
 	}
 
 	r.query.Add(key, strValue)
-	return r
-}
-
-// addParam add param with key/value to query string
-func (r *request) setParam(key string, value interface{}) *request {
-	if r.query == nil {
-		r.query = url.Values{}
-	}
-	var strValue string
-	switch v := value.(type) {
-	case float64:
-		// 使用 strconv.FormatFloat 避免科学记号
-		strValue = strconv.FormatFloat(v, 'f', -1, 64)
-	case float32:
-		// 如果是 float32，同样使用 strconv.FormatFloat
-		strValue = strconv.FormatFloat(float64(v), 'f', -1, 32)
-	default:
-		strValue = fmt.Sprintf("%v", value)
-	}
-
-	r.query.Set(key, strValue)
+	//r.query.Set(key, strValue)//這個Set還沒使用到
 	return r
 }
 
