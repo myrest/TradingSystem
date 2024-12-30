@@ -39,20 +39,6 @@ type Client struct {
 	do         doFunc
 }
 
-type bitunixAPIRawResponse struct {
-	Code    string `json:"code"`
-	Msg     string `json:"msg"`
-	Success bool   `json:"success"`
-}
-
-func (c *bitunixAPIRawResponse) GetError() error {
-	if !c.Success {
-		return fmt.Errorf("<Bitunix API> code=%s, msg=%s", c.Code, c.Msg)
-	} else {
-		return nil
-	}
-}
-
 type doFunc func(req *http.Request) (*http.Response, error)
 
 // FormatTimestamp formats a time into Unix timestamp in milliseconds, as requested by Binance.
@@ -175,7 +161,7 @@ func urlValuesToJSON(v url.Values) (string, error) {
 	for key, value := range values {
 		// Use the first value if there are multiple values for a key
 		if len(value) > 0 {
-			if (key == "side") || (key == "type") { //side及type為數字
+			if (key == "notexist") || (key == "notexist2") { //用來改成數字型，目前未使用
 				queryMap[key], _ = strconv.Atoi(value[0])
 			} else {
 				queryMap[key] = value[0] // 或使用 value 直接作為 []string
@@ -309,8 +295,37 @@ func (c *Client) callAPI(ctx context.Context, r *request, opts ...RequestOption)
 }
 
 // region 新增功能
-//func (c *Client) GetLeverageService() *GetLeverageService {
-//	return &GetLeverageService{c: c}
-//}
+func (c *Client) GetUpdateLeverageService() *GetUpdateLeverageService {
+	return &GetUpdateLeverageService{c: c}
+}
+
+func (c *Client) GetUpdatePositionService() *GetUpdatePositionService {
+	return &GetUpdatePositionService{c: c}
+}
+
+func (c *Client) GetUpdateMarginTypeService() *GetUpdateMarginTypeService {
+	return &GetUpdateMarginTypeService{c: c}
+}
+
+func (c *Client) GetAccountBalanceService() *GetAccountBalanceService {
+	return &GetAccountBalanceService{c: c}
+}
+
+func (c *Client) GetPlaceNewOrderService() *GetPlaceNewOrderService {
+	return &GetPlaceNewOrderService{c: c}
+}
+
+func (c *Client) GetPendingPositionsService() *GetPendingPositionsService {
+	return &GetPendingPositionsService{c: c}
+}
+
+// 取未平倉訂單資料，應該用不到
+func (c *Client) GetOpenOrderDetailService() *GetOpenOrderDetailService {
+	return &GetOpenOrderDetailService{c: c}
+}
+
+func (c *Client) GetLeverageMarginTypeService() *GetLeverageMarginTypeService {
+	return &GetLeverageMarginTypeService{c: c}
+}
 
 // endregion
