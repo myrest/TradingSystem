@@ -534,28 +534,30 @@ type GetPendingPositionsService struct {
 	symbol *string
 }
 
+type PedingPosition struct {
+	PositionId    string `json:"positionId"`
+	Symbol        string `json:"symbol"`
+	Qty           string `json:"qty"`
+	EntryValue    string `json:"entryValue"`
+	Side          string `json:"side"`
+	MarginMode    string `json:"marginMode"`
+	PositionMode  string `json:"positionMode"`
+	Leverage      int64  `json:"leverage"`
+	Fee           string `json:"fee"`
+	Funding       string `json:"funding"`
+	RealizedPNL   string `json:"realizedPNL"`
+	Margin        string `json:"margin"`
+	UnrealizedPNL string `json:"unrealizedPNL"`
+	LiqPrice      string `json:"liqPrice"`
+	MarginRate    string `json:"marginRate"`
+	AvgOpenPrice  string `json:"avgOpenPrice"`
+	Ctime         string `json:"ctime"`
+	Mtime         string `json:"mtime"`
+}
+
 type PendingPositionsResponse struct {
 	StandardResponse
-	Data []struct {
-		PositionId    string `json:"positionId"`
-		Symbol        string `json:"symbol"`
-		Qty           string `json:"qty"`
-		EntryValue    string `json:"entryValue"`
-		Side          string `json:"side"`
-		MarginMode    string `json:"marginMode"`
-		PositionMode  string `json:"positionMode"`
-		Leverage      int64  `json:"leverage"`
-		Fee           string `json:"fee"`
-		Funding       string `json:"funding"`
-		RealizedPNL   string `json:"realizedPNL"`
-		Margin        string `json:"margin"`
-		UnrealizedPNL string `json:"unrealizedPNL"`
-		LiqPrice      string `json:"liqPrice"`
-		MarginRate    string `json:"marginRate"`
-		AvgOpenPrice  string `json:"avgOpenPrice"`
-		Ctime         string `json:"ctime"`
-		Mtime         string `json:"mtime"`
-	} `json:"data"`
+	Data []PedingPosition `json:"data"`
 }
 
 func (s *GetPendingPositionsService) Symbol(symbol string) *GetPendingPositionsService {
@@ -586,15 +588,15 @@ func (s *GetPendingPositionsService) Do(ctx context.Context, opts ...RequestOpti
 
 // endregion
 
-// region 取得未平倉訂單資料
+// region 取得訂單資料
 // https://openapidoc.bitunix.com/doc/trade/get_order_detail.html
-type GetOpenOrderDetailService struct {
+type GetOrderDetailService struct {
 	c        *Client
 	orderId  int64
 	clientId int64
 }
 
-type OpenOrderDetailResponse struct {
+type OrderDetailResponse struct {
 	StandardResponse
 	Data struct {
 		OrderId      string `json:"orderId"`
@@ -626,17 +628,17 @@ type OpenOrderDetailResponse struct {
 	} `json:"data"`
 }
 
-func (s *GetOpenOrderDetailService) OrderId(orderId int64) *GetOpenOrderDetailService {
+func (s *GetOrderDetailService) OrderId(orderId int64) *GetOrderDetailService {
 	s.orderId = orderId
 	return s
 }
 
-func (s *GetOpenOrderDetailService) ClientId(clientId int64) *GetOpenOrderDetailService {
+func (s *GetOrderDetailService) ClientId(clientId int64) *GetOrderDetailService {
 	s.clientId = clientId
 	return s
 }
 
-func (s *GetOpenOrderDetailService) Do(ctx context.Context, opts ...RequestOption) (res *OpenOrderDetailResponse, err error) {
+func (s *GetOrderDetailService) Do(ctx context.Context, opts ...RequestOption) (res *OrderDetailResponse, err error) {
 	r := &request{
 		method:   http.MethodGet,
 		endpoint: "/api/v1/futures/trade/get_order_detail",
@@ -653,7 +655,7 @@ func (s *GetOpenOrderDetailService) Do(ctx context.Context, opts ...RequestOptio
 	if err != nil {
 		return nil, err
 	}
-	res = &OpenOrderDetailResponse{}
+	res = &OrderDetailResponse{}
 	err = json.Unmarshal(data, &res)
 	if err != nil {
 		return nil, err

@@ -26,6 +26,8 @@
                     <label for="Binance_N">Binance一般帳戶</label>
                     <input type="radio" name="ExchangeSystemName" id="Binance_P" value="Binance_Portfolio" {{ if eq .ExchangeSystemName "Binance_Portfolio" }}checked{{ end }}  />
                     <label for="Binance_P">Binance統一帳戶</label>
+                    <input type="radio" name="ExchangeSystemName" id="Bitunix_F" value="Bitunix_Feature" {{ if eq .ExchangeSystemName "Bitunix_Feature" }}checked{{ end }}  />
+                    <label for="Bitunix_F">Bitunix</label>
                 </div>
                 <strong>API Key：</strong>
                 <input type="text" id="apiKey" placeholder="Enter API Key" value="{{ .ApiKey }}">
@@ -43,7 +45,7 @@
                 </div>
                 <span id="GroupSubscribeType" class="{{ if not .AutoSubscribeStatus }}displayNone{{ end }}">
                     跟隨盤種：
-                    <span class="status-toggle  {{ if not .AutoSubscribeType }}disabled{{ end }} {{ if eq .ExchangeSystemName "Binance_Normal" }}SysDisabled{{ end }} {{ if eq .ExchangeSystemName "Binance_Portfolio" }}SysDisabled{{ end }}"
+                    <span class="status-toggle  {{ if not .AutoSubscribeType }}disabled{{ end }} {{ if eq .ExchangeSystemName "Binance_Normal" }}SysDisabled{{ end }} {{ if eq .ExchangeSystemName "Binance_Portfolio" }}SysDisabled{{ end }} {{ if eq .ExchangeSystemName "ExchangeBitunix_Feature" }}SysDisabled{{ end }}"
                         onclick="toggleSubscribeType(this)" id="SubscribeType">
                         {{ if .AutoSubscribeType }}實盤{{ else }}模擬{{ end }}
                     </span>
@@ -83,6 +85,6 @@
     </div>
 
     <script>
-        var isRealonly = '{{ if eq .ExchangeSystemName "Binance_Normal" }}1{{ end }}{{ if eq .ExchangeSystemName "Binance_Portfolio" }}1{{ end }}';
+        var isRealonly = '{{ if eq .ExchangeSystemName "Binance_Normal" }}1{{ end }}{{ if eq .ExchangeSystemName "Binance_Portfolio" }}1{{ end }}{{ if eq .ExchangeSystemName "Bitunix_Feature" }}1{{ end }}';
     </script>
     

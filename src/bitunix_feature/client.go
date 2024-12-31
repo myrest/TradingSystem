@@ -319,9 +319,8 @@ func (c *Client) GetPendingPositionsService() *GetPendingPositionsService {
 	return &GetPendingPositionsService{c: c}
 }
 
-// 取未平倉訂單資料，應該用不到
-func (c *Client) GetOpenOrderDetailService() *GetOpenOrderDetailService {
-	return &GetOpenOrderDetailService{c: c}
+func (c *Client) GetOrderDetailService() *GetOrderDetailService {
+	return &GetOrderDetailService{c: c}
 }
 
 func (c *Client) GetLeverageMarginTypeService() *GetLeverageMarginTypeService {
