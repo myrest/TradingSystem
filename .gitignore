@@ -3,12 +3,13 @@ firebaseConfig_dev.json
 resttradingsystem-0761c133f88d.json
 serviceAccountKey*
 src/__debug_*
-src/binance_connector/portfolio_service_test.go
-src/binance_connector/trading_extenstion_test.go
-src/binance_connector_portfolio/portfolio_service_test.go
+src/binance_connector/*_test.go
+src/binance_connector_portfolio/*_test.go
 src/common/test.go
 src/firebaseConfig*
 src/main
 src/build.sh
 src/TmpCache/*
 note/*
+src/bitunix/*_test.go
+src/bitunix_feature/*_test.go

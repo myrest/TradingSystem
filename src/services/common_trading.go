@@ -4,6 +4,7 @@ import (
 	"TradingSystem/src/binance_connector"
 	"TradingSystem/src/binance_connector_portfolio"
 	"TradingSystem/src/bingx"
+	"TradingSystem/src/bitunix_feature"
 	"TradingSystem/src/models"
 	"TradingSystem/src/strategyinterface"
 	"context"
@@ -15,6 +16,8 @@ func GetTradingClient(apiKey, secretKey string, isTEST bool, ExchangeName models
 		client = binance_connector_portfolio.NewPortfolioClient(apiKey, secretKey)
 	case models.ExchangeBinance_N:
 		client = binance_connector.NewClient(apiKey, secretKey)
+	case models.ExchangeBitunix_Feature:
+		client = bitunix_feature.NewClient(apiKey, secretKey)
 	default:
 		client = bingx.NewClient(apiKey, secretKey, isTEST)
 	}

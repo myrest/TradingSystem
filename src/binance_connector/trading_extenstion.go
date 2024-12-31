@@ -28,8 +28,8 @@ const (
 	ExpireMaker SelfTradePreventionMode = "EXPIRE_MAKER"
 	ExpireBoth  SelfTradePreventionMode = "EXPIRE_BOTH"
 
-	MarginIsolated MarginTradingType = "ISOLATED" //全倉
-	MarginCrossed  MarginTradingType = "CROSSED"  //逐倉
+	MarginIsolated MarginTradingType = "ISOLATED" //逐倉
+	MarginCrossed  MarginTradingType = "CROSSED"  //全倉
 
 	GTC TimeInForce = "GTC" // Good Till Cancelled
 	GTD TimeInForce = "GTD" // Good Till Date

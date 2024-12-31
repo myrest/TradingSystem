@@ -73,7 +73,8 @@ func ShowDashboardPage(c *gin.Context) {
 
 		//Binance只有實盤
 		if customer.ExchangeSystemName == models.ExchangeBinance_N ||
-			customer.ExchangeSystemName == models.ExchangeBinance_P {
+			customer.ExchangeSystemName == models.ExchangeBinance_P ||
+			customer.ExchangeSystemName == models.ExchangeBitunix_Feature {
 			customer.AutoSubscribReal = true
 		}
 		c.HTML(http.StatusOK, "dashboard.html", gin.H{

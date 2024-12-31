@@ -190,7 +190,7 @@ func (Client *Client) UpdateLeverage(ctx context.Context, symbol string, leverag
 		return nil
 	}
 
-	if IsoOrCloseMode.MarginType != string(MarginIsolated) {
+	if IsoOrCloseMode.MarginType != string(MarginCrossed) {
 		//修改全逐倉模式
 		_, err = Client.GetMarginTypeService().
 			Symbol(symbol).MarginType(MarginIsolated).Do(ctx)
