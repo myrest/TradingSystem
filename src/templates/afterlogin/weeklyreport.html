@@ -127,9 +127,9 @@
                     <td>{{.Winrate}}</td>
                     <td>
                         {{ if $.IsAdmin }}
-                        <a href="/customers/placeorderhistory?symbol={{.Symbol}}&cid={{ $.cid }}">記錄</a>
+                        <a href="/customers/placeorderhistory?symbol={{.Symbol}}&cid={{ $.cid }}&f=g">記錄</a>
                         {{ else }}
-                        <a href="/customers/placeorderhistory?symbol={{.Symbol}}">記錄</a>
+                        <a href="/customers/placeorderhistory?symbol={{.Symbol}}&f=g">記錄</a>
                         {{ end }}
                     </td>
                 </tr>

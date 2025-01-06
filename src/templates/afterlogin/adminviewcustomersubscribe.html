@@ -34,7 +34,7 @@
                 <td>
                     {{ timesf .Amount .Leverage }} = {{ .Amount }} * {{ .Leverage }}倍 
                 </td>
-                <td><a href="/customers/placeorderhistory?symbol={{ .CurrencySymbolBase.Symbol }}&cid={{ $.cid }}">記錄</a></td>
+                <td><a href="/customers/placeorderhistory?symbol={{ .CurrencySymbolBase.Symbol }}&cid={{ $.cid }}&f=g">記錄</a></td>
             </tr>
             {{end}}
         </tbody>

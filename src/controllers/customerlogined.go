@@ -261,6 +261,7 @@ type Log_PlaceBetHistoryUI struct {
 func PlaceOrderHistory(c *gin.Context) {
 	symbol := c.Query("symbol")
 	customerid := c.Query("cid")
+	isFirst := c.Query("f")
 	session := sessions.Default(c)
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	pageSize, _ := strconv.Atoi(c.DefaultQuery("pageSize", "10"))
@@ -279,9 +280,10 @@ func PlaceOrderHistory(c *gin.Context) {
 		return
 	}
 
-	//如果Session有值，就以Session的為主，若沒有就取三個月內的
 	sdt, edt := common.GetReportStartEndDate(session)
-	if sdt == edt {
+
+	//如果是第一次進頁面，或是Session沒有設定時間，就取三個月內的
+	if isFirst != "" || sdt == edt {
 		sdt, edt = common.GetMonthStartEndDate(time.Now().UTC())
 		sdt = sdt.AddDate(0, -3, 0) //一次三個月內的資料
 	}
