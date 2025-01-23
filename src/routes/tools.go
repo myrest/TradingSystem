@@ -18,6 +18,7 @@ func RegisterMyTestRoutes(r *gin.Engine) {
 		authRoutes.GET("/systemsettings", controllers.SystemSettings)
 		authRoutes.POST("/savesystemsettings", controllers.SaveSystemSettings)
 		authRoutes.POST("/tradingview", controllers.PlaceOrderManually)
+		authRoutes.POST("/cleanup", controllers.CleanUP)
 	}
 
 	specialrouter := r.Group("/resthome")

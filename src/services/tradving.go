@@ -12,6 +12,8 @@ import (
 	"google.golang.org/api/iterator"
 )
 
+const deletion_batchSize = 500 // 每個批次的最大文件數量
+
 func GetCustomerCurrencySymbosBySymbol(ctx context.Context, symbol string) ([]models.CustomerCurrencySymboWithCustomer, error) {
 	client := common.GetFirestoreClient()
 
@@ -161,4 +163,38 @@ func getTotalPages(ctx context.Context, Symbol, CustomerID string, sdt, edt time
 	totalPages := (int(countValue) + pageSize - 1) / pageSize
 
 	return totalPages, nil
+}
+
+// ClearPlaceOrderHistory 清除過期的 placeOrderLog
+func ClearPlaceOrderHistory(ctx context.Context, edt time.Time) error {
+	client := common.GetFirestoreClient()
+	// 使用 Firestore 批量写入操作
+	bulkWriter := client.BulkWriter(ctx)
+
+	query := client.Collection("placeOrderLog").
+		Where("Time", "<", common.FormatTime(edt))
+
+	iter := query.Documents(ctx)
+	defer iter.Stop()
+
+	count := 0 // 計數器
+
+	for {
+		doc, err := iter.Next()
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			return err
+		}
+
+		bulkWriter.Delete(doc.Ref)
+		count++
+		if count >= deletion_batchSize {
+			bulkWriter.Flush()
+			count = 0 // 重置計數器
+		}
+	}
+	bulkWriter.Flush()
+	return nil
 }
