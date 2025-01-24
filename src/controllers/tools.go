@@ -123,5 +123,11 @@ func CleanUP(c *gin.Context) {
 		return
 	}
 
+	err = services.CleanCustomerCurrency(c)
+	if err != nil {
+		c.JSON(http.StatusExpectationFailed, gin.H{"error": err.Error()})
+		return
+	}
+
 	c.JSON(http.StatusOK, gin.H{"data": "OK"})
 }

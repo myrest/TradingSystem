@@ -7,6 +7,7 @@ import (
 	"errors"
 	"log"
 
+	"cloud.google.com/go/firestore"
 	"google.golang.org/api/iterator"
 )
 
@@ -125,6 +126,80 @@ func GetCustomerCurrency(ctx context.Context, customerID, symbol string) (*model
 	return &data, nil
 }
 
+func CleanCustomerCurrency(ctx context.Context) error {
+	systemSymbol, err := GetAllSymbol(ctx)
+	if err != nil {
+		return err
+	}
+
+	//將systemSymbol中的資料轉成map
+	systemSymbolMap := make(map[string]bool)
+	for _, v := range systemSymbol {
+		systemSymbolMap[v.Symbol] = v.Status
+	}
+
+	// 查詢 customerssymbol 中的所有資料
+	client := common.GetFirestoreClient()
+	iter := client.Collection("customerssymbol").Documents(ctx)
+	defer iter.Stop()
+
+	for {
+		doc, err := iter.Next()
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			return err
+		}
+
+		var customerSymbol models.CustomerCurrencySymbol
+		doc.DataTo(&customerSymbol)
+		//如果systemSymbolMap中存在customerSymbol.Symbol，且customerSymbol.Status為true，就跳過
+		if systemSymbolMap[customerSymbol.Symbol] {
+			continue
+		}
+
+		// 檢查 placeOrder 集合中是否存在相同的 CustomerID 和 Symbol
+		exists, err := checkPlaceOrderExists(ctx, client, customerSymbol.CustomerID, customerSymbol.Symbol)
+		if err != nil {
+			return err
+		}
+
+		// 如果在 placeOrder 中沒有找到，就刪除 customerssymbol 裡的資料
+		if !exists {
+			if _, err := client.Collection("customerssymbol").Doc(doc.Ref.ID).Delete(ctx); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+// 檢查 placeOrder 中是否存在相同的 CustomerID 和 Symbol
+func checkPlaceOrderExists(ctx context.Context, client *firestore.Client, customerID, symbol string) (bool, error) {
+	logsymbol := common.FormatSymbol(symbol)
+	iter := client.Collection("placeOrderLog").
+		Where("CustomerID", "==", customerID).
+		Where("Symbol", "==", logsymbol).
+		Limit(1).Documents(ctx)
+	defer iter.Stop()
+
+	_, err := iter.Next()
+	if err == iterator.Done {
+		// 找不到資料
+		return false, nil
+	}
+
+	if err != nil {
+		return false, err
+	}
+
+	// 找到資料
+	return true, nil
+}
+
+// 給自動測試刪除使用
 func DeleteCustomerCurrency(ctx context.Context, CustomerID, Symbol string) error {
 	client := common.GetFirestoreClient()
 
