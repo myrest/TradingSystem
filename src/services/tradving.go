@@ -198,3 +198,53 @@ func ClearPlaceOrderHistory(ctx context.Context, edt time.Time) error {
 	bulkWriter.Flush()
 	return nil
 }
+
+func ClearCustomerReportHistory(ctx context.Context, edt time.Time) error {
+	//Clear weekly report
+	err := clearReportHistory(ctx, common.GetWeeksByDate(edt), "CustomerWeeklyReport")
+	if err != nil {
+		return err
+	}
+
+	//clear monthly report
+	err = clearReportHistory(ctx, common.GetMonthsInRange(edt)[0], "CustomerMonthlyReport")
+	if err != nil {
+		return err
+	}
+	return nil
+
+}
+
+// 清除過期的 CustomerWeeklyReport
+func clearReportHistory(ctx context.Context, edt, reportName string) error {
+	client := common.GetFirestoreClient()
+	// 使用 Firestore 批量写入操作
+	bulkWriter := client.BulkWriter(ctx)
+
+	query := client.Collection(reportName).
+		Where("YearUnit", "<", edt)
+
+	iter := query.Documents(ctx)
+	defer iter.Stop()
+
+	count := 0 // 計數器
+
+	for {
+		doc, err := iter.Next()
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			return err
+		}
+
+		bulkWriter.Delete(doc.Ref)
+		count++
+		if count >= deletion_batchSize {
+			bulkWriter.Flush()
+			count = 0 // 重置計數器
+		}
+	}
+	bulkWriter.Flush()
+	return nil
+}
