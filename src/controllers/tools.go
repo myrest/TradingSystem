@@ -107,8 +107,10 @@ func PlaceOrderManually(c *gin.Context) {
 }
 
 func CleanUP(c *gin.Context) {
-	//刪除90天以前的訂單
-	startDT := time.Now().Add(-time.Hour * 24 * 90)
+	//取得二個月前的1號日期
+	utcNow := time.Now().AddDate(0, -2, 0).UTC()
+	startDT := time.Date(utcNow.Year(), utcNow.Month(), 1, 0, 0, 0, 0, utcNow.Location())
+
 	err := services.ClearPlaceOrderHistory(c, startDT)
 	if err != nil {
 		c.JSON(http.StatusExpectationFailed, gin.H{"error": err.Error()})
