@@ -124,7 +124,7 @@ func CreateAdminSymbolWithoutAutoSubscriberTest(t *testing.T, c context.Context,
 
 func DeleteAdminSymbol(t *testing.T, c context.Context, Symbol string) {
 	t.Run("測試刪除幣種", func(t *testing.T) {
-		err := services.DeleteAdminSymbol(c, Symbol)
+		err := services.DeleteAdminSymbol_Force(c, Symbol)
 		if err != nil {
 			t.Errorf("DeleteAdminSymbol() error = %v", err)
 		}

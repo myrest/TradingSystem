@@ -108,7 +108,7 @@ func asyncWriteTVsignalData(alertType models.AlertMessageModel, customer *models
 				tgMessage = fmt.Sprintf("%s\n盈虧：%s", tgMessage, formatFloat64(6, tvdata.Profit))
 			}
 			if data.Simulation {
-				tgMessage = fmt.Sprintf("%s\n【***模擬交易單***】", tgMessage)
+				tgMessage = fmt.Sprintf("【**模擬交易單**】\n %s", tgMessage)
 			}
 			//發送TG訊號
 			err := services.TGSendMessage(customer.TgChatID, tgMessage)

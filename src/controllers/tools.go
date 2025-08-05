@@ -111,18 +111,21 @@ func CleanUP(c *gin.Context) {
 	utcNow := time.Now().AddDate(0, -2, 0).UTC()
 	startDT := time.Date(utcNow.Year(), utcNow.Month(), 1, 0, 0, 0, 0, utcNow.Location())
 
+	//清除訂單歷史
 	err := services.ClearPlaceOrderHistory(c, startDT)
 	if err != nil {
 		c.JSON(http.StatusExpectationFailed, gin.H{"error": err.Error()})
 		return
 	}
 
+	//清除報表
 	err = services.ClearCustomerReportHistory(c, startDT)
 	if err != nil {
 		c.JSON(http.StatusExpectationFailed, gin.H{"error": err.Error()})
 		return
 	}
 
+	//清除使用者無用的幣別
 	err = services.CleanCustomerCurrency(c)
 	if err != nil {
 		c.JSON(http.StatusExpectationFailed, gin.H{"error": err.Error()})
