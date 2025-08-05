@@ -283,7 +283,7 @@ func PlaceOrderHistory(c *gin.Context) {
 	sdt, edt := common.GetReportStartEndDate(session)
 
 	//如果是第一次進頁面，或是Session沒有設定時間，就取三個月內的
-	if isFirst != "" || sdt == edt {
+	if isFirst != "" || sdt.Equal(edt) {
 		sdt, edt = common.GetMonthStartEndDate(time.Now().UTC())
 		sdt = sdt.AddDate(0, -3, 0) //一次三個月內的資料
 	}

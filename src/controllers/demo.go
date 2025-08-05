@@ -82,7 +82,7 @@ func DemoHistory(c *gin.Context) {
 
 	//如果Session有值，就以Session的為主，若沒有就取三個月內的
 	sdt, edt := common.GetReportStartEndDate(session)
-	if sdt == edt {
+	if sdt.Equal(edt) {
 		sdt, edt = common.GetMonthStartEndDate(time.Now().UTC())
 		sdt = sdt.AddDate(0, -3, 0) //一次三個月內的資料
 	}
