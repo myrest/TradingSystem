@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-func TestGetWeeksInDateRange(t *testing.T) {
+func TestGetWeeksInDateRange_Roy(t *testing.T) {
 	type args struct {
 		startDate time.Time
 		endDate   time.Time
@@ -83,6 +83,46 @@ func TestGetWeeksInDateRange(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestGetWeeksInDateRange(t *testing.T) {
+	// 測試案例1: 同一天（星期一）
+	date1 := time.Date(2025, 8, 4, 0, 0, 0, 0, time.UTC) // 2025年8月4日，星期一
+	weeks1 := GetWeeksInDateRange(date1, date1)
+	t.Logf("同一天（星期一）測試: %v", weeks1)
+	if len(weeks1) != 1 {
+		t.Errorf("期望得到1週，實際得到%d週", len(weeks1))
+	}
+
+	// 測試案例2: 同一天（星期三）
+	date2 := time.Date(2025, 8, 6, 0, 0, 0, 0, time.UTC) // 2025年8月6日，星期三
+	weeks2 := GetWeeksInDateRange(date2, date2)
+	t.Logf("同一天（星期三）測試: %v", weeks2)
+	if len(weeks2) != 1 {
+		t.Errorf("期望得到1週，實際得到%d週", len(weeks2))
+	}
+
+	// 測試案例3: 跨一週（週三到下週二）
+	startDate3 := time.Date(2025, 8, 6, 0, 0, 0, 0, time.UTC) // 2025年8月6日，星期三
+	endDate3 := time.Date(2025, 8, 12, 0, 0, 0, 0, time.UTC)  // 2025年8月12日，下週二
+	weeks3 := GetWeeksInDateRange(startDate3, endDate3)
+	t.Logf("跨一週測試: %v", weeks3)
+	if len(weeks3) != 2 {
+		t.Errorf("期望得到2週，實際得到%d週", len(weeks3))
+	}
+
+	// 測試案例4: 同一週內的不同日期
+	startDate4 := time.Date(2025, 8, 4, 0, 0, 0, 0, time.UTC) // 2025年8月4日，星期一
+	endDate4 := time.Date(2025, 8, 10, 0, 0, 0, 0, time.UTC)  // 2025年8月10日，星期日
+	weeks4 := GetWeeksInDateRange(startDate4, endDate4)
+	t.Logf("同一週內測試: %v", weeks4)
+	if len(weeks4) != 1 {
+		t.Errorf("期望得到1週，實際得到%d週", len(weeks4))
+	}
+
+	// 測試GetWeeksByDate函數（驗證其他相關函數是否正常）
+	week := GetWeeksByDate(date1)
+	t.Logf("GetWeeksByDate測試: %s", week)
 }
 
 func TestWeekToDateRange(t *testing.T) {

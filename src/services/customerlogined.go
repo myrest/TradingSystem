@@ -171,7 +171,7 @@ func cleanCustomerCurrencyWithOptions(ctx context.Context, options CleanOptions)
 	var processedCount int
 
 	if options.LogProgress {
-		log.Printf("Starting CleanCustomerCurrency with %d enabled system symbols", len(enabledSystemSymbolMap))
+		log.Printf("Starting CleanCustomerCurrency and there are %d enabled in %d system symbols", len(enabledSystemSymbolMap), len(systemSymbol))
 	}
 
 	// 查詢 customerssymbol 中的所有資料
