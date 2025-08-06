@@ -1,19 +1,19 @@
-# Use an official Golang runtime as a parent image
-FROM golang
-
-COPY ./ /app
+FROM golang:alpine3.22 AS builder
 
 WORKDIR /app
 
+COPY go.mod go.sum ./
+
 RUN go mod download
 
-# Build the Go app
-RUN go build -o ./src/main ./src/main.go
+COPY . .
 
-# Expose port 8080 to the outside world
+RUN go build -o /main ./src/main.go
+
+FROM scratch
+
+COPY --from=builder /main /main
+
 EXPOSE 8080
 
-WORKDIR /app/src
-
-# Command to run the executable
-CMD ["./main"]
+CMD ["/main"]

@@ -40,17 +40,22 @@ func DeleteSymbol(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-
-	err = services.DeleteAdminSymbol(c, adminSymbol.Symbol)
+	result := false
+	result, err = services.DeleteAdminSymbol(c, adminSymbol.Symbol)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if !result {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "請先停用該幣種後再試一次。"})
 		return
 	}
 
 	//把customer的訂閱停掉。
 	err = services.DisableCustomerSymbolStatus(c, adminSymbol.Symbol)
 	if err != nil {
-		c.JSON(http.StatusOK, gin.H{"data": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 

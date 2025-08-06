@@ -149,7 +149,9 @@ func GetEnvironmentSetting() SystemSettings {
 	}
 
 	//初始化DB，因為會取systemSettings，所以要放在後面
-	initFirebaseSetting()
+	if err := InitializeFirebase(context.Background(), env); err != nil {
+		panic(fmt.Errorf("failed to initialize Firebase: %w", err))
+	}
 	dbSystemSetting, _ := GetDBSystemSettings(context.Background())
 	ApplySystemSettings(dbSystemSetting)
 

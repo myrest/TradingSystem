@@ -82,7 +82,35 @@ func updateAutoSubscriberCustomerSymbol(ctx context.Context, AdminSymbol models.
 	return nil
 }
 
-func DeleteAdminSymbol(ctx context.Context, Symbol string) error {
+func DeleteAdminSymbol(ctx context.Context, Symbol string) (bool, error) {
+	client := common.GetFirestoreClient()
+	rtn := false
+
+	iter := client.Collection("SymbolData").Where("Symbol", "==", Symbol).
+		Where("Status", "==", false).
+		Documents(ctx)
+	defer iter.Stop()
+
+	for {
+		doc, err := iter.Next()
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			return rtn, err
+		}
+
+		// 删除文档
+		_, err = doc.Ref.Delete(ctx)
+		if err != nil {
+			return rtn, err
+		}
+		rtn = true
+	}
+	return rtn, nil
+}
+
+func DeleteAdminSymbol_Force(ctx context.Context, Symbol string) error {
 	client := common.GetFirestoreClient()
 
 	iter := client.Collection("SymbolData").Where("Symbol", "==", Symbol).Documents(ctx)

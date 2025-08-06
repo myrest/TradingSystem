@@ -125,7 +125,7 @@ function renderCryptoTable() {
                         X <input type="text" style="width:50px" name="leverage-${item.symbol}" value="${item.leverage || 0}" ${item.SystemStatus} onchange="displaySaveCurrenyBTN('${item.symbol}', 'Amount', this)">
                     </span>
                 </td>
-                <td><a href="/customers/placeorderhistory?symbol=${item.symbol}">記錄</a></td>
+                <td><a href="/customers/placeorderhistory?symbol=${item.symbol}&f=g">記錄</a></td>
             </tr>
         `;
         tableBody.innerHTML += row;

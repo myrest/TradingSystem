@@ -6,11 +6,16 @@ import (
 	"TradingSystem/src/middleware"
 	"TradingSystem/src/routes"
 	"TradingSystem/src/services"
+	"context"
 	"html/template"
 	"log"
+	"net/http"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"strconv"
+	"syscall"
+	"time"
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"
@@ -24,7 +29,7 @@ func formatFloat64(round int, f float64) string {
 }
 
 func main() {
-	defer services.FlushLogging()
+	// 創建 Gin 路由器
 	r := gin.Default()
 	r.SetFuncMap(template.FuncMap{
 		"subtract": func(a, b int) int {
@@ -73,10 +78,49 @@ func main() {
 		port = "8080"
 	}
 
-	log.Printf("Server started at :%s", port)
+	// 創建 HTTP 服務器
+	var addr string
 	if common.GetEnvironmentSetting().Env == common.Dev {
-		log.Fatal(r.Run("127.0.0.1:" + port))
+		addr = "127.0.0.1:" + port
 	} else {
-		log.Fatal(r.Run(":" + port))
+		addr = ":" + port
 	}
+
+	srv := &http.Server{
+		Addr:    addr,
+		Handler: r,
+	}
+
+	// 在 goroutine 中啟動服務器
+	go func() {
+		log.Printf("Server started at %s", addr)
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("Failed to start server: %v", err)
+		}
+	}()
+
+	// 等待中斷信號以優雅地關閉服務器
+	quit := make(chan os.Signal, 1)
+	// 捕獲 SIGINT (Ctrl+C) 和 SIGTERM 信號
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+	log.Println("Shutting down server...")
+
+	// 創建一個帶有超時的 context，給服務器一些時間來完成正在處理的請求
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	// 關閉服務器
+	if err := srv.Shutdown(ctx); err != nil {
+		log.Printf("Server forced to shutdown: %v", err)
+	}
+
+	// 清理資源
+	log.Println("Flushing logs and cleaning up resources...")
+	services.FlushLogging()
+	if err := services.CloseLogging(); err != nil {
+		log.Printf("Error closing logging client: %v", err)
+	}
+
+	log.Println("Server exited")
 }

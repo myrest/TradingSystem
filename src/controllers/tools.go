@@ -3,6 +3,7 @@ package controllers
 import (
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 
@@ -103,4 +104,33 @@ func PlaceOrderManually(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 	}
+}
+
+func CleanUP(c *gin.Context) {
+	//取得二個月前的1號日期
+	utcNow := time.Now().AddDate(0, -2, 0).UTC()
+	startDT := time.Date(utcNow.Year(), utcNow.Month(), 1, 0, 0, 0, 0, utcNow.Location())
+
+	//清除訂單歷史
+	err := services.ClearPlaceOrderHistory(c, startDT)
+	if err != nil {
+		c.JSON(http.StatusExpectationFailed, gin.H{"error": err.Error()})
+		return
+	}
+
+	//清除報表
+	err = services.ClearCustomerReportHistory(c, startDT)
+	if err != nil {
+		c.JSON(http.StatusExpectationFailed, gin.H{"error": err.Error()})
+		return
+	}
+
+	//清除使用者無用的幣別
+	err = services.CleanCustomerCurrency(c)
+	if err != nil {
+		c.JSON(http.StatusExpectationFailed, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"data": "OK"})
 }

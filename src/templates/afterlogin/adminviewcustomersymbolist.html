@@ -39,7 +39,7 @@
                     {{ end }}
                 </td>
                 <td>{{.Amount}} * {{.Leverage}}</td>
-                <td><a href="/customers/placeorderhistory?symbol={{ .Symbol }}&cid={{.CustomerID}}">記錄</a></td>
+                <td><a href="/customers/placeorderhistory?symbol={{ .Symbol }}&cid={{.CustomerID}}&f=g">記錄</a></td>
             </tr>
             {{end}}
         </tbody>

@@ -166,12 +166,16 @@ function deleteCrypto() {
         if (response.ok) {
             response.json().then(data => {
                 const crypto = coinData.find(item => item.symbol === symbol);
-                const index = array.indexOf(crypto);
+                const index = coinData.indexOf(crypto);
                 if (index > -1) { // only splice array when item is found
-                    array.splice(index, 1); // 2nd parameter means remove one item only
+                    coinData.splice(index, 1); // 2nd parameter means remove one item only
                 }
+                renderCryptoTable();
             })
-            renderCryptoTable();
+        }else{
+            response.json().then(data => 
+                alert(data.error)
+            )
         }
     })
     closeDashboardModal();
