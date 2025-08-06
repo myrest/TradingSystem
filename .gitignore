@@ -14,3 +14,4 @@ note/*
 src/bitunix/*_test.go
 src/bitunix_feature/*_test.go
 .qodo
+firebaseConfig_googlejp.json
